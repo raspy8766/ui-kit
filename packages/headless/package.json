@@ -1,5 +1,5 @@
 {
-  "name": "@coveo/headless",
+  "name": "@glcp/coveo-headless",
   "homepage": "https://docs.coveo.com/en/headless/latest/",
   "repository": {
     "type": "git",
@@ -28,6 +28,7 @@
   "scripts": {
     "dev": "concurrently \"npm run build:definitions -- -w\" \"npm run build:bundles -- dev\"",
     "build": "nx build",
+    "prepublish": "npm run build",
     "build:prod": "npm run build:definitions && npm run build:bundles",
     "build:bundles": "node esbuild.mjs",
     "build:definitions": "tsc -p src/tsconfig.build.json -d --emitDeclarationOnly --declarationDir dist/definitions",
