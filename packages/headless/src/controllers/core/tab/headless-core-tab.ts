@@ -1,24 +1,28 @@
 import {BooleanValue, Schema} from '@coveo/bueno';
-import {configuration} from '../../../app/common-reducers';
-import {CoreEngine} from '../../../app/engine';
-import {getConfigurationInitialState} from '../../../features/configuration/configuration-state';
+import {configuration} from '../../../app/common-reducers.js';
+import {CoreEngine} from '../../../app/engine.js';
+import {getConfigurationInitialState} from '../../../features/configuration/configuration-state.js';
+import {prepareForSearchWithQuery} from '../../../features/search/search-actions.js';
 import {
   registerTab,
   updateActiveTab,
-} from '../../../features/tab-set/tab-set-actions';
-import {tabSetReducer as tabSet} from '../../../features/tab-set/tab-set-slice';
-import {ConfigurationSection, TabSection} from '../../../state/state-sections';
-import {loadReducerError} from '../../../utils/errors';
+} from '../../../features/tab-set/tab-set-actions.js';
+import {tabSetReducer as tabSet} from '../../../features/tab-set/tab-set-slice.js';
+import {
+  ConfigurationSection,
+  TabSection,
+} from '../../../state/state-sections.js';
+import {loadReducerError} from '../../../utils/errors.js';
 import {
   requiredEmptyAllowedString,
   requiredNonEmptyString,
   validateInitialState,
   validateOptions,
-} from '../../../utils/validate-payload';
+} from '../../../utils/validate-payload.js';
 import {
   buildController,
   Controller,
-} from '../../controller/headless-controller';
+} from '../../controller/headless-controller.js';
 
 export interface TabOptions {
   /**
@@ -29,6 +33,11 @@ export interface TabOptions {
    * `@objecttype==Message`
    */
   expression: string;
+
+  /**
+   * Whether to clear the state when the active tab changes.
+   */
+  clearFiltersOnTabChange?: boolean;
 
   /**
    * A unique identifier for the tab. The value will be used as the originLevel2 when the tab is active.
@@ -47,6 +56,7 @@ export interface TabInitialState {
 const optionsSchema = new Schema<Required<TabOptions>>({
   expression: requiredEmptyAllowedString,
   id: requiredNonEmptyString,
+  clearFiltersOnTabChange: new BooleanValue(),
 });
 
 const initialStateSchema = new Schema({
@@ -72,7 +82,6 @@ export interface Tab extends Controller {
    * Activates the tab.
    */
   select(): void;
-
   /**
    * The state of the `Tab` controller.
    */
@@ -105,7 +114,6 @@ export function buildCoreTab(engine: CoreEngine, props: TabProps): Tab {
 
   const controller = buildController(engine);
   const {dispatch} = engine;
-
   validateOptions(engine, optionsSchema, props.options, 'buildTab');
   const initialState = validateInitialState(
     engine,
@@ -126,6 +134,14 @@ export function buildCoreTab(engine: CoreEngine, props: TabProps): Tab {
     ...controller,
 
     select() {
+      if (props.options.clearFiltersOnTabChange) {
+        dispatch(
+          prepareForSearchWithQuery({
+            q: '',
+            clearFilters: true,
+          })
+        );
+      }
       dispatch(updateActiveTab(id));
     },
 

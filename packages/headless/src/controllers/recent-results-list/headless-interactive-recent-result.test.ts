@@ -1,21 +1,23 @@
-import {Result} from '../../api/search/search/result';
-import {configuration} from '../../app/common-reducers';
-import {logRecentResultClick} from '../../features/recent-results/recent-results-analytics-actions';
-import {buildMockResult} from '../../test';
+import {Result} from '../../api/search/search/result.js';
+import {configuration} from '../../app/common-reducers.js';
+import {logRecentResultClick} from '../../features/recent-results/recent-results-analytics-actions.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {createMockState} from '../../test/mock-state.js';
 import {
   buildInteractiveRecentResult,
   InteractiveRecentResult,
-} from './headless-interactive-recent-result';
+} from './headless-interactive-recent-result.js';
+
+vi.mock('../../features/recent-results/recent-results-analytics-actions');
 
 describe('InteractiveRecentResult', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let mockResult: Result;
   let interactiveRecentResult: InteractiveRecentResult;
-  let logRecentResultClickPendingActionType: string;
 
   const resultStringParams = {
     title: 'title',
@@ -30,36 +32,19 @@ describe('InteractiveRecentResult', () => {
 
   function initializeInteractiveRecentResult(delay?: number) {
     const result = (mockResult = buildMockResult(resultStringParams));
-    logRecentResultClickPendingActionType =
-      logRecentResultClick(mockResult).pending.type;
     interactiveRecentResult = buildInteractiveRecentResult(engine, {
       options: {result, selectionDelay: delay},
     });
   }
 
-  function findLogRecentResultClickAction() {
-    return (
-      engine.actions.find(
-        (action) => action.type === logRecentResultClickPendingActionType
-      ) ?? null
-    );
-  }
-
-  function expectLogRecentResultActionPending() {
-    const action = findLogRecentResultClickAction();
-    expect(action).toEqual(
-      logRecentResultClick(mockResult).pending(action!.meta.requestId)
-    );
-  }
-
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initializeInteractiveRecentResult();
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('it adds the correct reducers to engine', () => {
@@ -68,8 +53,8 @@ describe('InteractiveRecentResult', () => {
 
   it('when calling select(), logs recentResultClick', () => {
     interactiveRecentResult.select();
-    jest.runAllTimers();
+    vi.runAllTimers();
 
-    expectLogRecentResultActionPending();
+    expect(logRecentResultClick).toHaveBeenCalledWith(mockResult);
   });
 });

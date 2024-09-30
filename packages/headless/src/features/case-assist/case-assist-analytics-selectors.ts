@@ -1,4 +1,4 @@
-import {CaseAssistAppState} from '../../state/case-assist-app-state';
+import {CaseAssistAppState} from '../../state/case-assist-app-state.js';
 
 export enum KnownCaseFields {
   id = 'id',
@@ -77,11 +77,10 @@ export const caseAssistCaseClassificationSelector = (
 ) => {
   const classificationFieldName = Object.keys(
     state?.caseField?.fields ?? {}
-  ).find(
-    (fieldName) =>
-      state?.caseField?.fields[fieldName].suggestions.some(
-        (suggestion) => suggestion.id === classificationId
-      )
+  ).find((fieldName) =>
+    state?.caseField?.fields[fieldName].suggestions.some(
+      (suggestion) => suggestion.id === classificationId
+    )
   );
 
   if (!classificationFieldName) {
@@ -122,7 +121,7 @@ export const caseAssistDocumentSuggestionSelector = (
   const suggestion = state.documentSuggestion?.documents.find((s, idx) => {
     const isFound = s.uniqueId === suggestionId;
     if (isFound) {
-      suggestionIdx = idx;
+      suggestionIdx = idx + 1;
     }
     return isFound;
   });

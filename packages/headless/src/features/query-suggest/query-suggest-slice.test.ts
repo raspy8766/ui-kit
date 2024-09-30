@@ -1,15 +1,19 @@
-import {QuerySuggestCompletion} from '../../api/search/query-suggest/query-suggest-response';
-import {buildMockQuerySuggest} from '../../test/mock-query-suggest';
-import {buildMockQuerySuggestCompletion} from '../../test/mock-query-suggest-completion';
-import {buildMockSearchApiErrorWithStatusCode} from '../../test/mock-search-api-error-with-status-code';
-import {fetchQuerySuggestions as fetchCommerceQuerySuggestions} from '../commerce/query-suggest/query-suggest-actions';
+import {QuerySuggestCompletion} from '../../api/search/query-suggest/query-suggest-response.js';
+import {buildMockQuerySuggestCompletion} from '../../test/mock-query-suggest-completion.js';
+import {buildMockQuerySuggest} from '../../test/mock-query-suggest.js';
+import {buildMockSearchApiErrorWithStatusCode} from '../../test/mock-search-api-error-with-status-code.js';
+import {
+  fetchQuerySuggestions as fetchCommerceQuerySuggestions,
+  registerQuerySuggest as registerCommerceQuerySuggest,
+  clearQuerySuggest as clearCommerceQuerySuggest,
+} from '../commerce/query-suggest/query-suggest-actions.js';
 import {
   clearQuerySuggest,
   fetchQuerySuggestions,
   registerQuerySuggest,
-} from './query-suggest-actions';
-import {querySuggestReducer} from './query-suggest-slice';
-import {QuerySuggestSet} from './query-suggest-state';
+} from './query-suggest-actions.js';
+import {querySuggestReducer} from './query-suggest-slice.js';
+import {QuerySuggestSet} from './query-suggest-state.js';
 
 describe('querySuggest slice', () => {
   let state: QuerySuggestSet;
@@ -44,24 +48,36 @@ describe('querySuggest slice', () => {
     expect(querySuggestReducer(undefined, {type: 'randomAction'})).toEqual({});
   });
 
-  describe('#registerQuerySuggest', () => {
+  const describeRegister = (
+    register: typeof registerQuerySuggest | typeof registerCommerceQuerySuggest
+  ) => {
     it('when the id does not exist, it adds an entry with the correct state', () => {
       const expectedState = buildMockQuerySuggest({id, count: 10});
-      const action = registerQuerySuggest({id, count: 10});
+      const action = register({id, count: 10});
       const finalState = querySuggestReducer(undefined, action);
 
       expect(finalState[id]).toEqual(expectedState);
     });
 
     it('when the id exists, it does not modify the registered state', () => {
-      const action = registerQuerySuggest({id, count: 10});
+      const action = register({id, count: 10});
       const finalState = querySuggestReducer(state, action);
 
       expect(state[id]).toEqual(finalState[id]);
     });
+  };
+
+  describe('#registerQuerySuggest', () => {
+    describeRegister(registerQuerySuggest);
   });
 
-  describe('#clearQuerySuggest', () => {
+  describe('#registerCommerceQuerySuggest', () => {
+    describeRegister(registerCommerceQuerySuggest);
+  });
+
+  const describeClear = (
+    clear: typeof clearQuerySuggest | typeof clearCommerceQuerySuggest
+  ) => {
     it('when the id is valid, it clears completions, responseId and partialQueries, but not the query', () => {
       state[id] = buildMockQuerySuggest({
         completions: getCompletions(),
@@ -75,14 +91,22 @@ describe('querySuggest slice', () => {
         responseId: '',
       });
 
-      const finalState = querySuggestReducer(state, clearQuerySuggest({id}));
+      const finalState = querySuggestReducer(state, clear({id}));
       expect(finalState[id]).toEqual(expectedState);
     });
 
     it('when the id is invalid, it does not throw', () => {
-      const action = clearQuerySuggest({id: 'invalid id'});
+      const action = clear({id: 'invalid id'});
       expect(() => querySuggestReducer(state, action)).not.toThrow();
     });
+  };
+
+  describe('#clearQuerySuggest', () => {
+    describeClear(clearQuerySuggest);
+  });
+
+  describe('#clearCommerceQuerySuggest', () => {
+    describeClear(clearCommerceQuerySuggest);
   });
 
   const describePending = (
@@ -283,6 +307,7 @@ describe('querySuggest slice', () => {
             id,
             responseId,
             query: 'abc',
+            fieldSuggestionsFacets: [],
           },
           '',
           {

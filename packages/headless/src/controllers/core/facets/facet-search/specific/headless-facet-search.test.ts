@@ -1,43 +1,65 @@
+import {describe, it, vi, expect, beforeEach} from 'vitest';
+import {CoreEngine} from '../../../../../app/engine.js';
+import {
+  executeFacetSearch,
+  executeFieldSuggest,
+} from '../../../../../features/facets/facet-search-set/generic/generic-facet-search-actions.js';
 import {
   excludeFacetSearchResult,
   registerFacetSearch,
   selectFacetSearchResult,
-} from '../../../../../features/facets/facet-search-set/specific/specific-facet-search-actions';
-import {deselectAllFacetValues} from '../../../../../features/facets/facet-set/facet-set-actions';
+} from '../../../../../features/facets/facet-search-set/specific/specific-facet-search-actions.js';
+import {deselectAllFacetValues} from '../../../../../features/facets/facet-set/facet-set-actions.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../../../../test/mock-engine';
-import {buildMockFacetSearch} from '../../../../../test/mock-facet-search';
-import {buildMockFacetSearchResult} from '../../../../../test/mock-facet-search-result';
-import {CategoryFacetSearchResult} from '../../../../facets/category-facet/headless-category-facet';
+  ConfigurationSection,
+  FacetSearchSection,
+} from '../../../../../state/state-sections.js';
+import {
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../../../test/mock-engine-v2.js';
+import {buildMockFacetSearchResult} from '../../../../../test/mock-facet-search-result.js';
+import {buildMockFacetSearch} from '../../../../../test/mock-facet-search.js';
+import {createMockState} from '../../../../../test/mock-state.js';
+import {CategoryFacetSearchResult} from '../../../../facets/category-facet/headless-category-facet.js';
 import {
   buildFacetSearch,
   FacetSearch,
   FacetSearchProps,
-} from './headless-facet-search';
+} from './headless-facet-search.js';
+
+vi.mock(
+  '../../../../../features/facets/facet-search-set/specific/specific-facet-search-actions'
+);
+vi.mock('../../../../../features/facets/facet-set/facet-set-actions');
 
 describe('FacetSearch', () => {
   const facetId = '1';
   let props: FacetSearchProps;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let controller: FacetSearch;
 
   function initEngine() {
-    engine = buildMockSearchAppEngine();
-    engine.state.facetSearchSet[facetId] = buildMockFacetSearch();
+    const state = createMockState();
+    state.facetSearchSet[facetId] = buildMockFacetSearch();
+    engine = buildMockSearchEngine(state);
   }
 
   function initFacetSearch() {
-    controller = buildFacetSearch(engine, props);
+    controller = buildFacetSearch(
+      engine as CoreEngine<FacetSearchSection & ConfigurationSection>,
+      props
+    );
   }
 
   beforeEach(() => {
     props = {
       options: {facetId},
-      select: jest.fn(),
-      exclude: jest.fn(),
+      select: vi.fn(),
+      exclude: vi.fn(),
       isForFieldSuggestions: false,
+      executeFacetSearchActionCreator: executeFacetSearch,
+      executeFieldSuggestActionCreator: executeFieldSuggest,
     };
 
     initEngine();
@@ -45,18 +67,13 @@ describe('FacetSearch', () => {
   });
 
   it('on init, it dispatches a #registerFacetSearch action with the specified options', () => {
-    expect(engine.actions).toContainEqual(registerFacetSearch(props.options));
-  });
-
-  it('calling #state returns the latest state', () => {
-    engine.state.facetSearchSet[facetId].isLoading = true;
-    expect(controller.state.isLoading).toBe(true);
+    expect(registerFacetSearch).toHaveBeenCalledWith(props.options);
   });
 
   it(`although the API returns an empty path for specific facet
   calling #state returns the values with only the relevant keys`, () => {
     const expectedValue = {count: 10, displayValue: 'Hello', rawValue: 'hello'};
-    (engine.state.facetSearchSet[facetId].response
+    (engine.state.facetSearchSet![facetId].response
       .values as CategoryFacetSearchResult[]) = [{...expectedValue, path: []}];
     expect(controller.state.values[0]).toEqual(expectedValue);
   });
@@ -69,11 +86,7 @@ describe('FacetSearch', () => {
     });
 
     it('dispatches #selectFacetSearchResult action', () => {
-      const action = selectFacetSearchResult({
-        facetId,
-        value,
-      });
-      expect(engine.actions).toContainEqual(action);
+      expect(selectFacetSearchResult).toHaveBeenCalledWith({facetId, value});
     });
 
     it('calls the select prop #executeSearch action', () => {
@@ -90,11 +103,7 @@ describe('FacetSearch', () => {
     });
 
     it('dispatches #selectFacetSearchResult action', () => {
-      const action = excludeFacetSearchResult({
-        facetId,
-        value,
-      });
-      expect(engine.actions).toContainEqual(action);
+      expect(excludeFacetSearchResult).toHaveBeenCalledWith({facetId, value});
     });
 
     it('calls the exclude prop #executeSearch action', () => {
@@ -111,16 +120,11 @@ describe('FacetSearch', () => {
     });
 
     it('dispatches #deselectAllFacetValues action', () => {
-      const action = deselectAllFacetValues(facetId);
-      expect(engine.actions).toContainEqual(action);
+      expect(deselectAllFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches #selectFacetSearchResult action', () => {
-      const action = selectFacetSearchResult({
-        facetId,
-        value,
-      });
-      expect(engine.actions).toContainEqual(action);
+      expect(selectFacetSearchResult).toHaveBeenCalledWith({facetId, value});
     });
 
     it('calls the select prop #executeSearch action', () => {
@@ -137,16 +141,11 @@ describe('FacetSearch', () => {
     });
 
     it('dispatches #deselectAllFacetValues action', () => {
-      const action = deselectAllFacetValues(facetId);
-      expect(engine.actions).toContainEqual(action);
+      expect(deselectAllFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches #excludeFacetSearchResult action', () => {
-      const action = excludeFacetSearchResult({
-        facetId,
-        value,
-      });
-      expect(engine.actions).toContainEqual(action);
+      expect(excludeFacetSearchResult).toHaveBeenCalledWith({facetId, value});
     });
 
     it('calls the exclude prop #executeSearch action', () => {

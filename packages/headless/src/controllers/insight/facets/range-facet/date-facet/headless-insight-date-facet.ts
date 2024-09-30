@@ -1,13 +1,18 @@
-import {InsightEngine} from '../../../../../app/insight-engine/insight-engine';
+import {InsightEngine} from '../../../../../app/insight-engine/insight-engine.js';
+import {
+  facetClearAll,
+  facetUpdateSort,
+} from '../../../../../features/facets/facet-set/facet-set-analytics-actions.js';
 import {
   logFacetClearAll,
   logFacetUpdateSort,
-} from '../../../../../features/facets/facet-set/facet-set-insight-analytics-actions';
-import {DateRangeRequest} from '../../../../../features/facets/range-facets/date-facet-set/interfaces/request';
-import {DateFacetValue} from '../../../../../features/facets/range-facets/date-facet-set/interfaces/response';
-import {RangeFacetSortCriterion} from '../../../../../features/facets/range-facets/generic/interfaces/request';
-import {getInsightAnalyticsActionForToggleRangeFacetSelect} from '../../../../../features/facets/range-facets/generic/range-facet-insight-utils';
-import {executeSearch} from '../../../../../features/insight-search/insight-search-actions';
+} from '../../../../../features/facets/facet-set/facet-set-insight-analytics-actions.js';
+import {DateRangeRequest} from '../../../../../features/facets/range-facets/date-facet-set/interfaces/request.js';
+import {DateFacetValue} from '../../../../../features/facets/range-facets/date-facet-set/interfaces/response.js';
+import {RangeFacetSortCriterion} from '../../../../../features/facets/range-facets/generic/interfaces/request.js';
+import {getInsightAnalyticsActionForToggleRangeFacetSelect} from '../../../../../features/facets/range-facets/generic/range-facet-insight-utils.js';
+import {getAnalyticsActionForToggleFacetSelect} from '../../../../../features/facets/range-facets/generic/range-facet-utils.js';
+import {executeSearch} from '../../../../../features/insight-search/insight-search-actions.js';
 import {
   buildCoreDateFacet,
   buildDateRange,
@@ -16,8 +21,8 @@ import {
   DateFacetState,
   DateRangeInput,
   DateRangeOptions,
-} from '../../../../core/facets/range-facet/date-facet/headless-core-date-facet';
-import {DateFacetOptions} from '../../../../core/facets/range-facet/date-facet/headless-date-facet-options';
+} from '../../../../core/facets/range-facet/date-facet/headless-core-date-facet.js';
+import {DateFacetOptions} from '../../../../core/facets/range-facet/date-facet/headless-date-facet-options.js';
 
 export type {
   DateFacetOptions,
@@ -50,27 +55,34 @@ export function buildDateFacet(
 
     deselectAll() {
       coreController.deselectAll();
-      dispatch(executeSearch(logFacetClearAll(getFacetId())));
+      dispatch(
+        executeSearch({
+          legacy: logFacetClearAll(getFacetId()),
+          next: facetClearAll(),
+        })
+      );
     },
 
     sortBy(sortCriterion: RangeFacetSortCriterion) {
       coreController.sortBy(sortCriterion);
       dispatch(
-        executeSearch(
-          logFacetUpdateSort({facetId: getFacetId(), sortCriterion})
-        )
+        executeSearch({
+          legacy: logFacetUpdateSort({facetId: getFacetId(), sortCriterion}),
+          next: facetUpdateSort(),
+        })
       );
     },
 
     toggleSelect: (selection: DateFacetValue) => {
       coreController.toggleSelect(selection);
       dispatch(
-        executeSearch(
-          getInsightAnalyticsActionForToggleRangeFacetSelect(
+        executeSearch({
+          legacy: getInsightAnalyticsActionForToggleRangeFacetSelect(
             getFacetId(),
             selection
-          )
-        )
+          ),
+          next: getAnalyticsActionForToggleFacetSelect(selection),
+        })
       );
     },
 

@@ -1,17 +1,21 @@
-import {Result} from '../../insight.index';
+import {InsightPanel} from '@coveo/relay-event-types';
+import {Result} from '../../api/search/search/result.js';
 import {
+  analyticsEventItemMetadata,
   documentIdentifier,
   InsightAction,
-  makeInsightAnalyticsAction,
+  makeInsightAnalyticsActionFactory,
   partialDocumentInformation,
   validateResultPayload,
-} from '../analytics/analytics-utils';
-import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state';
+} from '../analytics/analytics-utils.js';
+import {analyticsEventCaseContext} from '../analytics/insight-analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state.js';
 
 export const logCopyToClipboard = (result: Result): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/resultAction/insight/copyToClipboard',
-    (client, state) => {
+  makeInsightAnalyticsActionFactory(SearchPageEvents.copyToClipboard)({
+    prefix: 'analytics/resultAction/insight/copyToClipboard',
+    __legacy__getBuilder: (client, state) => {
       validateResultPayload(result);
       const metadata = getCaseContextAnalyticsMetadata(
         state.insightCaseContext
@@ -21,13 +25,24 @@ export const logCopyToClipboard = (result: Result): InsightAction =>
         documentIdentifier(result),
         metadata
       );
-    }
-  );
+    },
+    analyticsType: 'InsightPanel.ItemAction',
+    analyticsPayloadBuilder: (state): InsightPanel.ItemAction => {
+      const information = partialDocumentInformation(result, state);
+      return {
+        itemMetadata: analyticsEventItemMetadata(result, state),
+        position: information.documentPosition,
+        searchUid: result.searchUid || '',
+        action: 'copyToClipboard',
+        context: analyticsEventCaseContext(state),
+      };
+    },
+  });
 
 export const logCaseSendEmail = (result: Result): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/resultAction/insight/caseSendEmail',
-    (client, state) => {
+  makeInsightAnalyticsActionFactory(SearchPageEvents.caseSendEmail)({
+    prefix: 'analytics/resultAction/insight/caseSendEmail',
+    __legacy__getBuilder: (client, state) => {
       validateResultPayload(result);
       const metadata = getCaseContextAnalyticsMetadata(
         state.insightCaseContext
@@ -37,13 +52,24 @@ export const logCaseSendEmail = (result: Result): InsightAction =>
         documentIdentifier(result),
         metadata
       );
-    }
-  );
+    },
+    analyticsType: 'InsightPanel.ItemAction',
+    analyticsPayloadBuilder: (state): InsightPanel.ItemAction => {
+      const information = partialDocumentInformation(result, state);
+      return {
+        itemMetadata: analyticsEventItemMetadata(result, state),
+        position: information.documentPosition,
+        searchUid: result.searchUid || '',
+        action: 'sendEmail',
+        context: analyticsEventCaseContext(state),
+      };
+    },
+  });
 
 export const logFeedItemTextPost = (result: Result): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/resultAction/insight/feedItemTextPost',
-    (client, state) => {
+  makeInsightAnalyticsActionFactory(SearchPageEvents.feedItemTextPost)({
+    prefix: 'analytics/resultAction/insight/feedItemTextPost',
+    __legacy__getBuilder: (client, state) => {
       validateResultPayload(result);
       const metadata = getCaseContextAnalyticsMetadata(
         state.insightCaseContext
@@ -53,5 +79,16 @@ export const logFeedItemTextPost = (result: Result): InsightAction =>
         documentIdentifier(result),
         metadata
       );
-    }
-  );
+    },
+    analyticsType: 'InsightPanel.ItemAction',
+    analyticsPayloadBuilder: (state): InsightPanel.ItemAction => {
+      const information = partialDocumentInformation(result, state);
+      return {
+        itemMetadata: analyticsEventItemMetadata(result, state),
+        position: information.documentPosition,
+        searchUid: result.searchUid || '',
+        action: 'postToFeed',
+        context: analyticsEventCaseContext(state),
+      };
+    },
+  });

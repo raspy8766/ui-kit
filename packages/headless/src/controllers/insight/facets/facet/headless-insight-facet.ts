@@ -1,28 +1,33 @@
-import {configuration} from '../../../../app/common-reducers';
-import {InsightEngine} from '../../../../app/insight-engine/insight-engine';
-import {FacetValueState} from '../../../../features/facets/facet-api/value';
-import {specificFacetSearchSetReducer as facetSearchSet} from '../../../../features/facets/facet-search-set/specific/specific-facet-search-set-slice';
+import {configuration} from '../../../../app/common-reducers.js';
+import {InsightEngine} from '../../../../app/insight-engine/insight-engine.js';
+import {FacetValueState} from '../../../../features/facets/facet-api/value.js';
+import {specificFacetSearchSetReducer as facetSearchSet} from '../../../../features/facets/facet-search-set/specific/specific-facet-search-set-slice.js';
+import {
+  facetClearAll,
+  facetUpdateSort,
+} from '../../../../features/facets/facet-set/facet-set-analytics-actions.js';
 import {
   logFacetClearAll,
   logFacetShowLess,
   logFacetShowMore,
   logFacetUpdateSort,
-} from '../../../../features/facets/facet-set/facet-set-insight-analytics-actions';
-import {getInsightAnalyticsActionForToggleFacetSelect} from '../../../../features/facets/facet-set/facet-set-insight-utils';
-import {facetSetReducer as facetSet} from '../../../../features/facets/facet-set/facet-set-slice';
-import {FacetSortCriterion} from '../../../../features/facets/facet-set/interfaces/request';
+} from '../../../../features/facets/facet-set/facet-set-insight-analytics-actions.js';
+import {getInsightAnalyticsActionForToggleFacetSelect} from '../../../../features/facets/facet-set/facet-set-insight-utils.js';
+import {facetSetReducer as facetSet} from '../../../../features/facets/facet-set/facet-set-slice.js';
+import {getAnalyticsActionForToggleFacetSelect} from '../../../../features/facets/facet-set/facet-set-utils.js';
+import {FacetSortCriterion} from '../../../../features/facets/facet-set/interfaces/request.js';
 import {
   executeSearch,
   fetchFacetValues,
-} from '../../../../features/insight-search/insight-search-actions';
-import {searchReducer as search} from '../../../../features/search/search-slice';
+} from '../../../../features/insight-search/insight-search-actions.js';
+import {searchReducer as search} from '../../../../features/search/search-slice.js';
 import {
   FacetSection,
   ConfigurationSection,
   FacetSearchSection,
   SearchSection,
-} from '../../../../state/state-sections';
-import {loadReducerError} from '../../../../utils/errors';
+} from '../../../../state/state-sections.js';
+import {loadReducerError} from '../../../../utils/errors.js';
 import {
   buildCoreFacet,
   CoreFacet,
@@ -33,13 +38,13 @@ import {
   FacetState,
   FacetValue,
   SpecificFacetSearchResult,
-} from '../../../core/facets/facet/headless-core-facet';
+} from '../../../core/facets/facet/headless-core-facet.js';
 import {
   FacetOptions,
   FacetSearchOptions,
   facetOptionsSchema,
   CoreFacetOptions,
-} from './headless-insight-facet-options';
+} from './headless-insight-facet-options.js';
 
 export type {
   FacetOptions,
@@ -127,23 +132,33 @@ export function buildFacet(engine: InsightEngine, props: FacetProps): Facet {
     toggleSelect(selection) {
       coreController.toggleSelect(selection);
       dispatch(
-        executeSearch(
-          getInsightAnalyticsActionForToggleFacetSelect(getFacetId(), selection)
-        )
+        executeSearch({
+          legacy: getInsightAnalyticsActionForToggleFacetSelect(
+            getFacetId(),
+            selection
+          ),
+          next: getAnalyticsActionForToggleFacetSelect(selection),
+        })
       );
     },
 
     deselectAll() {
       coreController.deselectAll();
-      dispatch(executeSearch(logFacetClearAll(getFacetId())));
+      dispatch(
+        executeSearch({
+          legacy: logFacetClearAll(getFacetId()),
+          next: facetClearAll(),
+        })
+      );
     },
 
     sortBy(sortCriterion: FacetSortCriterion) {
       coreController.sortBy(sortCriterion);
       dispatch(
-        executeSearch(
-          logFacetUpdateSort({facetId: getFacetId(), sortCriterion})
-        )
+        executeSearch({
+          legacy: logFacetUpdateSort({facetId: getFacetId(), sortCriterion}),
+          next: facetUpdateSort(),
+        })
       );
     },
 
@@ -153,12 +168,20 @@ export function buildFacet(engine: InsightEngine, props: FacetProps): Facet {
 
     showMoreValues() {
       coreController.showMoreValues();
-      dispatch(fetchFacetValues(logFacetShowMore(getFacetId())));
+      dispatch(
+        fetchFacetValues({
+          legacy: logFacetShowMore(getFacetId()),
+        })
+      );
     },
 
     showLessValues() {
       coreController.showLessValues();
-      dispatch(fetchFacetValues(logFacetShowLess(getFacetId())));
+      dispatch(
+        fetchFacetValues({
+          legacy: logFacetShowLess(getFacetId()),
+        })
+      );
     },
 
     get state() {

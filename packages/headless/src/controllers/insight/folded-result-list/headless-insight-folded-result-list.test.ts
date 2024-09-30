@@ -1,24 +1,27 @@
-import {loadCollection} from '../../../features/folding/insight-folding-actions';
-import {fetchMoreResults} from '../../../features/insight-search/insight-search-actions';
-import {InsightAppState} from '../../../state/insight-app-state';
-import {buildMockResult} from '../../../test';
+import {loadCollection} from '../../../features/folding/insight-folding-actions.js';
+import {fetchMoreResults} from '../../../features/insight-search/insight-search-actions.js';
+import {InsightAppState} from '../../../state/insight-app-state.js';
 import {
-  MockInsightEngine,
+  MockedInsightEngine,
   buildMockInsightEngine,
-} from '../../../test/mock-engine';
-import {buildMockInsightState} from '../../../test/mock-insight-state';
+} from '../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../test/mock-insight-state.js';
+import {buildMockResult} from '../../../test/mock-result.js';
 import {
   FoldedResultList,
   buildFoldedResultList,
-} from './headless-insight-folded-result-list';
+} from './headless-insight-folded-result-list.js';
+
+vi.mock('../../../features/folding/insight-folding-actions');
+vi.mock('../../../features/insight-search/insight-search-actions');
 
 describe('insight folded result list', () => {
   let state: InsightAppState;
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let foldedResultList: FoldedResultList;
 
   function initFoldedResultList() {
-    engine = buildMockInsightEngine({state});
+    engine = buildMockInsightEngine(state);
     foldedResultList = buildFoldedResultList(engine);
   }
 
@@ -36,12 +39,11 @@ describe('insight folded result list', () => {
       result: buildMockResult(),
     });
 
-    expect(engine.findAsyncAction(loadCollection.pending)).toBeTruthy();
+    expect(loadCollection).toHaveBeenCalled();
   });
 
   it('#fetchMoreResults dispatches the insight search #fetchMoreResults action', () => {
     foldedResultList.fetchMoreResults();
-
-    expect(engine.findAsyncAction(fetchMoreResults.pending)).toBeTruthy();
+    expect(fetchMoreResults).toHaveBeenCalled();
   });
 });

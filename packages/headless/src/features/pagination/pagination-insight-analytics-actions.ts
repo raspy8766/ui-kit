@@ -1,31 +1,38 @@
-import {PaginationSection} from '../../state/state-sections';
+import {PaginationSection} from '../../state/state-sections.js';
 import {
-  makeInsightAnalyticsAction,
+  makeInsightAnalyticsActionFactory,
   InsightAction,
-} from '../analytics/analytics-utils';
-import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state';
-import {currentPageSelector} from './pagination-selectors';
+} from '../analytics/analytics-utils.js';
+import {LegacySearchPageEvents} from '../analytics/legacy-search-action-cause.js';
+import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state.js';
+import {currentPageSelector} from './pagination-selectors.js';
 
 export const logPageNumber = (): InsightAction =>
-  makeInsightAnalyticsAction('analytics/pager/number', (client, state) =>
-    client.logPagerNumber({
-      pagerNumber: currentPageSelector(state as PaginationSection),
-      ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
-    })
+  makeInsightAnalyticsActionFactory(LegacySearchPageEvents.pagerNumber)(
+    'analytics/pager/number',
+    (client, state) =>
+      client.logPagerNumber({
+        pagerNumber: currentPageSelector(state as PaginationSection),
+        ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
+      })
   );
 
 export const logPageNext = (): InsightAction =>
-  makeInsightAnalyticsAction('analytics/pager/next', (client, state) =>
-    client.logPagerNext({
-      pagerNumber: currentPageSelector(state as PaginationSection),
-      ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
-    })
+  makeInsightAnalyticsActionFactory(LegacySearchPageEvents.pagerNext)(
+    'analytics/pager/next',
+    (client, state) =>
+      client.logPagerNext({
+        pagerNumber: currentPageSelector(state as PaginationSection),
+        ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
+      })
   );
 
 export const logPagePrevious = (): InsightAction =>
-  makeInsightAnalyticsAction('analytics/pager/previous', (client, state) =>
-    client.logPagerPrevious({
-      pagerNumber: currentPageSelector(state as PaginationSection),
-      ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
-    })
+  makeInsightAnalyticsActionFactory(LegacySearchPageEvents.pagerPrevious)(
+    'analytics/pager/previous',
+    (client, state) =>
+      client.logPagerPrevious({
+        pagerNumber: currentPageSelector(state as PaginationSection),
+        ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
+      })
   );

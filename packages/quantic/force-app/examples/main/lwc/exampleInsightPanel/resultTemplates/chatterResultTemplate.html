@@ -9,15 +9,15 @@
     ></c-quantic-colored-result-badge>
     <div slot="badges" class="slds-grid slds-grid_vertical-align-center">
       <div class="slds-m-right_xx-small">
-        <c-quantic-result-badge
+        <c-quantic-result-tag
           variant="recommended"
           result={result}
-        ></c-quantic-result-badge>
+        ></c-quantic-result-tag>
       </div>
-      <c-quantic-result-badge
+      <c-quantic-result-tag
         variant="featured"
         result={result}
-      ></c-quantic-result-badge>
+      ></c-quantic-result-tag>
     </div>
     <p slot="date" class="slds-size_xx-small">
       <lightning-formatted-date-time
@@ -40,6 +40,7 @@
     <div slot="excerpt">{result.Excerpt}</div>
     <div slot="bottom-metadata" class="slds-m-top_x-small">
       <c-quantic-result-printable-uri
+        engine-id={engineId}
         result={result}
         max-number-of-parts="3"
       ></c-quantic-result-printable-uri>

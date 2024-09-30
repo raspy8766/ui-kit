@@ -1,18 +1,26 @@
-import {SearchEngine} from '../../../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../../../app/ssr-engine/types/common.js';
 import {
   NumericFilter,
   NumericFilterProps,
   buildNumericFilter,
-} from './headless-numeric-filter';
+} from './headless-numeric-filter.js';
 
-export * from './headless-numeric-filter';
+export * from './headless-numeric-filter.js';
+
+export interface NumericFilterDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, NumericFilter> {}
 
 /**
- * @internal
- */
-export const defineNumericFilter = (
+ * Defines a `NumericFilter` controller instance.
+ *
+ * @param props - The configurable `NumericFilter` properties.
+ * @returns The `NumericFilter` controller definition.
+ * */
+export function defineNumericFilter(
   props: NumericFilterProps
-): ControllerDefinitionWithoutProps<SearchEngine, NumericFilter> => ({
-  build: (engine) => buildNumericFilter(engine, props),
-});
+): NumericFilterDefinition {
+  return {
+    build: (engine) => buildNumericFilter(engine, props),
+  };
+}

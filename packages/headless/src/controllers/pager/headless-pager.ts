@@ -1,10 +1,11 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
 import {
   logPageNumber,
   logPageNext,
   logPagePrevious,
-} from '../../features/pagination/pagination-analytics-actions';
-import {fetchPage} from '../../features/search/search-actions';
+  browseResults,
+} from '../../features/pagination/pagination-analytics-actions.js';
+import {fetchPage} from '../../features/search/search-actions.js';
 import {
   buildCorePager,
   PagerInitialState,
@@ -12,7 +13,7 @@ import {
   PagerProps,
   Pager,
   PagerState,
-} from '../core/pager/headless-core-pager';
+} from '../core/pager/headless-core-pager.js';
 
 export type {PagerInitialState, PagerOptions, PagerProps, Pager, PagerState};
 
@@ -39,17 +40,17 @@ export function buildPager(
 
     selectPage(page: number) {
       pager.selectPage(page);
-      dispatch(fetchPage({legacy: logPageNumber()}));
+      dispatch(fetchPage({legacy: logPageNumber(), next: browseResults()}));
     },
 
     nextPage() {
       pager.nextPage();
-      dispatch(fetchPage({legacy: logPageNext()}));
+      dispatch(fetchPage({legacy: logPageNext(), next: browseResults()}));
     },
 
     previousPage() {
       pager.previousPage();
-      dispatch(fetchPage({legacy: logPagePrevious()}));
+      dispatch(fetchPage({legacy: logPagePrevious(), next: browseResults()}));
     },
   };
 }

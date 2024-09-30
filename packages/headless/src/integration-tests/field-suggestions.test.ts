@@ -1,14 +1,12 @@
-import {
-  buildSearchEngine,
-  getSampleSearchEngineConfiguration,
-  SearchEngine,
-  buildFieldSuggestions,
-  FieldSuggestions,
-  buildFacet,
-  Facet,
-  FieldSuggestionsValue,
-} from '..';
-import {waitForNextStateChange} from '../test/functional-test-utils';
+import {SearchEngine} from '../app/search-engine/search-engine.js';
+import {getSampleSearchEngineConfiguration} from '../app/search-engine/search-engine.js';
+import {buildSearchEngine} from '../app/search-engine/search-engine.js';
+import {Facet} from '../controllers/facets/facet/headless-facet.js';
+import {buildFacet} from '../controllers/facets/facet/headless-facet.js';
+import {FieldSuggestionsValue} from '../controllers/field-suggestions/facet/headless-field-suggestions.js';
+import {FieldSuggestions} from '../controllers/field-suggestions/facet/headless-field-suggestions.js';
+import {buildFieldSuggestions} from '../controllers/field-suggestions/facet/headless-field-suggestions.js';
+import {waitForNextStateChange} from '../test/functional-test-utils.js';
 
 describe('field suggestions', () => {
   let engine: SearchEngine;
@@ -127,7 +125,7 @@ describe('field suggestions', () => {
       });
 
       afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
 
       it('has more values', () => {

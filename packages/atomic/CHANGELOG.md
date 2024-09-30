@@ -1,3 +1,472 @@
+## <small>3.2.3 (2024-09-25)</small>
+
+- chore(atomic): fix tsconfig resolution for the e2e folders (#4462) ([2a037ff](https://github.com/coveo/ui-kit/commits/2a037ff)), closes [#4462](https://github.com/coveo/ui-kit/issues/4462)
+
+## <small>3.2.1 (2024-09-24)</small>
+
+- docs: document headless, atomic, and atomic-react entry points (#4455) ([3853bdc](https://github.com/coveo/ui-kit/commits/3853bdc)), closes [#4455](https://github.com/coveo/ui-kit/issues/4455)
+- fix: use correct pjson for bueno version replacement (#4454) ([bab0883](https://github.com/coveo/ui-kit/commits/bab0883)), closes [#4454](https://github.com/coveo/ui-kit/issues/4454)
+
+## 3.2.0 (2024-09-24)
+
+- chore(atomic, headless): make bueno external (#4433) ([e1f7f2d](https://github.com/coveo/ui-kit/commits/e1f7f2d)), closes [#4433](https://github.com/coveo/ui-kit/issues/4433)
+- chore(headless,atomic): add type "module" to atomic, atomic-react and headless (#4442) ([21896c3](https://github.com/coveo/ui-kit/commits/21896c3)), closes [#4442](https://github.com/coveo/ui-kit/issues/4442) [/github.com/coveo/ui-kit/pull/4449/files#diff-75f80b97846615f5b074710648b8191f74aa4f00fd1536c45bc344b284ca8e87](https://github.com//github.com/coveo/ui-kit/pull/4449/files/issues/diff-75f80b97846615f5b074710648b8191f74aa4f00fd1536c45bc344b284ca8e87)
+- feat: add answer configuration id to atomic-insight-generated-answer (#4451) ([6b7c2bd](https://github.com/coveo/ui-kit/commits/6b7c2bd)), closes [#4451](https://github.com/coveo/ui-kit/issues/4451)
+- feat(atomic): add tab support for atomic-generated-answer (#4285) ([744fb61](https://github.com/coveo/ui-kit/commits/744fb61)), closes [#4285](https://github.com/coveo/ui-kit/issues/4285)
+- feat(atomic): atomic insight user actions toggle component created (#4298) ([bad4ff5](https://github.com/coveo/ui-kit/commits/bad4ff5)), closes [#4298](https://github.com/coveo/ui-kit/issues/4298)
+- test(atomic): add tests for atomic-product-rating (#4440) ([498beff](https://github.com/coveo/ui-kit/commits/498beff)), closes [#4440](https://github.com/coveo/ui-kit/issues/4440)
+- test(atomic): add tests for product link (#4203) ([b62f3c7](https://github.com/coveo/ui-kit/commits/b62f3c7)), closes [#4203](https://github.com/coveo/ui-kit/issues/4203)
+- fix(atomic): bad search box layout when removing textarea prop (#4435) ([70d9378](https://github.com/coveo/ui-kit/commits/70d9378)), closes [#4435](https://github.com/coveo/ui-kit/issues/4435)
+- fix(atomic): enable/disable facet based on tab with updateActiveTab action (#4313) ([08fe92a](https://github.com/coveo/ui-kit/commits/08fe92a)), closes [#4313](https://github.com/coveo/ui-kit/issues/4313) [#4311](https://github.com/coveo/ui-kit/issues/4311)
+- fix(atomic): remove unnecessary css (#4397) ([1ee2897](https://github.com/coveo/ui-kit/commits/1ee2897)), closes [#4397](https://github.com/coveo/ui-kit/issues/4397)
+
+## <small>3.1.1 (2024-09-18)</small>
+
+- chore: ensure absolute paths are not resolved as local when building for the CDN (#4434) ([b9ee6e1](https://github.com/coveo/ui-kit/commits/b9ee6e1)), closes [#4434](https://github.com/coveo/ui-kit/issues/4434)
+
+## 3.1.0 (2024-09-18)
+
+- fix(atomic, atomic-react): use root-relative URL for CDN (#4431) ([39313ea](https://github.com/coveo/ui-kit/commits/39313ea)), closes [#4431](https://github.com/coveo/ui-kit/issues/4431)
+- feat(atomic): add label prop on NoItems functional component (#4390) ([7946199](https://github.com/coveo/ui-kit/commits/7946199)), closes [#4390](https://github.com/coveo/ui-kit/issues/4390)
+
+## 3.0.0 (2024-09-18)
+
+- chore!: update node engine definition in all exported packages (#4330) ([d6d8a1a](https://github.com/coveo/ui-kit/commits/d6d8a1a)), closes [#4330](https://github.com/coveo/ui-kit/issues/4330)
+- chore(atomic)!: externalize dependencies (#4393) ([b599477](https://github.com/coveo/ui-kit/commits/b599477)), closes [#4393](https://github.com/coveo/ui-kit/issues/4393)
+- chore(atomic)!: remove i18n compatibilityJSON v3 option (#4403) ([d5f36cf](https://github.com/coveo/ui-kit/commits/d5f36cf)), closes [#4403](https://github.com/coveo/ui-kit/issues/4403)
+- chore(headless, atomic, quantic)!: remove deprecated functions/properties (#4350) ([8de5406](https://github.com/coveo/ui-kit/commits/8de5406)), closes [#4350](https://github.com/coveo/ui-kit/issues/4350)
+- chore(headless, atomic)!: remove deprecated product recommendations (#4349) ([475a217](https://github.com/coveo/ui-kit/commits/475a217)), closes [#4349](https://github.com/coveo/ui-kit/issues/4349)
+- chore(headless)!: add export field in package.json (#4392) ([a834c2f](https://github.com/coveo/ui-kit/commits/a834c2f)), closes [#4392](https://github.com/coveo/ui-kit/issues/4392)
+- chore(headless)!: Remove TestUtils export (#4329) ([310cf53](https://github.com/coveo/ui-kit/commits/310cf53)), closes [#4329](https://github.com/coveo/ui-kit/issues/4329)
+- feat!: remove the organizationEndpoints configuration option (#4339) ([d3e1041](https://github.com/coveo/ui-kit/commits/d3e1041)), closes [#4339](https://github.com/coveo/ui-kit/issues/4339)
+- feat(atomic)!: delete atomic-load-more-children-results and put functionality in atomic-result-child ([b12331f](https://github.com/coveo/ui-kit/commits/b12331f)), closes [#4341](https://github.com/coveo/ui-kit/issues/4341)
+- feat(atomic)!: make textarea search box the default and only behavior (#4332) ([5890858](https://github.com/coveo/ui-kit/commits/5890858)), closes [#4332](https://github.com/coveo/ui-kit/issues/4332)
+- feat(atomic)!: remove gridCellLinkTarget property (#4378) ([4861e7d](https://github.com/coveo/ui-kit/commits/4861e7d)), closes [#4378](https://github.com/coveo/ui-kit/issues/4378)
+- feat(headless)!: rga rephrase logic removed from headless (#4413) ([79d3bc2](https://github.com/coveo/ui-kit/commits/79d3bc2)), closes [#4413](https://github.com/coveo/ui-kit/issues/4413)
+- feat(headless)!: use next as default analyticsMode (#4394) ([3dd775e](https://github.com/coveo/ui-kit/commits/3dd775e)), closes [#4394](https://github.com/coveo/ui-kit/issues/4394)
+- fix(atomic, commerce): prevent event propagation when clicking product show more description button ([b014414](https://github.com/coveo/ui-kit/commits/b014414)), closes [#4389](https://github.com/coveo/ui-kit/issues/4389)
+- fix(atomic)!: export the real SearchBoxSuggestionsEvent with a mandatory generic (#4326) ([413304b](https://github.com/coveo/ui-kit/commits/413304b)), closes [#4326](https://github.com/coveo/ui-kit/issues/4326)
+- fix(atomic)!: replace locales key remove-filter-on with remove-inclusion-filter-on (#4327) ([00ed882](https://github.com/coveo/ui-kit/commits/00ed882)), closes [#4327](https://github.com/coveo/ui-kit/issues/4327)
+- fix(headless)!: clean up deprecated feedback methods (#4404) ([45e9f2d](https://github.com/coveo/ui-kit/commits/45e9f2d)), closes [#4404](https://github.com/coveo/ui-kit/issues/4404)
+- chore: update tsconfigs to match node version (#4402) ([e5bf6b8](https://github.com/coveo/ui-kit/commits/e5bf6b8)), closes [#4402](https://github.com/coveo/ui-kit/issues/4402)
+- chore(atomic): replace @internal tags with @alpha tags in commerce components JS doc annotations (#4 ([1060eb5](https://github.com/coveo/ui-kit/commits/1060eb5)), closes [#4382](https://github.com/coveo/ui-kit/issues/4382)
+- fix(atomic): disable pager next button when reaching last pasge (#4370) ([916da71](https://github.com/coveo/ui-kit/commits/916da71)), closes [#4370](https://github.com/coveo/ui-kit/issues/4370)
+- fix(atomic): do not add click outside of grid layout (#4355) ([5bf5895](https://github.com/coveo/ui-kit/commits/5bf5895)), closes [#4355](https://github.com/coveo/ui-kit/issues/4355)
+- fix(atomic): field sort should be applied when selected (#4308) ([bf682ce](https://github.com/coveo/ui-kit/commits/bf682ce)), closes [#4308](https://github.com/coveo/ui-kit/issues/4308)
+- fix(atomic): fix atomic-commerce product card click invalid selector (#4367) ([5758029](https://github.com/coveo/ui-kit/commits/5758029)), closes [#4367](https://github.com/coveo/ui-kit/issues/4367)
+- fix(atomic): fix commerce facets being re-attached to the DOM (#4372) ([aa0802c](https://github.com/coveo/ui-kit/commits/aa0802c)), closes [#4372](https://github.com/coveo/ui-kit/issues/4372)
+- fix(atomic): fix ipx button without label (#4318) ([4520eee](https://github.com/coveo/ui-kit/commits/4520eee)), closes [#4318](https://github.com/coveo/ui-kit/issues/4318)
+- fix(atomic): use getter instead of fn (#4396) ([dcb4585](https://github.com/coveo/ui-kit/commits/dcb4585)), closes [#4396](https://github.com/coveo/ui-kit/issues/4396)
+- fix(Headless): enable/disable facet based on tab with updateActiveTab action (#4311) ([0c37dcd](https://github.com/coveo/ui-kit/commits/0c37dcd)), closes [#4311](https://github.com/coveo/ui-kit/issues/4311)
+- feat(atomic): add tab support for atomic-result-list and atomic-folded-result-list (#4281) ([8f484e0](https://github.com/coveo/ui-kit/commits/8f484e0)), closes [#4281](https://github.com/coveo/ui-kit/issues/4281)
+- feat(atomic): add value-rating-icon part to atomic-result-rating (#4388) ([6c5078c](https://github.com/coveo/ui-kit/commits/6c5078c)), closes [#4388](https://github.com/coveo/ui-kit/issues/4388)
+- feat(atomic): atomic user actions session component created (#4262) ([e2a7bdb](https://github.com/coveo/ui-kit/commits/e2a7bdb)), closes [#4262](https://github.com/coveo/ui-kit/issues/4262)
+- feat(atomic): exposes product-id on atomic-com-recs-list (#4317) ([8f77114](https://github.com/coveo/ui-kit/commits/8f77114)), closes [#4317](https://github.com/coveo/ui-kit/issues/4317)
+- feat(atomic): user actions timeline component created (#4272) ([7c110bc](https://github.com/coveo/ui-kit/commits/7c110bc)), closes [#4272](https://github.com/coveo/ui-kit/issues/4272)
+- test: run only on chrome (#4335) ([a380ae6](https://github.com/coveo/ui-kit/commits/a380ae6)), closes [#4335](https://github.com/coveo/ui-kit/issues/4335)
+- test(atomic): fix no-results test for folded children results (#4409) ([bc04659](https://github.com/coveo/ui-kit/commits/bc04659)), closes [#4409](https://github.com/coveo/ui-kit/issues/4409)
+
+### BREAKING CHANGE
+
+- add export field in package.json (#4392)
+- clean up deprecated feedback methods (#4404)
+- delete atomic-load-more-children-results and put functionality in atomic-result-children (#4341)
+- export the real SearchBoxSuggestionsEvent with a mandatory generic (#4326)
+- externalize dependencies (#4393)
+- make textarea search box the default and only behavior (#4332)
+- remove deprecated functions/properties (#4350)
+- remove deprecated product recommendations (#4349)
+- remove gridCellLinkTarget property (#4378)
+- remove i18n compatibilityJSON v3 option (#4403)
+- Remove TestUtils export (#4329)
+- remove the organizationEndpoints configuration option (#4339)
+- replace locales key remove-filter-on with remove-inclusion-filter-on (#4327)
+- rga rephrase logic removed from headless (#4413)
+- update node engine definition in all exported packages (#4330)
+- use next as default analyticsMode (#4394)
+
+# 2.78.0 (2024-08-27)
+
+### Bug Fixes
+
+- **atomic:** Facets don't update correctly in the refine modal when changing tabs ([#4280](https://github.com/coveo/ui-kit/issues/4280)) ([221e1bc](https://github.com/coveo/ui-kit/commits/221e1bcce68f5d74e092edf561dd6b401178c3e3))
+- **atomic:** prevent item click when carousel buttons are clicked ([#4297](https://github.com/coveo/ui-kit/issues/4297)) ([67d0416](https://github.com/coveo/ui-kit/commits/67d0416470b8b1fa77488da4bd8e534ffcc715eb))
+- **atomic:** search-box suggestions should be resilient to search-box redirection-url changes ([#4289](https://github.com/coveo/ui-kit/issues/4289)) ([19cabeb](https://github.com/coveo/ui-kit/commits/19cabeb2665a21a71f883c731ef4d5167cb1841d))
+
+### Features
+
+- **atomic:** allow user to customize grid card click behavior/links ([#4287](https://github.com/coveo/ui-kit/issues/4287)) ([e5961ca](https://github.com/coveo/ui-kit/commits/e5961ca33490499a2916bb9eb8818d360ff85c18)), closes [#4267](https://github.com/coveo/ui-kit/issues/4267)
+- **headless commerce ssr:** add SSR FacetGenerator ([#4290](https://github.com/coveo/ui-kit/issues/4290)) ([3f957f9](https://github.com/coveo/ui-kit/commits/3f957f9334708501a5fbaf73720e1646e6ea4611))
+
+## 2.77.1 (2024-08-20)
+
+### Bug Fixes
+
+- **refine-modal:** include facets from atomic-external ([#4219](https://github.com/coveo/ui-kit/issues/4219)) ([107c56b](https://github.com/coveo/ui-kit/commits/107c56b2d4a1467847210db05b1726b36ad4b50c))
+
+# 2.77.0 (2024-08-14)
+
+### Bug Fixes
+
+- **atomic:** use the hrefTemplate value in atomic-product-link ([#4259](https://github.com/coveo/ui-kit/issues/4259)) ([03513ee](https://github.com/coveo/ui-kit/commits/03513ee97ca0b62fbda75846866d116052bf6acc))
+
+### Features
+
+- **atomic:** add tab support for atomic-smart-snippet ([#4221](https://github.com/coveo/ui-kit/issues/4221)) ([9f228d3](https://github.com/coveo/ui-kit/commits/9f228d3e5948cc0a265c32500781e92dc53a42ae))
+- **atomic:** add tab support for atomic-sort-dropdown ([#4222](https://github.com/coveo/ui-kit/issues/4222)) ([f7a9061](https://github.com/coveo/ui-kit/commits/f7a90615d80967d63669231c4a4b00e4f96e9864))
+- **genqa:** add rephrase buttons as an option ([#4246](https://github.com/coveo/ui-kit/issues/4246)) ([03d065b](https://github.com/coveo/ui-kit/commits/03d065b17b21bf97c8639585d460f9c11d0ee56c))
+- **genqa:** update citations ([#4243](https://github.com/coveo/ui-kit/issues/4243)) ([54948d8](https://github.com/coveo/ui-kit/commits/54948d800c1b77bd0edce8fd297d5d7aa03a7733))
+
+## 2.76.1 (2024-08-07)
+
+# 2.76.0 (2024-08-07)
+
+### Bug Fixes
+
+- **atomic:** clear min/max for atomic-timeframe-facet when clearing filters ([#4240](https://github.com/coveo/ui-kit/issues/4240)) ([d97b04d](https://github.com/coveo/ui-kit/commits/d97b04de97e3b0fb45943249e330054179ff892a))
+
+### Features
+
+- **atomic:** add tab-manager support for facet components ([#4210](https://github.com/coveo/ui-kit/issues/4210)) ([600ee80](https://github.com/coveo/ui-kit/commits/600ee803edd1ae2e87c5aa75524fbd0bab96ca96))
+
+# 2.75.0 (2024-07-31)
+
+### Features
+
+- **atomic-commerce:** products-per-page ([#4107](https://github.com/coveo/ui-kit/issues/4107)) ([81e31cf](https://github.com/coveo/ui-kit/commits/81e31cff63c19f19b12babd4b10aa5b2e60c19e6))
+- **atomic:** add atomic-tab-manager component ([#4196](https://github.com/coveo/ui-kit/issues/4196)) ([523ab9b](https://github.com/coveo/ui-kit/commits/523ab9be9ba9bf8d14ef304d98726680bea63b71))
+
+# 2.74.0 (2024-07-24)
+
+### Bug Fixes
+
+- enhance focus handling for search-box components ([#4027](https://github.com/coveo/ui-kit/issues/4027)) ([d5f04b7](https://github.com/coveo/ui-kit/commits/d5f04b70ee32ecd1879496448471c408c281ed6d))
+- ensure quickview minimize ([#4193](https://github.com/coveo/ui-kit/issues/4193)) ([c366764](https://github.com/coveo/ui-kit/commits/c366764255de30b29bb14bb5f6439bca8164c97a))
+
+### Features
+
+- answerapi-generated-answer ([#4157](https://github.com/coveo/ui-kit/issues/4157)) ([aafe3fe](https://github.com/coveo/ui-kit/commits/aafe3fed4a9ba3962a3edd73288a59ed1ecb5b1e))
+- **atomic:** format commerce numeric facet for price with currency by default ([#4201](https://github.com/coveo/ui-kit/issues/4201)) ([bf6e2de](https://github.com/coveo/ui-kit/commits/bf6e2de55692d31808ea031eb6e2d90eb70ac3b5))
+
+# 2.73.0 (2024-07-17)
+
+### Bug Fixes
+
+- add atomic version in the analytics initial config for Headless ([#4171](https://github.com/coveo/ui-kit/issues/4171)) ([a72c3ac](https://github.com/coveo/ui-kit/commits/a72c3ac349f62e819c77aeef4ed2e85b97375a2c))
+- **atomic/commerce:** fix breadbox labels / values ([#4178](https://github.com/coveo/ui-kit/issues/4178)) ([6ab1e3b](https://github.com/coveo/ui-kit/commits/6ab1e3bd374c6257908f69c7882c227c348fbce6))
+- **atomic:** breaking change in `SearchBoxSuggestionsEvent` ([#4186](https://github.com/coveo/ui-kit/issues/4186)) ([8e7f6ab](https://github.com/coveo/ui-kit/commits/8e7f6abd820f5074fb28324cfbf8dc8532201e4a))
+- **deps:** update stencil j:kit-282 ([#3833](https://github.com/coveo/ui-kit/issues/3833)) ([095ab4b](https://github.com/coveo/ui-kit/commits/095ab4b7ca97b21dc01fc488b9f91ee12f9705f1))
+- **headless:** separate manual numeric facet in a separate slice for commerce ([#4183](https://github.com/coveo/ui-kit/issues/4183)) ([3c58454](https://github.com/coveo/ui-kit/commits/3c58454d0b6776d0988ef61011db7930be819bba))
+- interpolate page# in pageNumber label ([#4190](https://github.com/coveo/ui-kit/issues/4190)) ([d2719b4](https://github.com/coveo/ui-kit/commits/d2719b4077f1fd2893304bf961fd597be6489592))
+- **storybook:** add min & preset value for nbOfVal (facets) ([#4191](https://github.com/coveo/ui-kit/issues/4191)) ([edac684](https://github.com/coveo/ui-kit/commits/edac6847811f94f7c2fe33cc1859b81f83c53bf3))
+
+### Features
+
+- **answer:** knowledge controller preparation ([#4129](https://github.com/coveo/ui-kit/issues/4129)) ([3e1b7d1](https://github.com/coveo/ui-kit/commits/3e1b7d1e8df18d07949e2a51b54e63920eb37b3a))
+- **atomic:** clickable "More matches for {query}" in facetSearch ([#4154](https://github.com/coveo/ui-kit/issues/4154)) ([a389b40](https://github.com/coveo/ui-kit/commits/a389b402e2022486d8ba68d7538421603a3016b5))
+- **genqa:** new feedback modal ([#4092](https://github.com/coveo/ui-kit/issues/4092)) ([7bf9bfe](https://github.com/coveo/ui-kit/commits/7bf9bfecfa2f01a250ebf13897d5322472873855))
+
+# 2.72.0 (2024-07-09)
+
+### Bug Fixes
+
+- **atomic/commerce:** facet / facetState mismatch when rendering generated facets ([#4152](https://github.com/coveo/ui-kit/issues/4152)) ([a55b748](https://github.com/coveo/ui-kit/commits/a55b7488ff42c32f3ef756e0edae5e798d9b4649))
+- **atomic/commerce:** fix url manager ([#4151](https://github.com/coveo/ui-kit/issues/4151)) ([d5991f5](https://github.com/coveo/ui-kit/commits/d5991f57581712eec670df3b23483cc3f1fc5382))
+- **atomic:** make sure to escape any HTML generated by the AI model ([#4100](https://github.com/coveo/ui-kit/issues/4100)) ([18d9646](https://github.com/coveo/ui-kit/commits/18d964601db04728ffe38bf9863a103ac8a71cba))
+
+### Features
+
+- **atomic:** add new atomic-commerce-refine-toggle component ([#4155](https://github.com/coveo/ui-kit/issues/4155)) ([71d81ba](https://github.com/coveo/ui-kit/commits/71d81ba6a60c8ab83a2d744cb56097d85f691383))
+- **atomic:** use "product" instead of "result" in commerce components ([#4139](https://github.com/coveo/ui-kit/issues/4139)) ([e63610e](https://github.com/coveo/ui-kit/commits/e63610e13a6d9a7d6926a9e902262d7f99639dde))
+
+# 2.71.0 (2024-07-03)
+
+### Features
+
+- **commerce:** add atomic-commerce-breadbox ([#4121](https://github.com/coveo/ui-kit/issues/4121)) ([d96287a](https://github.com/coveo/ui-kit/commits/d96287a7efb853f575700fe982b898ab6c1e7744))
+
+## 2.70.1 (2024-07-03)
+
+### Bug Fixes
+
+- **atomic:** add RGA rich formatting to the insight interface ([#4106](https://github.com/coveo/ui-kit/issues/4106)) ([5817e37](https://github.com/coveo/ui-kit/commits/5817e37d497f9f5ea8e3ce1b7a3378b3be15abfa))
+- **atomic:** support `gridCellLinkTarget` prop on `DisplayGrid` component ([#4122](https://github.com/coveo/ui-kit/issues/4122)) ([e3c7528](https://github.com/coveo/ui-kit/commits/e3c75288da2589669fd420dd02dc5b228a03faf5))
+- **commerce:** expose child product directly on `promoteChildToParent` ([#4128](https://github.com/coveo/ui-kit/issues/4128)) ([d333812](https://github.com/coveo/ui-kit/commits/d3338121f6e49477424faec1d520c9ac53e11af3))
+- **commerce:** remove `executeFirstSearch` & friend from commerce engine ([#4095](https://github.com/coveo/ui-kit/issues/4095)) ([64cda10](https://github.com/coveo/ui-kit/commits/64cda1085a8be29e92e8965222962c0c90762d89))
+
+### Features
+
+- **headless commerce:** create use & export commerce-specific actions & loaders ([#4124](https://github.com/coveo/ui-kit/issues/4124)) ([ce6fb7e](https://github.com/coveo/ui-kit/commits/ce6fb7ee5e23f10840b4cc654544e7dde05d80d2))
+
+# 2.69.0 (2024-06-26)
+
+### Bug Fixes
+
+- **atomic:** add query-summary E2E tests ([#4102](https://github.com/coveo/ui-kit/issues/4102)) ([6f73da7](https://github.com/coveo/ui-kit/commits/6f73da703b5d948b713680d187f03da1d207976a))
+- **atomic:** adjust product-list placeholder ([#4108](https://github.com/coveo/ui-kit/issues/4108)) ([9b28869](https://github.com/coveo/ui-kit/commits/9b288691bd05dac40ac87e244d0c892379469535))
+- **atomic:** clear recent searches on keyboard enter keypress ([#4072](https://github.com/coveo/ui-kit/issues/4072)) ([9ab7ba5](https://github.com/coveo/ui-kit/commits/9ab7ba5f43197e7691051daf45dc955f8a87d8af))
+- **atomic:** escape searchQuery in regex ([#4116](https://github.com/coveo/ui-kit/issues/4116)) ([dbd33a1](https://github.com/coveo/ui-kit/commits/dbd33a18b8eab4ff3c34aa2cd2069f7c043c7f96))
+- **atomic:** fix atomic-commerce-search-box needlessly requesting suggestions when input is disabled ([#4096](https://github.com/coveo/ui-kit/issues/4096)) ([49e9415](https://github.com/coveo/ui-kit/commits/49e9415a601924996d87f1062ea87fed231dcb36))
+- **atomic:** resolve result to full collection in context of folded result list ([#4119](https://github.com/coveo/ui-kit/issues/4119)) ([360b604](https://github.com/coveo/ui-kit/commits/360b604badd96f21c20701e55a109cb8a0766a75))
+- **headless:** update product interface to reflect how the commerce api behaves ([#4104](https://github.com/coveo/ui-kit/issues/4104)) ([5e514c5](https://github.com/coveo/ui-kit/commits/5e514c5bf642e709c6bd897f693ec42174026c24))
+
+### Features
+
+- **atomic:** add alt text field on atomic-result-image ([#4056](https://github.com/coveo/ui-kit/issues/4056)) ([3d69e97](https://github.com/coveo/ui-kit/commits/3d69e976a380c8f71b9a6720be19920cc7fe4447))
+- **atomic:** add identifier on atomic commerce generated facets ([#4112](https://github.com/coveo/ui-kit/issues/4112)) ([b2a4406](https://github.com/coveo/ui-kit/commits/b2a4406f6f94d6d724811ce430484b02eb9d48f5))
+- **commerce:** make summary a sub-controller ([#4082](https://github.com/coveo/ui-kit/issues/4082)) ([cfcc9d9](https://github.com/coveo/ui-kit/commits/cfcc9d9b2557345a0a96e271a0dba9cb549812b4))
+
+## 2.68.1 (2024-06-19)
+
+### Bug Fixes
+
+- **atomic:** collapsed answer gradient colour ([#4081](https://github.com/coveo/ui-kit/issues/4081)) ([56da0e3](https://github.com/coveo/ui-kit/commits/56da0e3db32bb31ea375f4e2d47dbcb23d6e38cd))
+- **atomic:** fallback language to commerce engine value instead of always defaulting to english ([#4094](https://github.com/coveo/ui-kit/issues/4094)) ([fc4c312](https://github.com/coveo/ui-kit/commits/fc4c31293738589d5c4142c8a2f0de1a23b11c6e))
+- **atomic:** use currency from context instead of prop for atomic-product-price ([#4091](https://github.com/coveo/ui-kit/issues/4091)) ([1bfee6b](https://github.com/coveo/ui-kit/commits/1bfee6b4a314a86a5b2049bc09ff810019312552))
+- expose atomic-commerce-load-more-products to react ([#4097](https://github.com/coveo/ui-kit/issues/4097)) ([d7214c7](https://github.com/coveo/ui-kit/commits/d7214c7b988e169ccb4bb9b84a4b471721f329cb))
+
+# 2.68.0 (2024-06-13)
+
+### Bug Fixes
+
+- **atomic:** fix facet and product list loading state ([#4080](https://github.com/coveo/ui-kit/issues/4080)) ([6500ea1](https://github.com/coveo/ui-kit/commits/6500ea15c61326ca6425028c3f6df0016cf2ecb3))
+
+### Features
+
+- **atomic:** add excerpt and product name highlights ([#4046](https://github.com/coveo/ui-kit/issues/4046)) ([fe412e0](https://github.com/coveo/ui-kit/commits/fe412e0077084e4ed4b5da8f7c7210e1f0dc8de8))
+
+# 2.67.0 (2024-06-12)
+
+### Bug Fixes
+
+- **atomic:** fix collapse-facets-after support for atomic-commerce-facets ([#4075](https://github.com/coveo/ui-kit/issues/4075)) ([bf72e1e](https://github.com/coveo/ui-kit/commits/bf72e1ee965823fe6c60e14ce5ac95e90e8809f1))
+- **atomic:** fix grid system for commerce when no results or error ([#4058](https://github.com/coveo/ui-kit/issues/4058)) ([7d0bddc](https://github.com/coveo/ui-kit/commits/7d0bddc2fb88e7d07c570738a73d93882229cdcd))
+- **atomic:** no break word for product-price + truncate/wrap ([#4055](https://github.com/coveo/ui-kit/issues/4055)) ([a538557](https://github.com/coveo/ui-kit/commits/a538557f9129c7f1c946df671069e01a4953154d))
+- **atomic:** remove boundary validation on numeric inputs ([#4073](https://github.com/coveo/ui-kit/issues/4073)) ([51848ee](https://github.com/coveo/ui-kit/commits/51848ee2e2b8484a1d07d469a38a037c907cbe1e))
+
+### Features
+
+- **atomic commerce:** add interactive product controller support ([#4026](https://github.com/coveo/ui-kit/issues/4026)) ([a07f4b9](https://github.com/coveo/ui-kit/commits/a07f4b9eafd14931c917baf39ec10edaba5ec11c))
+- **headless:** enforce organization endpoints usage for headless commerce ([#4060](https://github.com/coveo/ui-kit/issues/4060)) ([8bb77af](https://github.com/coveo/ui-kit/commits/8bb77af019e326380a424646b226055f36038d2e))
+
+# 2.66.0 (2024-06-06)
+
+### Bug Fixes
+
+- **atomic:** add label on atomic-pager radiogroup ([#3983](https://github.com/coveo/ui-kit/issues/3983)) ([a4d87f8](https://github.com/coveo/ui-kit/commits/a4d87f8ed0848b29f7dd2c205a1a6292bae68c30))
+- **atomic:** fix some padding and margin issue for commerce facets ([#4011](https://github.com/coveo/ui-kit/issues/4011)) ([c109b74](https://github.com/coveo/ui-kit/commits/c109b74daa6e1df0e67f4740f817d38dcaae904c))
+- **atomic:** improve translation for "clear" in multiple languages ([#4051](https://github.com/coveo/ui-kit/issues/4051)) ([cb3ff8b](https://github.com/coveo/ui-kit/commits/cb3ff8b32ffb964aa67e5bb54357f3d0ca37e9b3))
+- **atomic:** prevent facet value checkbox and label overlap ([#3984](https://github.com/coveo/ui-kit/issues/3984)) ([80b50a1](https://github.com/coveo/ui-kit/commits/80b50a1ad06519663aa7cf7867ed4945d2ee8ec6))
+- calculate limits based on domain and input values ([#4043](https://github.com/coveo/ui-kit/issues/4043)) ([6512d7a](https://github.com/coveo/ui-kit/commits/6512d7a31b3f386770d562f3692cc0abc9a87b57))
+- **Commerce Atomic:** add commerce category facet ([#4008](https://github.com/coveo/ui-kit/issues/4008)) ([804b5af](https://github.com/coveo/ui-kit/commits/804b5af40e7c97db261328ae8566b92cbf4f211a)), closes [/github.com/coveo/ui-kit/compare/KIT-3197...KIT-3200#diff-755504d8edb4af1c62f81e58f159ff3861c8ebe161f133941bbfd4e0ffebbb70](https://github.com//github.com/coveo/ui-kit/compare/KIT-3197...KIT-3200/issues/diff-755504d8edb4af1c62f81e58f159ff3861c8ebe161f133941bbfd4e0ffebbb70)
+- **Commerce Atomic:** ensure facet collapse ([#4009](https://github.com/coveo/ui-kit/issues/4009)) ([e8b2e5e](https://github.com/coveo/ui-kit/commits/e8b2e5ed3d5d15c0b0c716181b5351f020af2064))
+- **Commerce Atomic:** prevent recs carousel buttons from overlapping with text ([#3976](https://github.com/coveo/ui-kit/issues/3976)) ([52cb8e2](https://github.com/coveo/ui-kit/commits/52cb8e235c83ebdf876592c353149c64efc9ae67))
+
+### Features
+
+- **atomic,headless:** support for atomic-commerce-did-you-mean ([#4029](https://github.com/coveo/ui-kit/issues/4029)) ([5e860a5](https://github.com/coveo/ui-kit/commits/5e860a52ea93a7fa7fa442a5c9612ba5febadaf1))
+- **atomic:** add commerce-no-products component ([#4013](https://github.com/coveo/ui-kit/issues/4013)) ([5374847](https://github.com/coveo/ui-kit/commits/5374847bc2ac08a168317586fa0380d12cd283cf))
+- **atomic:** add date facet ([#4024](https://github.com/coveo/ui-kit/issues/4024)) ([ea5c9b1](https://github.com/coveo/ui-kit/commits/ea5c9b1443311048d1f2cfb80a174c6f6023816d))
+- **Commerce Headless:** change the way selectors are exposed ([#4016](https://github.com/coveo/ui-kit/issues/4016)) ([534e1c2](https://github.com/coveo/ui-kit/commits/534e1c2d402c740de0e5f824b7cf6854eeb1f1fd))
+- **commerce:** atomic-product-field-condition ([#3959](https://github.com/coveo/ui-kit/issues/3959)) ([5e14eec](https://github.com/coveo/ui-kit/commits/5e14eec2b037a7cbe9842dc8ffac73645d2b6741)), closes [#3956](https://github.com/coveo/ui-kit/issues/3956)
+- simplify the arguments for the `setRanges()` method in numeric and date facets ([#4042](https://github.com/coveo/ui-kit/issues/4042)) ([20c0978](https://github.com/coveo/ui-kit/commits/20c0978a783122e55ebe4de975d34abc45817fce))
+
+## 2.65.5 (2024-05-29)
+
+## 2.65.4 (2024-05-22)
+
+## 2.65.3 (2024-05-15)
+
+## 2.65.2 (2024-05-10)
+
+## 2.65.1 (2024-05-06)
+
+# 2.65.0 (2024-05-02)
+
+### Bug Fixes
+
+- always include suggestions popup in the DOM ([#3860](https://github.com/coveo/ui-kit/issues/3860)) ([c13d91f](https://github.com/coveo/ui-kit/commits/c13d91f9c380bc690ddbb73ef12e0862808711ef))
+- **atomic:** answer generation component glitch ([#3841](https://github.com/coveo/ui-kit/issues/3841)) ([71d3aa5](https://github.com/coveo/ui-kit/commits/71d3aa54fb6879550da4f527baa5f033c247cdc2))
+- **atomic:** separator should not be consider for ARIA ([#3846](https://github.com/coveo/ui-kit/issues/3846)) ([329a914](https://github.com/coveo/ui-kit/commits/329a91472de21f1e4344e53e247c092526876dbd))
+
+### Features
+
+- **Commerce Atomic:** add atomic-commerce-interface ([#3868](https://github.com/coveo/ui-kit/issues/3868)) ([4527419](https://github.com/coveo/ui-kit/commits/45274198ea6af6e1d4a2acd6472dbf706b279588))
+- **Commerce Atomic:** add atomic-commerce-result-list ([#3872](https://github.com/coveo/ui-kit/issues/3872)) ([8db0aee](https://github.com/coveo/ui-kit/commits/8db0aee7690a70f517e136c206c7c20d926086d0))
+- **Commerce Atomic:** add standalone searchbox ([#3875](https://github.com/coveo/ui-kit/issues/3875)) ([e1f2b6f](https://github.com/coveo/ui-kit/commits/e1f2b6f23eb30be4972a7e46a7878515004cec46))
+- **Commerce Atomic:** setup search box skeleton ([#3861](https://github.com/coveo/ui-kit/issues/3861)) ([d6c87b5](https://github.com/coveo/ui-kit/commits/d6c87b50ecf266574d1062861c345c7827d19090))
+- **genQA:** add part attribute to rephrase buttons container ([#3831](https://github.com/coveo/ui-kit/issues/3831)) ([d2c062d](https://github.com/coveo/ui-kit/commits/d2c062dcf10372bd5c72bb522ba07e1ec9549c5b))
+- **genQa:** change feedback buttons position for small layout ([#3847](https://github.com/coveo/ui-kit/issues/3847)) ([38e101c](https://github.com/coveo/ui-kit/commits/38e101c2e64a79bb6ea6560060ba711070ceea32))
+
+## 2.64.1 (2024-04-24)
+
+### Bug Fixes
+
+- **genqa:** fix rephrase buttons for very small layout ([#3830](https://github.com/coveo/ui-kit/issues/3830)) ([79fbccc](https://github.com/coveo/ui-kit/commits/79fbccc14e75556e845c871e1c13e57920110208))
+
+# 2.64.0 (2024-04-17)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3764](https://github.com/coveo/ui-kit/issues/3764)) ([82b6948](https://github.com/coveo/ui-kit/commits/82b694835e9e0a29859590f16bd64a8e028eb888))
+
+### Features
+
+- add nonce support ([#3791](https://github.com/coveo/ui-kit/issues/3791)) ([fc4be2e](https://github.com/coveo/ui-kit/commits/fc4be2e7cbeb5815e43105a8584a7bfd0db82682))
+
+## 2.63.1 (2024-04-10)
+
+# 2.63.0 (2024-04-03)
+
+### Features
+
+- **atomic:** add part attribute for genQA component ([#3753](https://github.com/coveo/ui-kit/issues/3753)) ([0a55222](https://github.com/coveo/ui-kit/commits/0a55222e982d7fa384fa402b1b7c00d8e2625f6f))
+- **atomic:** add rga disclaimer ([#3761](https://github.com/coveo/ui-kit/issues/3761)) ([d6c8b34](https://github.com/coveo/ui-kit/commits/d6c8b34e654cd72df053d1aae184ec045ffb5d8f))
+
+## 2.62.3 (2024-03-27)
+
+## 2.62.1 (2024-03-20)
+
+# 2.62.0 (2024-03-20)
+
+### Bug Fixes
+
+- **deps:** update dependency @stencil/core to v4.13.0 j:kit-282 ([#3725](https://github.com/coveo/ui-kit/issues/3725)) ([aee2015](https://github.com/coveo/ui-kit/commits/aee20158c892bf1ec73ea3e66c2cdfa6823420c1))
+
+### Features
+
+- **atomic:** style rephrase buttons and add auto option ([#3702](https://github.com/coveo/ui-kit/issues/3702)) ([cdae484](https://github.com/coveo/ui-kit/commits/cdae48449176e4913f61b461fab689dbc604e25f))
+
+# 2.61.0 (2024-03-13)
+
+### Features
+
+- **atomic:** add sort-criteria to timeframe facet ([#3692](https://github.com/coveo/ui-kit/issues/3692)) ([1a6f1ab](https://github.com/coveo/ui-kit/commits/1a6f1ab9c943a2b977bdece4c39cbfd1d3dda3de))
+
+## 2.60.5 (2024-03-12)
+
+### Bug Fixes
+
+- **atomic:** fix query suggestions mismatch on searchbox disabled + manual input clear ([#3699](https://github.com/coveo/ui-kit/issues/3699)) ([7e23c3a](https://github.com/coveo/ui-kit/commits/7e23c3a8b4f9711d927799e5d7463c4e16c97214))
+
+## 2.60.3 (2024-03-11)
+
+### Bug Fixes
+
+- **atomic:** add missing end label ([#3689](https://github.com/coveo/ui-kit/issues/3689)) ([4b404ab](https://github.com/coveo/ui-kit/commits/4b404abe5398f0b06047365b400bc981a273ce90))
+
+### Features
+
+- **quantic|atomic:** update genQA answer section title ([#3674](https://github.com/coveo/ui-kit/issues/3674)) ([1aaeb08](https://github.com/coveo/ui-kit/commits/1aaeb08802fd71ad9bdc98c213c830f676088adb))
+
+# 2.60.0 (2024-03-08)
+
+### Bug Fixes
+
+- **atomic:** fix search disabled check for query suggestion ([#3669](https://github.com/coveo/ui-kit/issues/3669)) ([8b4bb3d](https://github.com/coveo/ui-kit/commits/8b4bb3d14c876bb4b39be51f8ccb8e2add41f7ca))
+- **deps:** update stencil j:kit-282 ([#3635](https://github.com/coveo/ui-kit/issues/3635)) ([63b333e](https://github.com/coveo/ui-kit/commits/63b333eb5ef5b5017288883102503fd47863357b))
+
+### Features
+
+- **atomic,headless:** remove customData & middleware iff analyticsMode=next ([#3670](https://github.com/coveo/ui-kit/issues/3670)) ([ac15f5c](https://github.com/coveo/ui-kit/commits/ac15f5c11c89fd6af30a92d6abf7c6a5b984b8e5))
+
+# 2.59.0 (2024-03-06)
+
+### Features
+
+- **auto-facet:** bump max count to 20 ([#3642](https://github.com/coveo/ui-kit/issues/3642)) ([069a4be](https://github.com/coveo/ui-kit/commits/069a4be48522b65ae4c582162757fe1e441b1db7))
+- **IPX:** add PageView in IPX actions history ([#3607](https://github.com/coveo/ui-kit/issues/3607)) ([155f04c](https://github.com/coveo/ui-kit/commits/155f04c66c2961c55ea337c0e37f2c1cee1bb1d2)), closes [/github.com/coveo/coveo.analytics.js/blob/master/src/coveoua/browser.ts#L29](https://github.com//github.com/coveo/coveo.analytics.js/blob/master/src/coveoua/browser.ts/issues/L29)
+
+## 2.58.1 (2024-02-28)
+
+# 2.58.0 (2024-02-21)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3578](https://github.com/coveo/ui-kit/issues/3578)) ([a5b645d](https://github.com/coveo/ui-kit/commits/a5b645d4f5395c9942af38feb5cfc2c08585405d))
+- **refine-modal:** Sort facets values based on their DOM position ([#3619](https://github.com/coveo/ui-kit/issues/3619)) ([3cf03af](https://github.com/coveo/ui-kit/commits/3cf03afc9f28065d94fa723a4b2c417585d67d30))
+
+### Features
+
+- **atomic:** exposes numberOfFoldedResults ([#3597](https://github.com/coveo/ui-kit/issues/3597)) ([3da9ac6](https://github.com/coveo/ui-kit/commits/3da9ac63984eef223e5a766ff1371435b9c1dc9c))
+
+## 2.57.2 (2024-02-14)
+
+### Bug Fixes
+
+- **atomic:** ensure redirection on instant result click ([#3585](https://github.com/coveo/ui-kit/issues/3585)) ([b47e3cb](https://github.com/coveo/ui-kit/commits/b47e3cb7b2a4febd98132d0e22ed22e45ae478af))
+- **atomic:** improve query suggestions selection ([#3582](https://github.com/coveo/ui-kit/issues/3582)) ([f8b06e9](https://github.com/coveo/ui-kit/commits/f8b06e926fcba970c334696080bac543686e2a61))
+
+## 2.57.1 (2024-02-09)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3576](https://github.com/coveo/ui-kit/issues/3576)) ([4887772](https://github.com/coveo/ui-kit/commits/48877723d6f8c5e5446a48296326519f009ae850))
+
+# 2.57.0 (2024-02-08)
+
+### Bug Fixes
+
+- **atomic:** fix facet order in modal refine ([#3572](https://github.com/coveo/ui-kit/issues/3572)) ([9dc777e](https://github.com/coveo/ui-kit/commits/9dc777ea622d8d763ca4f628f87f733bf0d50d49))
+- **atomic:** fix input minimum length behaving incorrectly with clear button ([#3564](https://github.com/coveo/ui-kit/issues/3564)) ([eda7dfa](https://github.com/coveo/ui-kit/commits/eda7dfa3cfd320edaa6a5d48e03655b5adf1796b))
+
+### Features
+
+- **atomic:** add shadow part of result-multi-value-text list element ([#3567](https://github.com/coveo/ui-kit/issues/3567)) ([9c94377](https://github.com/coveo/ui-kit/commits/9c9437722223f707a6dead944e45d721ff8a1bc4))
+- **headless,atomic:** expose and leverage user defined label in administration tool for facets ([#3566](https://github.com/coveo/ui-kit/issues/3566)) ([5848396](https://github.com/coveo/ui-kit/commits/58483961a702887b54a5a51625a267753d727d6f))
+
+# 2.56.0 (2024-01-31)
+
+### Bug Fixes
+
+- **atomic:** fix insight search box width ([#3550](https://github.com/coveo/ui-kit/issues/3550)) ([797d50c](https://github.com/coveo/ui-kit/commits/797d50cd98d4f8e3ecff764fde6be01836cc849a))
+- **deps:** update all dependencies j:kit-282 ([#3535](https://github.com/coveo/ui-kit/issues/3535)) ([8cbc113](https://github.com/coveo/ui-kit/commits/8cbc113c323134c73ec9643260ee4580289e891b))
+
+### Features
+
+- **headless,atomic:** migrate framework versions from customData to source w/ next analytics ([#3544](https://github.com/coveo/ui-kit/issues/3544)) ([b4c9262](https://github.com/coveo/ui-kit/commits/b4c9262e89cf0e02d9f7392a3f1f198a5e61c64e))
+
+## 2.55.1 (2024-01-24)
+
+### Bug Fixes
+
+- **atomic:** quick fix for failing color-facet cypress test ([#3541](https://github.com/coveo/ui-kit/issues/3541)) ([e368df8](https://github.com/coveo/ui-kit/commits/e368df80a47de8f0d9d3d72b24cb8d32085f7d16))
+
+# 2.55.0 (2024-01-19)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3522](https://github.com/coveo/ui-kit/issues/3522)) ([59c3ac7](https://github.com/coveo/ui-kit/commits/59c3ac76c8a5c4d61cb2fa7cfc90fd2b901b0535))
+
+### Features
+
+- **atomic:** change insight searchbox to be expandable by default ([#3524](https://github.com/coveo/ui-kit/issues/3524)) ([7372a2b](https://github.com/coveo/ui-kit/commits/7372a2bb1ce745c7442c3a50e161cf8a1b28ace8))
+- **atomic:** cRGA refactor + atomic-insight-generated-answer component ([#3514](https://github.com/coveo/ui-kit/issues/3514)) ([043a2c8](https://github.com/coveo/ui-kit/commits/043a2c8c60e97b9aad4311f01cb0c96cc4ad2940))
+- **headless,atomic:** support new query correction system ([#3530](https://github.com/coveo/ui-kit/issues/3530)) ([1d81780](https://github.com/coveo/ui-kit/commits/1d81780b25f2e4159fcc3810461b6f2173776089))
+
+# 2.54.0 (2024-01-10)
+
+### Bug Fixes
+
+- **atomic:** set end of range to end of day when applying facet date input ([#3517](https://github.com/coveo/ui-kit/issues/3517)) ([c67f3e1](https://github.com/coveo/ui-kit/commits/c67f3e1e539ba4c21d96186c30b1794c2789614c))
+- **error:** added margin at the buttom of the error component ([#3486](https://github.com/coveo/ui-kit/issues/3486)) ([5eb2c8c](https://github.com/coveo/ui-kit/commits/5eb2c8c473a90184bb5987304f8ac6a55d64ac1e))
+- **rga:** ensure svgs does not include static colors ([#3515](https://github.com/coveo/ui-kit/issues/3515)) ([d7c44e7](https://github.com/coveo/ui-kit/commits/d7c44e71d8f9d6e22125873c6c5fcf0ce85f8df2))
+
+### Features
+
+- **atomic:** add suggestion delay option for atomic search box ([#3510](https://github.com/coveo/ui-kit/issues/3510)) ([bc52812](https://github.com/coveo/ui-kit/commits/bc528120bcdeaf4f57f37713913b3fc6f34e0182))
+
+# 2.53.0 (2024-01-03)
+
+### Bug Fixes
+
+- **atomic:** center various icons ([#3491](https://github.com/coveo/ui-kit/issues/3491)) ([518b37b](https://github.com/coveo/ui-kit/commits/518b37b428454b13fdc055b609246c94a1187d8d))
+- **deps:** update stencil j:kit-282 ([#3492](https://github.com/coveo/ui-kit/issues/3492)) ([83dfb8d](https://github.com/coveo/ui-kit/commits/83dfb8dbbd89524a694bcd39ce807143a073ac2c))
+
+### Features
+
+- **rga:** hide copy to clipboard button when Clipboard API is not defined ([#3499](https://github.com/coveo/ui-kit/issues/3499)) ([6672909](https://github.com/coveo/ui-kit/commits/66729095b6dcf54c3b3bcc82c6ab1e5142991712))
+
 ## 2.52.1 (2023-12-13)
 
 ### Bug Fixes

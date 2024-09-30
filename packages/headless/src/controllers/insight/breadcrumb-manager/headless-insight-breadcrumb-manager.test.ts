@@ -1,57 +1,57 @@
-import {configuration} from '../../../app/common-reducers';
-import {deselectAllBreadcrumbs} from '../../../features/breadcrumb/breadcrumb-actions';
-import {deselectAllCategoryFacetValues} from '../../../features/facets/category-facet-set/category-facet-set-actions';
-import {categoryFacetSetReducer as categoryFacetSet} from '../../../features/facets/category-facet-set/category-facet-set-slice';
-import {CategoryFacetValue} from '../../../features/facets/category-facet-set/interfaces/response';
+import {configuration} from '../../../app/common-reducers.js';
+import {deselectAllBreadcrumbs} from '../../../features/breadcrumb/breadcrumb-actions.js';
+import {deselectAllCategoryFacetValues} from '../../../features/facets/category-facet-set/category-facet-set-actions.js';
+import {categoryFacetSetReducer as categoryFacetSet} from '../../../features/facets/category-facet-set/category-facet-set-slice.js';
+import {CategoryFacetValue} from '../../../features/facets/category-facet-set/interfaces/response.js';
 import {
   toggleExcludeFacetValue,
   toggleSelectFacetValue,
   updateFreezeCurrentValues,
-} from '../../../features/facets/facet-set/facet-set-actions';
-import {facetSetReducer as facetSet} from '../../../features/facets/facet-set/facet-set-slice';
-import {FacetValue} from '../../../features/facets/facet-set/interfaces/response';
+} from '../../../features/facets/facet-set/facet-set-actions.js';
+import {facetSetReducer as facetSet} from '../../../features/facets/facet-set/facet-set-slice.js';
+import {FacetValue} from '../../../features/facets/facet-set/interfaces/response.js';
 import {
   toggleExcludeDateFacetValue,
   toggleSelectDateFacetValue,
-} from '../../../features/facets/range-facets/date-facet-set/date-facet-actions';
-import {dateFacetSetReducer as dateFacetSet} from '../../../features/facets/range-facets/date-facet-set/date-facet-set-slice';
-import {DateFacetValue} from '../../../features/facets/range-facets/date-facet-set/interfaces/response';
-import {NumericFacetValue} from '../../../features/facets/range-facets/numeric-facet-set/interfaces/response';
+} from '../../../features/facets/range-facets/date-facet-set/date-facet-actions.js';
+import {dateFacetSetReducer as dateFacetSet} from '../../../features/facets/range-facets/date-facet-set/date-facet-set-slice.js';
+import {DateFacetValue} from '../../../features/facets/range-facets/date-facet-set/interfaces/response.js';
+import {NumericFacetValue} from '../../../features/facets/range-facets/numeric-facet-set/interfaces/response.js';
 import {
   toggleExcludeNumericFacetValue,
   toggleSelectNumericFacetValue,
-} from '../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions';
-import {numericFacetSetReducer as numericFacetSet} from '../../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-slice';
-import {executeSearch} from '../../../features/search/search-actions';
-import {searchReducer as search} from '../../../features/search/search-slice';
-import {getSearchInitialState} from '../../../features/search/search-state';
+} from '../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions.js';
+import {numericFacetSetReducer as numericFacetSet} from '../../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-slice.js';
+import {executeSearch} from '../../../features/insight-search/insight-search-actions.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
+import {getSearchInitialState} from '../../../features/search/search-state.js';
 import {
   toggleExcludeStaticFilterValue,
   toggleSelectStaticFilterValue,
-} from '../../../features/static-filter-set/static-filter-set-actions';
-import {InsightAppState} from '../../../state/insight-app-state';
-import {buildMockCategoryFacetRequest} from '../../../test/mock-category-facet-request';
-import {buildMockCategoryFacetResponse} from '../../../test/mock-category-facet-response';
-import {buildMockCategoryFacetValue} from '../../../test/mock-category-facet-value';
-import {buildMockDateFacetRequest} from '../../../test/mock-date-facet-request';
-import {buildMockDateFacetResponse} from '../../../test/mock-date-facet-response';
-import {buildMockDateFacetSlice} from '../../../test/mock-date-facet-slice';
-import {buildMockDateFacetValue} from '../../../test/mock-date-facet-value';
+} from '../../../features/static-filter-set/static-filter-set-actions.js';
+import {InsightAppState} from '../../../state/insight-app-state.js';
+import {buildMockCategoryFacetRequest} from '../../../test/mock-category-facet-request.js';
+import {buildMockCategoryFacetResponse} from '../../../test/mock-category-facet-response.js';
+import {buildMockCategoryFacetValue} from '../../../test/mock-category-facet-value.js';
+import {buildMockDateFacetRequest} from '../../../test/mock-date-facet-request.js';
+import {buildMockDateFacetResponse} from '../../../test/mock-date-facet-response.js';
+import {buildMockDateFacetSlice} from '../../../test/mock-date-facet-slice.js';
+import {buildMockDateFacetValue} from '../../../test/mock-date-facet-value.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../test/mock-engine';
-import {buildMockFacetRequest} from '../../../test/mock-facet-request';
-import {buildMockFacetResponse} from '../../../test/mock-facet-response';
-import {buildMockFacetSlice} from '../../../test/mock-facet-slice';
-import {buildMockFacetValue} from '../../../test/mock-facet-value';
-import {buildMockInsightState} from '../../../test/mock-insight-state';
-import {buildMockNumericFacetRequest} from '../../../test/mock-numeric-facet-request';
-import {buildMockNumericFacetResponse} from '../../../test/mock-numeric-facet-response';
-import {buildMockNumericFacetSlice} from '../../../test/mock-numeric-facet-slice';
-import {buildMockNumericFacetValue} from '../../../test/mock-numeric-facet-value';
-import {buildMockStaticFilterSlice} from '../../../test/mock-static-filter-slice';
-import {buildMockStaticFilterValue} from '../../../test/mock-static-filter-value';
+  MockedInsightEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockFacetRequest} from '../../../test/mock-facet-request.js';
+import {buildMockFacetResponse} from '../../../test/mock-facet-response.js';
+import {buildMockFacetSlice} from '../../../test/mock-facet-slice.js';
+import {buildMockFacetValue} from '../../../test/mock-facet-value.js';
+import {buildMockInsightState} from '../../../test/mock-insight-state.js';
+import {buildMockNumericFacetRequest} from '../../../test/mock-numeric-facet-request.js';
+import {buildMockNumericFacetResponse} from '../../../test/mock-numeric-facet-response.js';
+import {buildMockNumericFacetSlice} from '../../../test/mock-numeric-facet-slice.js';
+import {buildMockNumericFacetValue} from '../../../test/mock-numeric-facet-value.js';
+import {buildMockStaticFilterSlice} from '../../../test/mock-static-filter-slice.js';
+import {buildMockStaticFilterValue} from '../../../test/mock-static-filter-value.js';
 import {
   BreadcrumbManager,
   CategoryFacetBreadcrumb,
@@ -59,16 +59,30 @@ import {
   FacetBreadcrumb,
   NumericFacetBreadcrumb,
   buildBreadcrumbManager,
-} from './headless-insight-breadcrumb-manager';
+} from './headless-insight-breadcrumb-manager.js';
+
+vi.mock('../../../features/breadcrumb/breadcrumb-actions');
+vi.mock(
+  '../../../features/facets/category-facet-set/category-facet-set-actions'
+);
+vi.mock('../../../features/facets/facet-set/facet-set-actions');
+vi.mock(
+  '../../../features/facets/range-facets/date-facet-set/date-facet-actions'
+);
+vi.mock(
+  '../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions'
+);
+vi.mock('../../../features/insight-search/insight-search-actions');
+vi.mock('../../../features/static-filter-set/static-filter-set-actions');
 
 describe('insight breadcrumb manager', () => {
   const facetId = 'abc123';
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let state: InsightAppState;
   let breadcrumbManager: BreadcrumbManager;
 
   function initController() {
-    engine = buildMockInsightEngine();
+    engine = buildMockInsightEngine(buildMockInsightState());
     engine.state = state;
     breadcrumbManager = buildBreadcrumbManager(engine);
   }
@@ -133,72 +147,60 @@ describe('insight breadcrumb manager', () => {
 
     it('dispatches an executeSearch action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches an toggleSelectFacetValue action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.actions).toContainEqual(
-        toggleSelectFacetValue({
-          facetId,
-          selection: mockSelectedValue,
-        })
-      );
+      expect(toggleSelectFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockSelectedValue,
+      });
     });
 
     it('dispatches an updateFreezeCurrentValues action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.actions).toContainEqual(
-        updateFreezeCurrentValues({
-          facetId,
-          freezeCurrentValues: false,
-        })
-      );
+      expect(updateFreezeCurrentValues).toHaveBeenCalledWith({
+        facetId,
+        freezeCurrentValues: false,
+      });
     });
 
     it('dispatches a toggleSelectFacetValue action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0].values[0]);
-      expect(engine.actions).toContainEqual(
-        toggleSelectFacetValue({
-          facetId,
-          selection: mockSelectedValue,
-        })
-      );
+      expect(toggleSelectFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockSelectedValue,
+      });
     });
 
     it('dispatches an executeSearch action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches an toggleExcludeFacetValue action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.actions).toContainEqual(
-        toggleExcludeFacetValue({
-          facetId,
-          selection: mockExcludedValue,
-        })
-      );
+      expect(toggleExcludeFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockExcludedValue,
+      });
     });
 
     it('dispatches an updateFreezeCurrentValues action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.actions).toContainEqual(
-        updateFreezeCurrentValues({
-          facetId,
-          freezeCurrentValues: false,
-        })
-      );
+      expect(updateFreezeCurrentValues).toHaveBeenCalledWith({
+        facetId,
+        freezeCurrentValues: false,
+      });
     });
 
     it('dispatches a toggleExcludeFacetValue action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0].values[1]);
-      expect(engine.actions).toContainEqual(
-        toggleExcludeFacetValue({
-          facetId,
-          selection: mockExcludedValue,
-        })
-      );
+      expect(toggleExcludeFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockExcludedValue,
+      });
     });
   });
 
@@ -242,52 +244,44 @@ describe('insight breadcrumb manager', () => {
 
     it('dispatches an executeSearch action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches a toggleSelectDateFacetValue action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.actions).toContainEqual(
-        toggleSelectDateFacetValue({
-          facetId,
-          selection: mockSelectedValue,
-        })
-      );
+      expect(toggleSelectDateFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockSelectedValue,
+      });
     });
 
     it('dispatches a toggleSelectDateFacetValue action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0].values[0]);
-      expect(engine.actions).toContainEqual(
-        toggleSelectDateFacetValue({
-          facetId,
-          selection: mockSelectedValue,
-        })
-      );
+      expect(toggleSelectDateFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockSelectedValue,
+      });
     });
 
     it('dispatches an executeSearch action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches a toggleExcludeDateFacetValue action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.actions).toContainEqual(
-        toggleExcludeDateFacetValue({
-          facetId,
-          selection: mockExcludedValue,
-        })
-      );
+      expect(toggleExcludeDateFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockExcludedValue,
+      });
     });
 
     it('dispatches a toggleExcludeDateFacetValue action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0].values[1]);
-      expect(engine.actions).toContainEqual(
-        toggleExcludeDateFacetValue({
-          facetId,
-          selection: mockExcludedValue,
-        })
-      );
+      expect(toggleExcludeDateFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockExcludedValue,
+      });
     });
   });
 
@@ -331,52 +325,44 @@ describe('insight breadcrumb manager', () => {
 
     it('dispatches an executeSearch action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches a toggleSelectNumericFacetValue action on selection', () => {
       facetBreadcrumbs[0].values[0].deselect();
-      expect(engine.actions).toContainEqual(
-        toggleSelectNumericFacetValue({
-          facetId,
-          selection: mockSelectedValue,
-        })
-      );
+      expect(toggleSelectNumericFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockSelectedValue,
+      });
     });
 
     it('dispatches a toggleSelectNumericFacetValue action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0].values[0]);
-      expect(engine.actions).toContainEqual(
-        toggleSelectNumericFacetValue({
-          facetId,
-          selection: mockSelectedValue,
-        })
-      );
+      expect(toggleSelectNumericFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockSelectedValue,
+      });
     });
 
     it('dispatches an executeSearch action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches a toggleExcludeNumericFacetValue action on exclusion', () => {
       facetBreadcrumbs[0].values[1].deselect();
-      expect(engine.actions).toContainEqual(
-        toggleExcludeNumericFacetValue({
-          facetId,
-          selection: mockExcludedValue,
-        })
-      );
+      expect(toggleExcludeNumericFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockExcludedValue,
+      });
     });
 
     it('dispatches a toggleExcludeNumericFacetValue action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0].values[1]);
-      expect(engine.actions).toContainEqual(
-        toggleExcludeNumericFacetValue({
-          facetId,
-          selection: mockExcludedValue,
-        })
-      );
+      expect(toggleExcludeNumericFacetValue).toHaveBeenCalledWith({
+        facetId,
+        selection: mockExcludedValue,
+      });
     });
   });
 
@@ -429,21 +415,17 @@ describe('insight breadcrumb manager', () => {
 
     it('dispatches an executeSearch action on selection', () => {
       facetBreadcrumbs[0].deselect();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches a deselectAllCategoryFacetValues action on selection', () => {
       facetBreadcrumbs[0].deselect();
-      expect(engine.actions).toContainEqual(
-        deselectAllCategoryFacetValues(facetId)
-      );
+      expect(deselectAllCategoryFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches a deselectAllCategoryFacetValues action when #deselectBreadcrumb is called', () => {
       breadcrumbManager.deselectBreadcrumb(facetBreadcrumbs[0]);
-      expect(engine.actions).toContainEqual(
-        deselectAllCategoryFacetValues(facetId)
-      );
+      expect(deselectAllCategoryFacetValues).toHaveBeenCalledWith(facetId);
     });
   });
 
@@ -495,16 +477,14 @@ describe('insight breadcrumb manager', () => {
         });
 
         it('dispatches #toggleSelectStaticFilterValue', () => {
-          const toggleSelect = toggleSelectStaticFilterValue({
+          expect(toggleSelectStaticFilterValue).toHaveBeenCalledWith({
             id,
             value: selected,
           });
-          expect(engine.actions).toContainEqual(toggleSelect);
         });
 
         it('dispatches #executeSearch', () => {
-          const action = engine.findAsyncAction(executeSearch.pending);
-          expect(action).toBeTruthy();
+          expect(executeSearch).toHaveBeenCalled();
         });
       });
       describe('#excluded values', () => {
@@ -516,16 +496,14 @@ describe('insight breadcrumb manager', () => {
         });
 
         it('dispatches #toggleExcludeStaticFilterValue', () => {
-          const toggleExclude = toggleExcludeStaticFilterValue({
+          expect(toggleExcludeStaticFilterValue).toHaveBeenCalledWith({
             id,
             value: excluded,
           });
-          expect(engine.actions).toContainEqual(toggleExclude);
         });
 
         it('dispatches #executeSearch', () => {
-          const action = engine.findAsyncAction(executeSearch.pending);
-          expect(action).toBeTruthy();
+          expect(executeSearch).toHaveBeenCalled();
         });
       });
     });
@@ -567,12 +545,12 @@ describe('insight breadcrumb manager', () => {
   describe('#deselectAll', () => {
     it('dispatches #deselectAllBreadcrumbs', () => {
       breadcrumbManager.deselectAll();
-      expect(engine.actions).toContainEqual(deselectAllBreadcrumbs());
+      expect(deselectAllBreadcrumbs).toHaveBeenCalled();
     });
 
     it('dispatches #executeSearch', () => {
       breadcrumbManager.deselectAll();
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 });

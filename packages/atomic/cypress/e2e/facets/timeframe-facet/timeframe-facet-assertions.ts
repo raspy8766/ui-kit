@@ -37,7 +37,7 @@ export function assertRangeHash(
 ) {
   const expectedRange = `${startDate.replaceAll('-', '/')}@00:00:00${
     endInclusive ? '...' : '..'
-  }${endDate.replaceAll('-', '/')}@00:00:00` as const;
+  }${endDate.replaceAll('-', '/')}@23:59:59` as const;
 
   function getHash(win: Window) {
     return win.location.hash
@@ -120,5 +120,14 @@ export function assertFacetValueContainsText(index: number, value: string) {
       .then((txt: string) => {
         expect(txt).contains(value);
       });
+  });
+}
+
+export function assertValuesMatchExpectedOrder(expectedValues: string[]) {
+  it('values should be ordered in the expected order', () => {
+    TimeframeFacetSelectors.valueLabel().as('facetAllValuesLabel');
+    cy.getTextOfAllElements('@facetAllValuesLabel').then((originalValues) => {
+      expect(originalValues).to.eql(expectedValues);
+    });
   });
 }

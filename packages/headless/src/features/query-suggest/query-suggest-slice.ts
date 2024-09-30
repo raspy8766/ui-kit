@@ -1,30 +1,33 @@
 import {AnyAction, type Draft as WritableDraft} from '@reduxjs/toolkit';
 import {createReducer} from '@reduxjs/toolkit';
-import {fetchQuerySuggestions as fetchCommerceQuerySuggestions} from '../commerce/query-suggest/query-suggest-actions';
 import {
+  clearQuerySuggest as clearCommerceQuerySuggest,
+  fetchQuerySuggestions as fetchCommerceQuerySuggestions,
+  registerQuerySuggest as registerCommerceQuerySuggest,
+} from '../commerce/query-suggest/query-suggest-actions.js';
+import {
+  ClearQuerySuggestActionCreatorPayload,
+  RegisterQuerySuggestActionCreatorPayload,
   clearQuerySuggest,
   fetchQuerySuggestions,
   registerQuerySuggest,
   unregisterQuerySuggest,
-} from './query-suggest-actions';
+} from './query-suggest-actions.js';
 import {
   getQuerySuggestSetInitialState,
   QuerySuggestSet,
   QuerySuggestState,
-} from './query-suggest-state';
+} from './query-suggest-state.js';
 
 export const querySuggestReducer = createReducer(
   getQuerySuggestSetInitialState(),
   (builder) =>
     builder
       .addCase(registerQuerySuggest, (state, action) => {
-        const id = action.payload.id;
-
-        if (id in state) {
-          return;
-        }
-
-        state[id] = buildQuerySuggest(action.payload);
+        handleRegisterQuerySuggest(state, action.payload);
+      })
+      .addCase(registerCommerceQuerySuggest, (state, action) => {
+        handleRegisterQuerySuggest(state, action.payload);
       })
       .addCase(unregisterQuerySuggest, (state, action) => {
         delete state[action.payload.id];
@@ -83,17 +86,25 @@ export const querySuggestReducer = createReducer(
       })
       .addCase(fetchCommerceQuerySuggestions.rejected, handleFetchRejected)
       .addCase(clearQuerySuggest, (state, action) => {
-        const querySuggest = state[action.payload.id];
-
-        if (!querySuggest) {
-          return;
-        }
-
-        querySuggest.responseId = '';
-        querySuggest.completions = [];
-        querySuggest.partialQueries = [];
+        handleClearQuerySuggest(state, action.payload);
+      })
+      .addCase(clearCommerceQuerySuggest, (state, action) => {
+        handleClearQuerySuggest(state, action.payload);
       })
 );
+
+function handleRegisterQuerySuggest(
+  state: WritableDraft<QuerySuggestSet>,
+  payload: RegisterQuerySuggestActionCreatorPayload
+) {
+  const id = payload.id;
+
+  if (id in state) {
+    return;
+  }
+
+  state[id] = buildQuerySuggest(payload);
+}
 
 function buildQuerySuggest(
   config: Partial<QuerySuggestState>
@@ -137,4 +148,19 @@ function handleFetchRejected(
 
   querySuggest.error = action.payload || null;
   querySuggest.isLoading = false;
+}
+
+function handleClearQuerySuggest(
+  state: WritableDraft<QuerySuggestSet>,
+  payload: ClearQuerySuggestActionCreatorPayload
+) {
+  const querySuggest = state[payload.id];
+
+  if (!querySuggest) {
+    return;
+  }
+
+  querySuggest.responseId = '';
+  querySuggest.completions = [];
+  querySuggest.partialQueries = [];
 }

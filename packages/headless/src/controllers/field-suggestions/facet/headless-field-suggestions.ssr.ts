@@ -1,18 +1,26 @@
-import {SearchEngine} from '../../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../../app/ssr-engine/types/common.js';
 import {
   FieldSuggestions,
   FieldSuggestionsProps,
   buildFieldSuggestions,
-} from './headless-field-suggestions';
+} from './headless-field-suggestions.js';
 
-export * from './headless-field-suggestions';
+export * from './headless-field-suggestions.js';
+
+export interface FieldSuggestionsDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, FieldSuggestions> {}
 
 /**
- * @internal
- */
-export const defineFieldSuggestions = (
+ * Defines a `FieldSuggestions` controller instance.
+ *
+ * @param props - The configurable `FieldSuggestions` properties.
+ * @returns The `FieldSuggestions` controller definition.
+ * */
+export function defineFieldSuggestions(
   props: FieldSuggestionsProps
-): ControllerDefinitionWithoutProps<SearchEngine, FieldSuggestions> => ({
-  build: (engine) => buildFieldSuggestions(engine, props),
-});
+): FieldSuggestionsDefinition {
+  return {
+    build: (engine) => buildFieldSuggestions(engine, props),
+  };
+}

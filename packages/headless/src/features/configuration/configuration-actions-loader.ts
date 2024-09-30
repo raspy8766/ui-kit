@@ -1,6 +1,6 @@
 import {PayloadAction} from '@reduxjs/toolkit';
-import {configuration} from '../../app/common-reducers';
-import {CoreEngine} from '../../app/engine';
+import {configuration} from '../../app/common-reducers.js';
+import {CoreEngine, CoreEngineNext} from '../../app/engine.js';
 import {
   disableAnalytics,
   enableAnalytics,
@@ -13,7 +13,7 @@ import {
   updateBasicConfiguration,
   UpdateBasicConfigurationActionCreatorPayload,
   AnalyticsRuntimeEnvironment,
-} from './configuration-actions';
+} from './configuration-actions.js';
 
 export type {
   SetOriginLevel2ActionCreatorPayload,
@@ -89,7 +89,7 @@ export interface ConfigurationActionCreators {
  * @returns An object holding the action creators.
  */
 export function loadConfigurationActions(
-  engine: CoreEngine
+  engine: CoreEngine | CoreEngineNext
 ): ConfigurationActionCreators {
   engine.addReducers({configuration});
 

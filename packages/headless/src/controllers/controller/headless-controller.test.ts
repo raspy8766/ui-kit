@@ -1,50 +1,52 @@
+import {Mock} from 'vitest';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
-import {buildController, Controller} from './headless-controller';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {buildController, Controller} from './headless-controller.js';
 
 describe('Controller', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let cmp: Controller;
 
   function registeredListeners() {
-    return (engine.subscribe as jest.Mock).mock.calls.map((args) => args[0]);
+    return (engine.subscribe as Mock).mock.calls.map((args) => args[0]);
   }
 
   function updateControllerState(state: object) {
-    jest.spyOn(cmp, 'state', 'get').mockReturnValue(state);
+    vi.spyOn(cmp, 'state', 'get').mockReturnValue(state);
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     cmp = buildController(engine);
     updateControllerState({property: 'initial value'});
   });
 
   it('calling #subscribe invokes the passed listener immediately', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     cmp.subscribe(listener);
 
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
   it('calling #subscribe registers a handler on the engine', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     cmp.subscribe(listener);
 
     expect(registeredListeners().length).toBe(1);
   });
 
   it('the #subscribe method returns a function', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     const returnValue = cmp.subscribe(listener);
 
     expect(typeof returnValue).toBe('function');
   });
 
   it('invoking the registered #subscribe handler calls the listener if the state has changed', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     cmp.subscribe(listener);
 
     updateControllerState({property: 'new value'});
@@ -55,7 +57,7 @@ describe('Controller', () => {
   });
 
   it('invoking the registered #subscribe handler does not call the listener if the state has not changed', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     cmp.subscribe(listener);
 
     const [firstListener] = registeredListeners();
@@ -65,8 +67,8 @@ describe('Controller', () => {
   });
 
   it('allows subscribing twice to same instance when there is a state change', () => {
-    const firstListener = jest.fn();
-    const secondListener = jest.fn();
+    const firstListener = vi.fn();
+    const secondListener = vi.fn();
     cmp.subscribe(firstListener);
     cmp.subscribe(secondListener);
 

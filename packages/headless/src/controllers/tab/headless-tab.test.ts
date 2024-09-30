@@ -1,13 +1,16 @@
-import {executeSearch} from '../../features/search/search-actions';
+import {executeSearch} from '../../features/search/search-actions.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-} from '../../test/mock-engine';
-import {buildTab, Tab, TabProps} from './headless-tab';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {buildTab, Tab, TabProps} from './headless-tab.js';
+
+vi.mock('../../features/search/search-actions');
 
 describe('Tab', () => {
   const expression = 'abc123';
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let props: TabProps;
   let tab: Tab;
 
@@ -16,7 +19,7 @@ describe('Tab', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     props = {
       options: {
         expression,
@@ -37,8 +40,7 @@ describe('Tab', () => {
   describe('#select', () => {
     it('dispatches #executeSearch', () => {
       tab.select();
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 });

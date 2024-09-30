@@ -1,6 +1,6 @@
 import {PayloadAction} from '@reduxjs/toolkit';
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {facetOptionsReducer as facetOptions} from '../../features/facet-options/facet-options-slice';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {facetOptionsReducer as facetOptions} from '../../features/facet-options/facet-options-slice.js';
 import {
   updateFacetOptions,
   UpdateFacetOptionsActionCreatorPayload,
@@ -8,7 +8,7 @@ import {
   DisableFacetActionCreatorPayload,
   enableFacet,
   disableFacet,
-} from './facet-options-actions';
+} from './facet-options-actions.js';
 
 export type {
   UpdateFacetOptionsActionCreatorPayload,
@@ -21,7 +21,7 @@ export type {
  */
 export interface FacetOptionsActionCreators {
   /**
-   * Updates options that affect facet reordering. For more information, refer to [the documentation on query parameters](https://docs.coveo.com/en/1461/build-a-search-ui/query-parameters#definitions-RestFacetOptions).
+   * Updates options that affect facet reordering. For more information, refer to [the documentation on query parameters](https://docs.coveo.com/en/13#operation/searchUsingPost-facets).
    *
    * @param payload - The action creator payload.
    * @returns A dispatchable action.

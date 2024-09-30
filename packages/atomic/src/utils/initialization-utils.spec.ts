@@ -1,4 +1,4 @@
-import {buildSearchBox, Controller, TestUtils} from '@coveo/headless';
+import {buildSearchBox, buildSearchEngine, Controller} from '@coveo/headless';
 import {newSpecPage, SpecPage} from '@stencil/core/testing';
 import i18next from 'i18next';
 import {AtomicSearchBox} from '../components/search/atomic-search-box/atomic-search-box';
@@ -105,12 +105,17 @@ describe('InitializeBindings decorator', () => {
     it(`when "engine" is defined
     should render the content `, () => {
       component['bindings'] = {
-        engine: TestUtils.buildMockSearchAppEngine({
-          state: TestUtils.createMockState(),
+        engine: buildSearchEngine({
+          configuration: {
+            accessToken: 'accessToken',
+            organizationId: 'organizationId',
+          },
         }),
         i18n: i18next,
         store: createAtomicStore(),
         interfaceElement: document.createElement('atomic-search-interface'),
+        createScriptElement: jest.fn(),
+        createStyleElement: jest.fn(),
       };
       InitializeBindings()(component, 'bindings');
       component.initialize!();
@@ -127,12 +132,17 @@ describe('BindStateToController decorator', () => {
     console.error = jest.fn();
     component = {
       bindings: {
-        engine: TestUtils.buildMockSearchAppEngine({
-          state: TestUtils.createMockState(),
+        engine: buildSearchEngine({
+          configuration: {
+            accessToken: 'accessToken',
+            organizationId: 'organizationId',
+          },
         }),
         i18n: i18next,
         store: createAtomicStore(),
         interfaceElement: document.createElement('atomic-search-interface'),
+        createScriptElement: jest.fn(),
+        createStyleElement: jest.fn(),
       },
       error: {} as Error,
     };
@@ -193,7 +203,7 @@ describe('BindStateToController decorator', () => {
     });
 
     it('should subscribe to the controller', () => {
-      spyOn(controller, 'subscribe');
+      jest.spyOn(controller, 'subscribe');
       BindStateToController('controller')(component, 'controllerState');
       component.initialize!();
 

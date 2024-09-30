@@ -1,20 +1,20 @@
-import {SearchEngine} from '../../../app/search-engine/search-engine';
+import {SearchEngine} from '../../../app/search-engine/search-engine.js';
 import {
   deselectAllAutomaticFacetValues,
   toggleSelectAutomaticFacetValue,
-} from '../../../features/facets/automatic-facet-set/automatic-facet-set-actions';
+} from '../../../features/facets/automatic-facet-set/automatic-facet-set-actions.js';
 import {
   facetClearAll,
   logFacetClearAll,
-} from '../../../features/facets/facet-set/facet-set-analytics-actions';
+} from '../../../features/facets/facet-set/facet-set-analytics-actions.js';
 import {
   getLegacyAnalyticsActionForToggleFacetSelect,
   getAnalyticsActionForToggleFacetSelect,
-} from '../../../features/facets/facet-set/facet-set-utils';
-import {FacetValue} from '../../../features/facets/facet-set/interfaces/response';
-import {executeSearch} from '../../../features/search/search-actions';
-import {buildController} from '../../controller/headless-controller';
-import {AutomaticFacet} from '../automatic-facet-generator/headless-automatic-facet-generator';
+} from '../../../features/facets/facet-set/facet-set-utils.js';
+import {FacetValue} from '../../../features/facets/facet-set/interfaces/response.js';
+import {executeSearch} from '../../../features/search/search-actions.js';
+import {buildController} from '../../controller/headless-controller.js';
+import {AutomaticFacet} from '../automatic-facet-generator/headless-automatic-facet-generator.js';
 
 /**
  * @internal
@@ -57,7 +57,7 @@ export function buildAutomaticFacet(
             field,
             selection
           ),
-          next: getAnalyticsActionForToggleFacetSelect(field, selection),
+          next: getAnalyticsActionForToggleFacetSelect(selection),
         })
       );
     },
@@ -67,7 +67,7 @@ export function buildAutomaticFacet(
       dispatch(
         executeSearch({
           legacy: logFacetClearAll(field),
-          next: facetClearAll(field),
+          next: facetClearAll(),
         })
       );
     },

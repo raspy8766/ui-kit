@@ -1,44 +1,50 @@
-import {updateFacetOptions} from '../../../../features/facet-options/facet-options-actions';
+import {updateFacetOptions} from '../../../../features/facet-options/facet-options-actions.js';
 import {
   deselectAllCategoryFacetValues,
   toggleSelectCategoryFacetValue,
   updateCategoryFacetNumberOfValues,
   updateCategoryFacetSortCriterion,
-} from '../../../../features/facets/category-facet-set/category-facet-set-actions';
-import {defaultCategoryFacetOptions} from '../../../../features/facets/category-facet-set/category-facet-set-slice';
+} from '../../../../features/facets/category-facet-set/category-facet-set-actions.js';
+import {defaultCategoryFacetOptions} from '../../../../features/facets/category-facet-set/category-facet-set-slice.js';
 import {
   CategoryFacetRequest,
   CategoryFacetSortCriterion,
-} from '../../../../features/facets/category-facet-set/interfaces/request';
+} from '../../../../features/facets/category-facet-set/interfaces/request.js';
 import {
   executeSearch,
   fetchFacetValues,
-} from '../../../../features/insight-search/insight-search-actions';
-import {InsightAppState} from '../../../../state/insight-app-state';
-import {buildMockCategoryFacetRequest} from '../../../../test/mock-category-facet-request';
-import {buildMockCategoryFacetResponse} from '../../../../test/mock-category-facet-response';
-import {buildMockCategoryFacetSlice} from '../../../../test/mock-category-facet-slice';
-import {buildMockCategoryFacetValue} from '../../../../test/mock-category-facet-value';
+} from '../../../../features/insight-search/insight-search-actions.js';
+import {InsightAppState} from '../../../../state/insight-app-state.js';
+import {buildMockCategoryFacetRequest} from '../../../../test/mock-category-facet-request.js';
+import {buildMockCategoryFacetResponse} from '../../../../test/mock-category-facet-response.js';
+import {buildMockCategoryFacetSlice} from '../../../../test/mock-category-facet-slice.js';
+import {buildMockCategoryFacetValue} from '../../../../test/mock-category-facet-value.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../../test/mock-engine';
-import {buildMockInsightState} from '../../../../test/mock-insight-state';
+  MockedInsightEngine,
+} from '../../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../../test/mock-insight-state.js';
 import {
   CategoryFacet,
   CategoryFacetOptions,
   buildCategoryFacet,
-} from './headless-insight-category-facet';
+} from './headless-insight-category-facet.js';
+
+vi.mock(
+  '../../../../features/facets/category-facet-set/category-facet-set-actions'
+);
+vi.mock('../../../../features/insight-search/insight-search-actions');
+vi.mock('../../../../features/facet-options/facet-options-actions');
 
 describe('insight category facet', () => {
   const facetId = '1';
   let insightCategoryFacet: CategoryFacet;
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let state: InsightAppState;
   let options: CategoryFacetOptions;
 
   function initInsightCategoryFacet() {
-    engine = buildMockInsightEngine({state});
+    engine = buildMockInsightEngine(state);
     insightCategoryFacet = buildCategoryFacet(engine, {options});
   }
 
@@ -63,12 +69,11 @@ describe('insight category facet', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       insightCategoryFacet.toggleSelect(selection);
 
-      const action = toggleSelectCategoryFacetValue({
+      expect(toggleSelectCategoryFacetValue).toHaveBeenCalledWith({
         facetId,
         selection,
         retrieveCount: defaultCategoryFacetOptions.numberOfValues,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('if the numberOfValues is set it dispatches #toggleCategoryFacetValue with the correct retrieveCount', () => {
@@ -77,29 +82,25 @@ describe('insight category facet', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       insightCategoryFacet.toggleSelect(selection);
 
-      const action = toggleSelectCategoryFacetValue({
+      expect(toggleSelectCategoryFacetValue).toHaveBeenCalledWith({
         facetId,
         selection,
         retrieveCount: 10,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       insightCategoryFacet.toggleSelect(selection);
 
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalledWith();
     });
 
     it('executes a search', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       insightCategoryFacet.toggleSelect(selection);
 
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -107,20 +108,15 @@ describe('insight category facet', () => {
     beforeEach(() => insightCategoryFacet.deselectAll());
 
     it('dispatches #deselectAllCategoryFacetValues', () => {
-      expect(engine.actions).toContainEqual(
-        deselectAllCategoryFacetValues(facetId)
-      );
+      expect(deselectAllCategoryFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalledWith();
     });
 
     it('executes a search', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -128,11 +124,10 @@ describe('insight category facet', () => {
     it('with no values, it dispatches #updateCategoryFacetNumberOfResults with the correct number of values', () => {
       insightCategoryFacet.showMoreValues();
 
-      const action = updateCategoryFacetNumberOfValues({
+      expect(updateCategoryFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: defaultCategoryFacetOptions.numberOfValues,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('with a value, it dispatches #updateCategoryFacetNumberOfResults with the correct number of values', () => {
@@ -142,25 +137,22 @@ describe('insight category facet', () => {
 
       initInsightCategoryFacet();
 
-      const action = updateCategoryFacetNumberOfValues({
+      insightCategoryFacet.showMoreValues();
+      expect(updateCategoryFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: 6,
       });
-      insightCategoryFacet.showMoreValues();
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       insightCategoryFacet.showMoreValues();
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalledWith();
     });
 
     it('dispatches #fetchFacetValues', () => {
       insightCategoryFacet.showMoreValues();
 
-      const action = engine.findAsyncAction(fetchFacetValues.pending);
-      expect(action).toBeTruthy();
+      expect(fetchFacetValues).toHaveBeenCalled();
     });
   });
 
@@ -168,22 +160,18 @@ describe('insight category facet', () => {
     beforeEach(() => insightCategoryFacet.showLessValues());
 
     it('dispatches #updateCategoryFacetNumberOfResults with the correct numberOfValues', () => {
-      const action = updateCategoryFacetNumberOfValues({
+      expect(updateCategoryFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: 5,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalledWith();
     });
 
     it('dispatches #fetchFacetValues', () => {
-      const action = engine.actions.find(
-        (a) => a.type === fetchFacetValues.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(fetchFacetValues).toHaveBeenCalled();
     });
   });
 
@@ -191,25 +179,21 @@ describe('insight category facet', () => {
     it('dispatches #toggleCategoryFacetValue with the passed selection', () => {
       const sortCriterion: CategoryFacetSortCriterion = 'alphanumeric';
       insightCategoryFacet.sortBy(sortCriterion);
-      const action = updateCategoryFacetSortCriterion({
+
+      expect(updateCategoryFacetSortCriterion).toHaveBeenCalledWith({
         facetId,
         criterion: sortCriterion,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       insightCategoryFacet.sortBy('alphanumeric');
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalledWith();
     });
 
     it('dispatches #executeSearch', () => {
       insightCategoryFacet.sortBy('alphanumeric');
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 

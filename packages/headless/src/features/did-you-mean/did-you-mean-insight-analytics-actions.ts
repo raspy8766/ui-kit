@@ -1,18 +1,21 @@
 import {
   InsightAction,
-  makeInsightAnalyticsAction,
-} from '../analytics/analytics-utils';
-import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state';
+  makeInsightAnalyticsActionFactory,
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state.js';
 
 export const logDidYouMeanClick = (): InsightAction =>
-  makeInsightAnalyticsAction('analytics/didyoumean/click', (client, state) =>
-    client.logDidYouMeanClick(
-      getCaseContextAnalyticsMetadata(state.insightCaseContext)
-    )
+  makeInsightAnalyticsActionFactory(SearchPageEvents.didYouMeanClick)(
+    'analytics/didyoumean/click',
+    (client, state) =>
+      client.logDidYouMeanClick(
+        getCaseContextAnalyticsMetadata(state.insightCaseContext)
+      )
   );
 
 export const logDidYouMeanAutomatic = (): InsightAction =>
-  makeInsightAnalyticsAction(
+  makeInsightAnalyticsActionFactory(SearchPageEvents.didYouMeanAutomatic)(
     'analytics/didyoumean/automatic',
     (client, state) =>
       client.logDidYouMeanAutomatic(

@@ -18,7 +18,6 @@
           insightId: 'fc2ee6e0-8bda-4883-bfc6-ffc1b0ce34c7',
           accessToken: 'xx9446b04d-45d4-44a6-880c-22c6c04573ff',
           organizationId: 'searchuisamples',
-          organizationEndpoints: await insightInterface.getOrganizationEndpoints('searchuisamples'),
         });
 
         insightInterface.executeFirstSearch();
@@ -116,9 +115,15 @@
                   }
                 </style>
                 <atomic-insight-result-action-bar>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
+                  <atomic-insight-result-action
+                    tooltip="copy to clipboard"
+                    action="copyToClipboard"
+                  ></atomic-insight-result-action>
+                  <atomic-insight-result-action
+                    tooltip="post to feed"
+                    action="postToFeed"
+                  ></atomic-insight-result-action>
+                  <atomic-insight-result-action tooltip="quickview" action="quickview"></atomic-insight-result-action>
                 </atomic-insight-result-action-bar>
                 <atomic-result-section-badges>
                   <atomic-field-condition must-match-sourcetype="Salesforce">
@@ -183,9 +188,15 @@
                   }
                 </style>
                 <atomic-insight-result-action-bar>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
+                  <atomic-insight-result-action
+                    tooltip="copy to clipboard"
+                    action="copyToClipboard"
+                  ></atomic-insight-result-action>
+                  <atomic-insight-result-action
+                    tooltip="post to feed"
+                    action="postToFeed"
+                  ></atomic-insight-result-action>
+                  <atomic-insight-result-action tooltip="quickview" action="quickview"></atomic-insight-result-action>
                 </atomic-insight-result-action-bar>
                 <atomic-result-section-badges>
                   <atomic-field-condition must-match-sourcetype="Salesforce">
@@ -228,7 +239,6 @@
                   </atomic-result-fields-list>
                 </atomic-result-section-bottom-metadata>
                 <atomic-result-section-children>
-                  <atomic-load-more-children-results></atomic-load-more-children-results>
                   <atomic-insight-result-children image-size="icon">
                     <!-- CHILD -->
                     <atomic-insight-result-children-template>
@@ -317,9 +327,15 @@
                   }
                 </style>
                 <atomic-insight-result-action-bar>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
-                  <atomic-insight-result-action tooltip="test"></atomic-insight-result-action>
+                  <atomic-insight-result-action
+                    tooltip="copy to clipboard"
+                    action="copyToClipboard"
+                  ></atomic-insight-result-action>
+                  <atomic-insight-result-action
+                    tooltip="post to feed"
+                    action="postToFeed"
+                  ></atomic-insight-result-action>
+                  <atomic-insight-result-action tooltip="quickview" action="quickview"></atomic-insight-result-action>
                 </atomic-insight-result-action-bar>
                 <atomic-result-section-badges>
                   <atomic-field-condition must-match-sourcetype="Salesforce">
@@ -421,6 +437,10 @@
           insightElements.forEach((el) => el.setAttribute('widget', false));
         }
       }
+
+      document.addEventListener('atomicInsightResultActionClicked', (event) => {
+        console.log('Result action clicked', event.detail);
+      });
     </script>
   </body>
 </html>

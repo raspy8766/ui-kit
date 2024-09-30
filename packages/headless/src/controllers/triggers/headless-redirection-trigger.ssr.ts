@@ -1,18 +1,24 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
-import {
-  RedirectionTrigger,
-  buildRedirectionTrigger,
-} from './headless-redirection-trigger';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
+import {RedirectionTrigger} from '../core/triggers/headless-core-redirection-trigger.js';
+import {buildRedirectionTrigger} from './headless-redirection-trigger.js';
 
-export * from './headless-redirection-trigger';
+export {buildRedirectionTrigger} from './headless-redirection-trigger.js';
+export type {
+  RedirectionTrigger,
+  RedirectionTriggerState,
+} from '../core/triggers/headless-core-redirection-trigger.js';
+
+export interface RedirectionTriggerDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, RedirectionTrigger> {}
 
 /**
- * @internal
- */
-export const defineRedirectionTrigger = (): ControllerDefinitionWithoutProps<
-  SearchEngine,
-  RedirectionTrigger
-> => ({
-  build: (engine) => buildRedirectionTrigger(engine),
-});
+ * Defines a `RedirectionTrigger` controller instance.
+ *
+ * @returns The `RedirectionTrigger` controller definition.
+ * */
+export function defineRedirectionTrigger(): RedirectionTriggerDefinition {
+  return {
+    build: (engine) => buildRedirectionTrigger(engine),
+  };
+}

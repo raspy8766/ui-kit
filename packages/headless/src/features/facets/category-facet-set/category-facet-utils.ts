@@ -1,6 +1,7 @@
-import {CategoryFacetValueCommon} from './interfaces/commons';
-import {CategoryFacetValueRequest} from './interfaces/request';
-import {CategoryFacetValue} from './interfaces/response';
+import {CategoryFacetValue as CommerceCategoryFacetValue} from '../../commerce/facets/facet-set/interfaces/response.js';
+import {CategoryFacetValueCommon} from './interfaces/commons.js';
+import {CategoryFacetValueRequest} from './interfaces/request.js';
+import {CategoryFacetValue} from './interfaces/response.js';
 
 type GenericCategoryFacetValue = CategoryFacetValueRequest | CategoryFacetValue;
 
@@ -37,6 +38,9 @@ export function partitionIntoParentsAndValues<
 export function findActiveValueAncestry(
   valuesAsTress: CategoryFacetValueRequest[]
 ): CategoryFacetValueRequest[];
+export function findActiveValueAncestry(
+  valuesAsTress: CommerceCategoryFacetValue[]
+): CommerceCategoryFacetValue[];
 export function findActiveValueAncestry(
   valuesAsTress: CategoryFacetValue[]
 ): CategoryFacetValue[];

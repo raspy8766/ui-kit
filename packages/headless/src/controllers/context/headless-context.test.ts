@@ -1,17 +1,25 @@
-import {setContext} from '../../features/context/context-actions';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {setContext} from '../../features/context/context-actions.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
-import {buildContext, Context, ContextInitialState} from './headless-context';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {
+  buildContext,
+  Context,
+  ContextInitialState,
+} from './headless-context.js';
+
+vi.mock('../../features/context/context-actions');
 
 describe('Context', () => {
   let context: Context;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let initialState: ContextInitialState | undefined;
 
   function initContext() {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     context = buildContext(engine, {initialState});
   }
 
@@ -29,6 +37,6 @@ describe('Context', () => {
       values: {foo: 'bar'},
     };
     initContext();
-    expect(engine.actions).toContainEqual(setContext({foo: 'bar'}));
+    expect(setContext).toHaveBeenCalledWith({foo: 'bar'});
   });
 });

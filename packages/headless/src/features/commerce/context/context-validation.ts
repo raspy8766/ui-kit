@@ -1,36 +1,26 @@
-import {RecordValue, Schema} from '@coveo/bueno';
-import {
-  nonEmptyString,
-  requiredNonEmptyString,
-} from '../../../utils/validate-payload';
+import {RecordValue, Schema, StringValue} from '@coveo/bueno';
+import {CurrencyCodeISO4217} from '@coveo/relay-event-types';
+import {requiredNonEmptyString} from '../../../utils/validate-payload.js';
+
+const currencies = Intl.supportedValuesOf('currency') as CurrencyCodeISO4217[];
+
+const currencyDefinition = new StringValue<CurrencyCodeISO4217>({
+  required: true,
+  emptyAllowed: false,
+  constrainTo: currencies,
+});
 
 export const viewDefinition = {
   url: requiredNonEmptyString,
 };
 
-export const userDefinition = {
-  userId: nonEmptyString,
-  email: nonEmptyString,
-  userIp: nonEmptyString,
-  userAgent: nonEmptyString,
-};
-
 export const contextDefinition = {
-  trackingId: requiredNonEmptyString,
   language: requiredNonEmptyString,
   country: requiredNonEmptyString,
-  currency: requiredNonEmptyString,
-  clientId: requiredNonEmptyString,
-  user: new RecordValue({
-    values: {
-      ...userDefinition,
-    },
-  }),
+  currency: currencyDefinition,
   view: new RecordValue({
     options: {required: true},
-    values: {
-      ...viewDefinition,
-    },
+    values: viewDefinition,
   }),
 };
 

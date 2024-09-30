@@ -26,7 +26,9 @@ import {
   QuestionAnsweringSection,
   FoldingSection,
   GeneratedAnswerSection,
-} from './state-sections';
+  ContextSection,
+  InsightUserActionsSection,
+} from './state-sections.js';
 
 export type InsightSearchParametersState = FacetSection &
   DateFacetSection &
@@ -58,4 +60,6 @@ export type InsightAppState = InsightSearchParametersState &
   AttachedResultsSection &
   QuestionAnsweringSection &
   FoldingSection &
-  GeneratedAnswerSection;
+  GeneratedAnswerSection &
+  ContextSection &
+  InsightUserActionsSection;

@@ -1,15 +1,19 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
-import {FacetManager, buildFacetManager} from './headless-facet-manager';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
+import {FacetManager, buildFacetManager} from './headless-facet-manager.js';
 
-export * from './headless-facet-manager';
+export * from './headless-facet-manager.js';
+
+export interface FacetManagerDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, FacetManager> {}
 
 /**
- * @internal
- */
-export const defineFacetManager = (): ControllerDefinitionWithoutProps<
-  SearchEngine,
-  FacetManager
-> => ({
-  build: (engine) => buildFacetManager(engine),
-});
+ * Defines a `FacetManager` controller instance.
+ *
+ * @returns The `FacetManager` controller definition.
+ * */
+export function defineFacetManager(): FacetManagerDefinition {
+  return {
+    build: (engine) => buildFacetManager(engine),
+  };
+}

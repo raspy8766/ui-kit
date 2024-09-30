@@ -1,32 +1,31 @@
-import {fetchMoreResults} from '../../../features/insight-search/insight-search-actions';
-import {buildMockResult} from '../../../test';
+import {fetchMoreResults} from '../../../features/insight-search/insight-search-actions.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../test/mock-engine';
-import {buildResultList} from './headless-insight-result-list';
+  MockedInsightEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../test/mock-insight-state.js';
+import {buildMockResult} from '../../../test/mock-result.js';
+import {buildResultList} from './headless-insight-result-list.js';
+
+vi.mock('../../../features/insight-search/insight-search-actions');
 
 describe('InsightResultList', () => {
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
 
   beforeEach(() => {
-    engine = buildMockInsightEngine();
+    engine = buildMockInsightEngine(buildMockInsightState());
     const results = new Array(10).fill(buildMockResult());
     engine.state.search.results = results;
     engine.state.search.response.totalCountFiltered = 1000;
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('fetchMoreResults should dispatch a fetchMoreResults action', () => {
     buildResultList(engine).fetchMoreResults();
-    expect(
-      engine.actions.find(
-        (action) => action.type === fetchMoreResults.pending.type
-      )
-    ).toBeTruthy();
+    expect(fetchMoreResults).toHaveBeenCalled();
   });
 });

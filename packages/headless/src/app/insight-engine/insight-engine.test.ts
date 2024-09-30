@@ -1,10 +1,10 @@
-import {getSampleEngineConfiguration} from '../engine-configuration';
+import {getSampleEngineConfiguration} from '../engine-configuration.js';
 import {
   buildInsightEngine,
   InsightEngine,
   InsightEngineConfiguration,
   InsightEngineOptions,
-} from './insight-engine';
+} from './insight-engine.js';
 
 function getSampleInsightEngineConfiguration(): InsightEngineConfiguration {
   return {
@@ -23,7 +23,12 @@ describe('buildInsightEngine', () => {
 
   beforeEach(() => {
     options = {
-      configuration: getSampleInsightEngineConfiguration(),
+      configuration: {
+        ...getSampleInsightEngineConfiguration(),
+        search: {
+          locale: 'en-US',
+        },
+      },
       loggerOptions: {level: 'silent'},
     };
 
@@ -39,6 +44,10 @@ describe('buildInsightEngine', () => {
     expect(engine.state.insightConfiguration?.insightId).toEqual(
       options.configuration.insightId
     );
+  });
+
+  it('sets the locale correctly', () => {
+    expect(engine.state.configuration?.search?.locale).toEqual('en-US');
   });
 
   it('exposes an #executeFirstSearch method', () => {

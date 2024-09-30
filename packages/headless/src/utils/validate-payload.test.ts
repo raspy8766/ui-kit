@@ -1,13 +1,14 @@
 import {NumberValue, Schema, SchemaValidationError} from '@coveo/bueno';
-import {CoreEngine} from '../app/engine';
-import {buildMockSearchAppEngine} from '../test';
+import {CoreEngine} from '../app/engine.js';
+import {buildMockSearchEngine} from '../test/mock-engine-v2.js';
+import {createMockState} from '../test/mock-state.js';
 import {
   validatePayload,
   validatePayloadAndThrow,
   validateOptions,
   validateInitialState,
   serializeSchemaValidationError,
-} from './validate-payload';
+} from './validate-payload.js';
 
 const definition = {
   id: new NumberValue({max: 10}),
@@ -73,7 +74,7 @@ describe('validateOptions', () => {
   });
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
   });
 
   it(`when options are valid
@@ -102,7 +103,7 @@ describe('validateInitialState', () => {
   });
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
   });
 
   it(`when initial state is valid

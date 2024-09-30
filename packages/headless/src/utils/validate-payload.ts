@@ -8,7 +8,7 @@ import {
   ArrayValue,
 } from '@coveo/bueno';
 import {SerializedError} from '@reduxjs/toolkit';
-import {CoreEngine} from '../app/engine';
+import type {CoreEngine, CoreEngineNext} from '../app/engine.js';
 
 export const requiredNonEmptyString = new StringValue({
   required: true,
@@ -25,9 +25,20 @@ export const requiredEmptyAllowedString = new StringValue({
   emptyAllowed: true,
 });
 
+export const nonRequiredEmptyAllowedString = new StringValue({
+  required: false,
+  emptyAllowed: true,
+});
+
 export const nonEmptyStringArray = new ArrayValue({
   each: requiredNonEmptyString,
   required: true,
+});
+
+export const optionalNonEmptyVersionString = new StringValue({
+  required: false,
+  emptyAllowed: false,
+  regex: /^\d+\.\d+\.\d+$/,
 });
 
 export const serializeSchemaValidationError = ({
@@ -86,7 +97,7 @@ export const validatePayload = <P>(
 };
 
 export const validateInitialState = <T extends object>(
-  engine: CoreEngine,
+  engine: CoreEngine | CoreEngineNext,
   schema: Schema<T>,
   obj: T | undefined,
   functionName: string
@@ -102,7 +113,7 @@ export const validateInitialState = <T extends object>(
 };
 
 export const validateOptions = <T extends object>(
-  engine: CoreEngine<object>,
+  engine: CoreEngine<object> | CoreEngineNext<object>,
   schema: Schema<T>,
   obj: Partial<T> | undefined,
   functionName: string
@@ -118,7 +129,7 @@ export const validateOptions = <T extends object>(
 };
 
 const validateObject = <T extends object>(
-  engine: CoreEngine<object>,
+  engine: CoreEngine<object> | CoreEngineNext<object>,
   schema: Schema<T>,
   obj: T | undefined,
   validationMessage: string,

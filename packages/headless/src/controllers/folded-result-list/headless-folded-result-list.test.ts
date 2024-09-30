@@ -1,24 +1,27 @@
-import {SearchAppState} from '../..';
-import {loadCollection} from '../../features/folding/folding-actions';
-import {fetchMoreResults} from '../../features/search/search-actions';
+import {loadCollection} from '../../features/folding/folding-actions.js';
+import {fetchMoreResults} from '../../features/search/search-actions.js';
+import {SearchAppState} from '../../state/search-app-state.js';
 import {
-  MockSearchEngine,
-  buildMockResult,
-  buildMockSearchAppEngine,
-  createMockState,
-} from '../../test';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {createMockState} from '../../test/mock-state.js';
 import {
   FoldedResultList,
   buildFoldedResultList,
-} from './headless-folded-result-list';
+} from './headless-folded-result-list.js';
+
+vi.mock('../../features/folding/folding-actions');
+vi.mock('../../features/search/search-actions');
 
 describe('folded result list', () => {
   let state: SearchAppState;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let foldedResultList: FoldedResultList;
 
   function initFoldedResultList() {
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
     foldedResultList = buildFoldedResultList(engine);
   }
 
@@ -36,11 +39,10 @@ describe('folded result list', () => {
       result: buildMockResult(),
     });
 
-    expect(engine.findAsyncAction(loadCollection.pending)).toBeTruthy();
+    expect(loadCollection).toHaveBeenCalled();
   });
   it('#fetchMoreResults dispatches the search #fetchMoreResults action', () => {
     foldedResultList.fetchMoreResults();
-
-    expect(engine.findAsyncAction(fetchMoreResults.pending)).toBeTruthy();
+    expect(fetchMoreResults).toHaveBeenCalled();
   });
 });

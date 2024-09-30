@@ -1,10 +1,9 @@
-import {SearchAnalyticsProvider} from '../../api/analytics/search-analytics';
 import {
   makeAnalyticsAction,
   LegacySearchAction,
-} from '../analytics/analytics-utils';
-import {SearchPageEvents} from '../analytics/search-action-cause';
-import {SearchAction} from '../search/search-actions';
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {SearchAction} from '../search/search-actions.js';
 
 //TODO: KIT-2859
 export const logDidYouMeanClick = (): LegacySearchAction =>
@@ -12,15 +11,16 @@ export const logDidYouMeanClick = (): LegacySearchAction =>
     client.makeDidYouMeanClick()
   );
 
+//TODO: KIT-2859
 export const logDidYouMeanAutomatic = (): LegacySearchAction =>
   makeAnalyticsAction('analytics/didyoumean/automatic', (client) =>
     client.makeDidYouMeanAutomatic()
   );
 
-export const didYouMeanClick = (): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.didyoumeanClick,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getBaseMetadata(),
-  };
-};
+export const didYouMeanClick = (): SearchAction => ({
+  actionCause: SearchPageEvents.didYouMeanClick,
+});
+
+export const didYouMeanAutomatic = (): SearchAction => ({
+  actionCause: SearchPageEvents.didYouMeanAutomatic,
+});

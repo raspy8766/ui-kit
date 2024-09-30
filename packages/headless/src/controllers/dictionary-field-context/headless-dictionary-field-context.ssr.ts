@@ -1,16 +1,25 @@
-import {CoreEngine} from '../../app/engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
+import {CoreEngine} from '../../app/engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
 import {
   DictionaryFieldContext,
   buildDictionaryFieldContext,
-} from './headless-dictionary-field-context';
+} from './headless-dictionary-field-context.js';
 
-export * from './headless-dictionary-field-context';
+export * from './headless-dictionary-field-context.js';
+
+export interface DictionaryFieldContextDefinition
+  extends ControllerDefinitionWithoutProps<
+    CoreEngine,
+    DictionaryFieldContext
+  > {}
 
 /**
- * @internal
- */
-export const defineDictionaryFieldContext =
-  (): ControllerDefinitionWithoutProps<CoreEngine, DictionaryFieldContext> => ({
+ * Defines a `DictionaryFieldContext` controller instance.
+ *
+ * @returns The `DictionaryFieldContext` controller definition.
+ * */
+export function defineDictionaryFieldContext(): DictionaryFieldContextDefinition {
+  return {
     build: (engine) => buildDictionaryFieldContext(engine),
-  });
+  };
+}

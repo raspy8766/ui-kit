@@ -1,15 +1,19 @@
-import {buildMockSearch} from '../../test/mock-search';
-import {buildMockSearchResponse} from '../../test/mock-search-response';
-import {logSearchEvent} from '../analytics/analytics-actions';
-import {executeSearch} from '../search/search-actions';
+import {buildMockSearchResponse} from '../../test/mock-search-response.js';
+import {buildMockSearch} from '../../test/mock-search.js';
+import {logSearchEvent} from '../analytics/analytics-actions.js';
+import {executeSearch} from '../search/search-actions.js';
 import {
   enableDidYouMean,
   disableDidYouMean,
   disableAutomaticQueryCorrection,
   enableAutomaticQueryCorrection,
-} from './did-you-mean-actions';
-import {didYouMeanReducer} from './did-you-mean-slice';
-import {getDidYouMeanInitialState, DidYouMeanState} from './did-you-mean-state';
+  setCorrectionMode,
+} from './did-you-mean-actions.js';
+import {didYouMeanReducer} from './did-you-mean-slice.js';
+import {
+  getDidYouMeanInitialState,
+  DidYouMeanState,
+} from './did-you-mean-state.js';
 
 describe('did you mean slice', () => {
   let state: DidYouMeanState;
@@ -22,14 +26,14 @@ describe('did you mean slice', () => {
 
   it('should handle enable did you mean', () => {
     state.enableDidYouMean = false;
-    expect(didYouMeanReducer(state, enableDidYouMean).enableDidYouMean).toBe(
+    expect(didYouMeanReducer(state, enableDidYouMean()).enableDidYouMean).toBe(
       true
     );
   });
 
   it('should handle disable did you mean', () => {
     state.enableDidYouMean = true;
-    expect(didYouMeanReducer(state, disableDidYouMean).enableDidYouMean).toBe(
+    expect(didYouMeanReducer(state, disableDidYouMean()).enableDidYouMean).toBe(
       false
     );
   });
@@ -37,15 +41,17 @@ describe('did you mean slice', () => {
   it('should clear query corrections on new search', () => {
     state.queryCorrection = {correctedQuery: 'foo', wordCorrections: []};
     expect(
-      didYouMeanReducer(state, executeSearch.pending).queryCorrection
-        .correctedQuery
+      didYouMeanReducer(state, {type: executeSearch.pending.type})
+        .queryCorrection.correctedQuery
     ).toBe('');
   });
 
   it('should clear automatic corrections on new search', () => {
     state.wasAutomaticallyCorrected = true;
     state.wasCorrectedTo = 'foo';
-    const newState = didYouMeanReducer(state, executeSearch.pending);
+    const newState = didYouMeanReducer(state, {
+      type: executeSearch.pending.type,
+    });
     expect(newState.wasAutomaticallyCorrected).toBe(false);
     expect(newState.wasCorrectedTo).toBe('');
   });
@@ -100,7 +106,7 @@ describe('did you mean slice', () => {
   it('should handle enable autocorrection', () => {
     state.automaticallyCorrectQuery = false;
     expect(
-      didYouMeanReducer(state, enableAutomaticQueryCorrection)
+      didYouMeanReducer(state, enableAutomaticQueryCorrection())
         .automaticallyCorrectQuery
     ).toBe(true);
   });
@@ -108,8 +114,36 @@ describe('did you mean slice', () => {
   it('should handle disable autocorrection', () => {
     state.automaticallyCorrectQuery = true;
     expect(
-      didYouMeanReducer(state, disableAutomaticQueryCorrection)
+      didYouMeanReducer(state, disableAutomaticQueryCorrection())
         .automaticallyCorrectQuery
     ).toBe(false);
+  });
+
+  it('should handle #setCorrectionMode', () => {
+    state.queryCorrectionMode = 'legacy';
+    expect(
+      didYouMeanReducer(state, setCorrectionMode('next')).queryCorrectionMode
+    ).toBe('next');
+  });
+
+  it('should set corrected query if mode is next', () => {
+    state.queryCorrectionMode = 'next';
+    const searchAction = executeSearch.fulfilled(
+      buildMockSearch({
+        response: buildMockSearchResponse({
+          queryCorrection: {
+            originalQuery: 'foo',
+            correctedQuery: 'bar',
+            corrections: [],
+          },
+        }),
+      }),
+      '',
+      {legacy: logSearchEvent({evt: 'foo'})}
+    );
+    const resultingState = didYouMeanReducer(state, searchAction);
+
+    expect(resultingState.queryCorrection.correctedQuery).toBe('bar');
+    expect(resultingState.wasCorrectedTo).toBe('bar');
   });
 });

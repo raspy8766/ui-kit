@@ -1,24 +1,25 @@
-import {configuration} from '../../app/common-reducers';
-import {facetOrderReducer as facetOrder} from '../../features/facets/facet-order/facet-order-slice';
-import {
-  back,
-  forward,
-  redo,
-  undo,
-} from '../../features/history/history-actions';
-import {history} from '../../features/history/history-slice';
+import {configuration} from '../../app/common-reducers.js';
+import {facetOrderReducer as facetOrder} from '../../features/facets/facet-order/facet-order-slice.js';
+import {back, forward} from '../../features/history/history-actions.js';
+import {history} from '../../features/history/history-slice.js';
 import {
   extractHistory,
   getHistoryInitialState,
-} from '../../features/history/history-state';
+} from '../../features/history/history-state.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
-import {buildHistoryManager, HistoryManager} from './headless-history-manager';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {
+  buildHistoryManager,
+  HistoryManager,
+} from './headless-history-manager.js';
+
+vi.mock('../../features/history/history-actions');
 
 describe('History Manager', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let historyManager: HistoryManager;
 
   function initHistoryManager() {
@@ -26,7 +27,7 @@ describe('History Manager', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initHistoryManager();
   });
 
@@ -40,49 +41,43 @@ describe('History Manager', () => {
 
   it("won't navigate backwards when there is no past history", () => {
     historyManager.back();
-    expect(engine.actions.length).toBe(0);
+    expect(back).not.toHaveBeenCalled();
   });
 
   it("won't navigate backwards on no results when there is no past history", () => {
     historyManager.backOnNoResults();
-    expect(engine.actions.length).toBe(0);
+    expect(back).not.toHaveBeenCalled();
   });
 
   it('should allow to navigate backward when there is a past history', () => {
-    engine.state.history.present = getHistoryInitialState();
-    engine.state.history.past = [extractHistory({pipeline: 'test'})];
+    engine.state.history!.present = getHistoryInitialState();
+    engine.state.history!.past = [extractHistory({pipeline: 'test'})];
     initHistoryManager();
 
     historyManager.back();
-
-    expect(engine.actions[0].type).toBe(back.pending.type);
-    expect(engine.actions[1].type).toBe(undo().type);
+    expect(back).toHaveBeenCalled();
   });
 
   it('should allow to navigate backward on no results when there is a past history', () => {
-    engine.state.history.present = getHistoryInitialState();
-    engine.state.history.past = [extractHistory({pipeline: 'test'})];
+    engine.state.history!.present = getHistoryInitialState();
+    engine.state.history!.past = [extractHistory({pipeline: 'test'})];
     initHistoryManager();
 
     historyManager.backOnNoResults();
-
-    expect(engine.actions[0].type).toBe(back.pending.type);
-    expect(engine.actions[1].type).toBe(undo().type);
+    expect(back).toHaveBeenCalled();
   });
 
-  it("won't navigate backwards when there is no future history", () => {
+  it("won't navigate forward when there is no future history", () => {
     historyManager.forward();
-    expect(engine.actions.length).toBe(0);
+    expect(forward).not.toHaveBeenCalled();
   });
 
   it('should allow to navigate forward when there is a future history', () => {
-    engine.state.history.present = getHistoryInitialState();
-    engine.state.history.future = [extractHistory({pipeline: 'test'})];
+    engine.state.history!.present = getHistoryInitialState();
+    engine.state.history!.future = [extractHistory({pipeline: 'test'})];
     initHistoryManager();
 
     historyManager.forward();
-
-    expect(engine.actions[0].type).toBe(forward.pending.type);
-    expect(engine.actions[1].type).toBe(redo().type);
+    expect(forward).toHaveBeenCalled();
   });
 });

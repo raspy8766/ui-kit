@@ -1,30 +1,40 @@
-import {Raw} from '../../../api/search/search/raw';
-import {Result} from '../../../api/search/search/result';
-import {configurationReducer as configuration} from '../../../features/configuration/configuration-slice';
-import {loadCollection} from '../../../features/folding/folding-actions';
-import {foldedResultAnalyticsClient} from '../../../features/folding/folding-analytics-actions';
-import {foldingReducer as folding} from '../../../features/folding/folding-slice';
+import {Raw} from '../../../api/search/search/raw.js';
+import {Result} from '../../../api/search/search/result.js';
+import {configurationReducer as configuration} from '../../../features/configuration/configuration-slice.js';
+import {
+  loadCollection,
+  registerFolding,
+} from '../../../features/folding/folding-actions.js';
+import {
+  foldedResultAnalyticsClient,
+  logShowMoreFoldedResults,
+} from '../../../features/folding/folding-analytics-actions.js';
+import {foldingReducer as folding} from '../../../features/folding/folding-slice.js';
 import {
   FoldedCollection,
   getFoldingInitialState,
-} from '../../../features/folding/folding-state';
-import {queryReducer as query} from '../../../features/query/query-slice';
-import {fetchMoreResults} from '../../../features/search/search-actions';
-import {searchReducer as search} from '../../../features/search/search-slice';
+} from '../../../features/folding/folding-state.js';
+import {queryReducer as query} from '../../../features/query/query-slice.js';
+import {fetchMoreResults} from '../../../features/search/search-actions.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
 import {
-  buildMockResult,
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../../test';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockResult} from '../../../test/mock-result.js';
+import {createMockState} from '../../../test/mock-state.js';
 import {
   buildCoreFoldedResultList,
   FoldedResultList,
   CoreFoldedResultListProps,
   FoldedResultListOptions,
-} from './headless-core-folded-result-list';
+} from './headless-core-folded-result-list.js';
+
+vi.mock('../../../features/folding/folding-actions');
+vi.mock('../../../features/folding/folding-analytics-actions');
 
 describe('FoldedResultList', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let foldedResultList: FoldedResultList;
   let props: CoreFoldedResultListProps;
 
@@ -52,7 +62,7 @@ describe('FoldedResultList', () => {
       fetchMoreResultsActionCreator: fetchMoreResults,
     };
 
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initFoldedResultList();
   });
 
@@ -94,10 +104,7 @@ describe('FoldedResultList', () => {
   });
 
   it('should dispatch a #registerFolding action at initialization', () => {
-    expect(engine.actions.length).toEqual(1);
-    expect(engine.actions.map((action) => action.type)).toContainEqual(
-      'folding/register'
-    );
+    expect(registerFolding).toHaveBeenCalled();
   });
 
   describe('with a result and two collections', () => {
@@ -155,13 +162,10 @@ describe('FoldedResultList', () => {
     });
 
     it('#loadCollection dispatches folding/loadCollection and #logShowMoreFoldedResults analytics', () => {
-      const expectedLogShowMoreAction = 'analytics/folding/showMore/pending';
-      const expectedLoadCollectionAction = 'folding/loadCollection/pending';
-
       foldedResultList.loadCollection(foldedResultList?.state?.results[0]);
 
-      expect(engine.actions.pop()?.type).toEqual(expectedLogShowMoreAction);
-      expect(engine.actions.pop()?.type).toEqual(expectedLoadCollectionAction);
+      expect(loadCollection).toHaveBeenCalled();
+      expect(logShowMoreFoldedResults).toHaveBeenCalled();
     });
 
     it('finds a result by id', () => {

@@ -19,9 +19,9 @@ import {LightningElement, api, track} from 'lwc';
 /**
  * The `QuanticResultQuickview` component renders a button which the end user can click to open a modal box containing certain information about a result.
  * @category Result Template
- * @fires CustomEvent#haspreview
+ * @fires CustomEvent#quantic__haspreview
  * @example
- * <c-quantic-result-quickview engine-id={engineId} result={result} maximum-preview-size="100" use-case="search"></c-quantic-result-quickview>
+ * <c-quantic-result-quickview engine-id={engineId} result={result} maximum-preview-size="100" onquantic__haspreview={handleHasPreview}></c-quantic-result-quickview>
  */
 export default class QuanticResultQuickview extends LightningElement {
   /**
@@ -64,14 +64,6 @@ export default class QuanticResultQuickview extends LightningElement {
    * @defaultValue `undefined`
    */
   @api previewButtonVariant;
-  /**
-   * Indicates the use case where this quickview component is used.
-   * @api
-   * @type {'search'|'case-assist'}
-   * @deprecated The component uses the same Headless bundle as the interface it is bound to.
-   * @defaultValue `'search'`
-   */
-  @api useCase = 'search';
   /**
    * The label displayed in the tooltip of the quick view button.
    * @api
@@ -129,7 +121,10 @@ export default class QuanticResultQuickview extends LightningElement {
       );
       this.dispatchEvent(resultActionRegister);
     }
-    this.addEventListener('loadingstatechange', this.handleLoadingStateChange);
+    this.addEventListener(
+      'quantic__loadingstatechange',
+      this.handleLoadingStateChange
+    );
   }
 
   renderedCallback() {
@@ -174,7 +169,7 @@ export default class QuanticResultQuickview extends LightningElement {
   openQuickview() {
     this.isQuickviewOpen = true;
     this._isLoading = true;
-    if (!isHeadlessBundle(this.engineId, HeadlessBundleNames.caseAssist)) {
+    if (isHeadlessBundle(this.engineId, HeadlessBundleNames.search)) {
       this.addRecentResult();
     }
     this.quickview.fetchResultContent();
@@ -185,7 +180,11 @@ export default class QuanticResultQuickview extends LightningElement {
     const {pushRecentResult} = this.headless.loadRecentResultsActions(
       this.engine
     );
-    this.engine.dispatch(pushRecentResult(Object.create(this.result)));
+
+    // Destructuring transforms the Proxy object created by Salesforce to a normal object so no unexpected behaviour will occur with the Headless library.
+    this.engine.dispatch(
+      pushRecentResult({...this.result, raw: {...this.result.raw}})
+    );
   }
 
   closeQuickview() {
@@ -200,7 +199,7 @@ export default class QuanticResultQuickview extends LightningElement {
 
   dispatchHasPreview(hasPreview) {
     this.dispatchEvent(
-      new CustomEvent('haspreview', {
+      new CustomEvent('quantic__haspreview', {
         detail: {
           hasPreview,
         },

@@ -1,14 +1,21 @@
-import {logTriggerExecute} from '../../features/triggers/trigger-analytics-actions';
-import {triggerReducer as triggers} from '../../features/triggers/triggers-slice';
-import {FunctionExecutionTrigger} from '../../features/triggers/triggers-state';
+import {Mock} from 'vitest';
+import {logTriggerExecute} from '../../features/triggers/trigger-analytics-actions.js';
+import {triggerReducer as triggers} from '../../features/triggers/triggers-slice.js';
+import {FunctionExecutionTrigger} from '../../features/triggers/triggers-state.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
-import {ExecuteTrigger, buildExecuteTrigger} from './headless-execute-trigger';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {
+  ExecuteTrigger,
+  buildExecuteTrigger,
+} from './headless-execute-trigger.js';
+
+vi.mock('../../features/triggers/trigger-analytics-actions');
 
 describe('ExecuteTrigger', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let executeTrigger: ExecuteTrigger;
 
   function initExecuteTrigger() {
@@ -16,21 +23,16 @@ describe('ExecuteTrigger', () => {
   }
 
   function setEngineTriggersState(executions: FunctionExecutionTrigger[]) {
-    engine.state.triggers.executions = executions;
+    engine.state.triggers!.executions = executions;
   }
 
   function registeredListeners() {
-    return (engine.subscribe as jest.Mock).mock.calls.map((args) => args[0]);
-  }
-
-  function getLogTriggerExecuteAction() {
-    return engine.actions.find(
-      (a) => a.type === logTriggerExecute().pending.type
-    );
+    return (engine.subscribe as Mock).mock.calls.map((args) => args[0]);
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    vi.resetAllMocks();
+    engine = buildMockSearchEngine(createMockState());
     initExecuteTrigger();
   });
 
@@ -49,9 +51,9 @@ describe('ExecuteTrigger', () => {
   });
 
   describe('when the #engine.state.triggers.executions is not updated', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
-      engine = buildMockSearchAppEngine();
+      engine = buildMockSearchEngine(createMockState());
       initExecuteTrigger();
       executeTrigger.subscribe(listener);
 
@@ -64,14 +66,14 @@ describe('ExecuteTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerExecute', () => {
-      expect(getLogTriggerExecuteAction()).toBeFalsy();
+      expect(logTriggerExecute).not.toHaveBeenCalled();
     });
   });
 
   describe('when the #engine.state.triggers.executions is updated', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
-      engine = buildMockSearchAppEngine();
+      engine = buildMockSearchEngine(createMockState());
       initExecuteTrigger();
       executeTrigger.subscribe(listener);
       setEngineTriggersState([
@@ -90,7 +92,7 @@ describe('ExecuteTrigger', () => {
     });
 
     it('it dispatches #logTriggerExecute', () => {
-      expect(getLogTriggerExecuteAction()).toBeTruthy();
+      expect(logTriggerExecute).toHaveBeenCalled();
     });
 
     it('#state should be updated', () => {
@@ -101,9 +103,9 @@ describe('ExecuteTrigger', () => {
   });
 
   describe('when the #engine.state.triggers.executions is updated with an empty array', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
-      engine = buildMockSearchAppEngine();
+      engine = buildMockSearchEngine(createMockState());
       initExecuteTrigger();
       executeTrigger.subscribe(listener);
       setEngineTriggersState([]);
@@ -117,14 +119,14 @@ describe('ExecuteTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerExecute', () => {
-      expect(getLogTriggerExecuteAction()).toBeFalsy();
+      expect(logTriggerExecute).not.toHaveBeenCalled();
     });
   });
 
   describe('when a non-empty #engine.state.triggers.executions is updated with an empty array', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
-      engine = buildMockSearchAppEngine();
+      engine = buildMockSearchEngine(createMockState());
       setEngineTriggersState([
         {functionName: 'info', params: ['String param', 1, false]},
         {functionName: 'error', params: [2, true, 'No']},
@@ -142,14 +144,14 @@ describe('ExecuteTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerExecute', () => {
-      expect(getLogTriggerExecuteAction()).toBeFalsy();
+      expect(logTriggerExecute).not.toHaveBeenCalled();
     });
   });
 
   describe('when a non-empty #engine.state.triggers.executions is updated with the same array', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
-      engine = buildMockSearchAppEngine();
+      engine = buildMockSearchEngine(createMockState());
       setEngineTriggersState([
         {functionName: 'info', params: ['String param', 1, false]},
         {functionName: 'error', params: [2, true, 'No']},
@@ -170,7 +172,7 @@ describe('ExecuteTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerExecute', () => {
-      expect(getLogTriggerExecuteAction()).toBeFalsy();
+      expect(logTriggerExecute).not.toHaveBeenCalled();
     });
   });
 });

@@ -1,18 +1,26 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
 import {
   InstantResultProps,
   InstantResults,
   buildInstantResults,
-} from './instant-results';
+} from './instant-results.js';
 
-export * from './instant-results';
+export * from './instant-results.js';
+
+export interface InstantResultsDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, InstantResults> {}
 
 /**
- * @internal
- */
-export const defineInstantResults = (
+ * Defines an `InstantResults` controller instance.
+ *
+ * @param props - The configurable `InstantResults` properties.
+ * @returns The `InstantResults` controller definition.
+ * */
+export function defineInstantResults(
   props: InstantResultProps
-): ControllerDefinitionWithoutProps<SearchEngine, InstantResults> => ({
-  build: (engine) => buildInstantResults(engine, props),
-});
+): InstantResultsDefinition {
+  return {
+    build: (engine) => buildInstantResults(engine, props),
+  };
+}

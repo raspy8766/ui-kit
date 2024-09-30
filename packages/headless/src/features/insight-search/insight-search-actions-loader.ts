@@ -1,24 +1,31 @@
-import {AsyncThunkAction} from '@reduxjs/toolkit';
-import {AsyncThunkInsightOptions} from '../../api/service/insight/insight-api-client';
-import {searchReducer as search} from '../../features/search/search-slice';
-import {InsightEngine} from '../../insight.index';
-import {InsightAction} from '../analytics/analytics-utils';
+import {AsyncThunkAction, PayloadAction} from '@reduxjs/toolkit';
+import {AsyncThunkInsightOptions} from '../../api/service/insight/insight-api-client.js';
+import {InsightEngine} from '../../app/insight-engine/insight-engine.js';
+import {searchReducer as search} from '../../features/search/search-slice.js';
+import {InsightAction} from '../analytics/analytics-utils.js';
 import {
   FetchQuerySuggestionsActionCreatorPayload,
   FetchQuerySuggestionsThunkReturn,
-} from '../query-suggest/query-suggest-actions';
-import {ExecuteSearchThunkReturn} from '../search/legacy/search-actions';
+  RegisterQuerySuggestActionCreatorPayload,
+  registerQuerySuggest,
+} from '../query-suggest/query-suggest-actions.js';
+import {ExecuteSearchThunkReturn} from '../search/legacy/search-actions.js';
+import {
+  StateNeededByExecuteSearch,
+  StateNeededByQuerySuggest,
+  fetchQuerySuggestions,
+} from './insight-search-actions.js';
 import {
   executeSearch,
   fetchFacetValues,
   fetchMoreResults,
   fetchPage,
-  fetchQuerySuggestions,
-  StateNeededByExecuteSearch,
-  StateNeededByQuerySuggest,
-} from './insight-search-actions';
+} from './legacy/insight-search-actions.js';
 
-export type {FetchQuerySuggestionsActionCreatorPayload};
+export type {
+  FetchQuerySuggestionsActionCreatorPayload,
+  RegisterQuerySuggestActionCreatorPayload,
+};
 
 export interface InsightSearchActionCreators {
   /**
@@ -95,6 +102,16 @@ export interface InsightSearchActionCreators {
     FetchQuerySuggestionsActionCreatorPayload,
     AsyncThunkInsightOptions<StateNeededByQuerySuggest>
   >;
+
+  /**
+   * Registers a new query suggest entity to the headless state to enable the Coveo ML query suggestions feature.
+   *
+   * @param payload - The action creator payload.
+   * @returns A dispatchable action.
+   */
+  registerQuerySuggest(
+    payload: RegisterQuerySuggestActionCreatorPayload
+  ): PayloadAction<RegisterQuerySuggestActionCreatorPayload>;
 }
 
 /**
@@ -114,5 +131,6 @@ export function loadInsightSearchActions(
     fetchMoreResults,
     fetchPage,
     fetchQuerySuggestions,
+    registerQuerySuggest,
   };
 }

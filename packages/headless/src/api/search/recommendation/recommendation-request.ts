@@ -1,10 +1,11 @@
 import {
   BaseParam,
   ContextParam,
+  DictionaryFieldContextParam,
   LocaleParam,
   NumberOfResultsParam,
   VisitorIDParam,
-} from '../../platform-service-params';
+} from '../../platform-service-params.js';
 import {
   ActionsHistoryParam,
   AdvancedQueryParam,
@@ -18,13 +19,14 @@ import {
   SearchHubParam,
   TabParam,
   TimezoneParam,
-} from '../search-api-params';
+} from '../search-api-params.js';
 
 export type RecommendationRequest = BaseParam &
   RecommendationParam &
   SearchHubParam &
   PipelineParam &
   ContextParam &
+  DictionaryFieldContextParam &
   FieldsToIncludeParam &
   AdvancedQueryParam &
   ConstantQueryParam &

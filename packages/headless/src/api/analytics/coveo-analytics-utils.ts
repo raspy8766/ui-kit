@@ -5,20 +5,12 @@ import {
   history,
 } from 'coveo.analytics';
 import {Logger} from 'pino';
-import {clone} from '../../utils/utils';
-import {PreprocessRequest} from '../preprocess-request';
+import {clone} from '../../utils/utils.js';
+import {PreprocessRequest} from '../preprocess-request.js';
 
 export const getVisitorID = (options: {
   runtimeEnvironment?: IRuntimeEnvironment;
 }) => new CoveoAnalyticsClient(options).getCurrentVisitorId();
-
-export const clearAnalyticsClient = (options: {
-  runtimeEnvironment?: IRuntimeEnvironment;
-}) => {
-  const client = new CoveoAnalyticsClient(options);
-  client.clear();
-  client.deleteHttpOnlyVisitorId();
-};
 
 export const historyStore = new history.HistoryStore();
 

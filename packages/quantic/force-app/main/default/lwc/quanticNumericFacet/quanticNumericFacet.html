@@ -8,8 +8,8 @@
       <c-quantic-placeholder variant="card" number-of-rows={numberOfValues}></c-quantic-placeholder>
     </template>
     <template if:true={shouldRenderFacet}>
-      <div data-cy="numeric-facet__card" class="slds-size_1-of-1">
-        <c-quantic-card-container title={label} onheaderclick={toggleFacetVisibility} onheaderkeydown={toggleFacetVisibility}>
+      <div data-cy="numeric-facet__card" class="slds-size_1-of-1 slds-var-m-bottom_large">
+        <c-quantic-card-container title={label} onquantic__headerclick={toggleFacetVisibility} onquantic__headerkeydown={toggleFacetVisibility}>
           <lightning-button-icon
             class={actionButtonCssClasses}
             slot="actions"
@@ -94,7 +94,7 @@
                     <template for:each={values} for:item="v">
                       <li class="slds-grid" key={v.key}>
                         <c-quantic-facet-value
-                          onselectvalue={onSelectValue}
+                          onquantic__selectvalue={onSelectValue}
                           item={v}
                           is-checked={v.checked}
                           formatting-function={formattingFunction}

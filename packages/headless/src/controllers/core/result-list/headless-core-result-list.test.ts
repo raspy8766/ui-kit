@@ -1,29 +1,39 @@
 import {SchemaValidationError} from '@coveo/bueno';
-import {configuration} from '../../../app/common-reducers';
-import {registerFieldsToInclude} from '../../../features/fields/fields-actions';
-import {fieldsReducer as fields} from '../../../features/fields/fields-slice';
-import {fetchMoreResults} from '../../../features/search/search-actions';
-import {searchReducer as search} from '../../../features/search/search-slice';
-import {buildMockResult, MockSearchEngine} from '../../../test';
-import {buildMockSearchAppEngine} from '../../../test/mock-engine';
-import {buildCoreResultList, ResultList} from './headless-core-result-list';
+import {Mock} from 'vitest';
+import {configuration} from '../../../app/common-reducers.js';
+import {registerFieldsToInclude} from '../../../features/fields/fields-actions.js';
+import {fieldsReducer as fields} from '../../../features/fields/fields-slice.js';
+import {fetchMoreResults} from '../../../features/search/search-actions.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
+import {
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockResult} from '../../../test/mock-result.js';
+import {createMockState} from '../../../test/mock-state.js';
+import {buildCoreResultList, ResultList} from './headless-core-result-list.js';
+
+vi.mock('../../../features/fields/fields-actions');
+vi.mock('../../../features/search/search-actions');
 
 describe('CoreResultList', () => {
   const testProps = {
     fetchMoreResultsActionCreator: fetchMoreResults,
   };
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    vi.resetAllMocks();
+    const state = createMockState();
     const results = new Array(10).fill(buildMockResult());
-    engine.state.search.results = results;
-    engine.state.search.response.totalCountFiltered = 1000;
-    jest.useFakeTimers();
+    state.search.results = results;
+    state.search.response.totalCountFiltered = 1000;
+    engine = buildMockSearchEngine(state);
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('it adds the correct reducers to engine', () => {
@@ -37,19 +47,15 @@ describe('CoreResultList', () => {
 
   it('initializes correctly with no fields to include', () => {
     expect(buildCoreResultList(engine)).toBeTruthy();
-    const action = engine.actions.find(
-      (a) => a.type === registerFieldsToInclude.type
-    );
-    expect(action).toBeUndefined();
+    expect(registerFieldsToInclude).not.toHaveBeenCalled();
   });
 
   it('initializes correctly with fields to include', () => {
-    expect(
-      buildCoreResultList(engine, {
-        options: {fieldsToInclude: ['test']},
-      })
-    ).toBeTruthy();
-    expect(engine.actions).toContainEqual(registerFieldsToInclude(['test']));
+    buildCoreResultList(engine, {
+      options: {fieldsToInclude: ['test']},
+    });
+
+    expect(registerFieldsToInclude).toHaveBeenCalledWith(['test']);
   });
 
   it('throws the correct error if the validation is not correct', () => {
@@ -57,26 +63,19 @@ describe('CoreResultList', () => {
       buildCoreResultList(engine, {
         options: {fieldsToInclude: [1 as unknown as string]},
       })
-    ).toThrowError(SchemaValidationError);
+    ).toThrow(SchemaValidationError);
   });
 
   it('fetchMoreResults should dispatch a fetchMoreResults action', () => {
     buildCoreResultList(engine, testProps).fetchMoreResults();
-    expect(
-      engine.actions.find(
-        (action) => action.type === fetchMoreResults.pending.type
-      )
-    ).toBeTruthy();
+
+    expect(fetchMoreResults).toHaveBeenCalled();
   });
 
   it('fetchMoreResults should not dispatch a fetchMoreResults action if search state is loading', () => {
     engine.state.search.isLoading = true;
     buildCoreResultList(engine, testProps).fetchMoreResults();
-    expect(
-      engine.actions.find(
-        (action) => action.type === fetchMoreResults.pending.type
-      )
-    ).toBeFalsy();
+    expect(fetchMoreResults).not.toHaveBeenCalled();
   });
 
   it('moreResultsAvailable should return true when totalCountFiltered is greater than the results length', () => {
@@ -91,7 +90,7 @@ describe('CoreResultList', () => {
 
   describe('fetchMoreResults "infinite" fetches prevention', () => {
     let resultList: ResultList;
-    let mockDispatch: jest.Mock;
+    let mockDispatch: Mock;
 
     const fetchMoreResultsAndWait = async (
       iterations: number,
@@ -100,13 +99,13 @@ describe('CoreResultList', () => {
       for (let i = 0; i < iterations; i++) {
         resultList.fetchMoreResults();
         await Promise.resolve();
-        jest.advanceTimersByTime(delay);
+        vi.advanceTimersByTime(delay);
         await Promise.resolve();
       }
     };
 
     beforeEach(() => {
-      mockDispatch = jest.fn().mockResolvedValue({});
+      mockDispatch = vi.fn().mockResolvedValue({});
       resultList = buildCoreResultList(
         {
           ...engine,
@@ -114,8 +113,8 @@ describe('CoreResultList', () => {
         },
         testProps
       );
-      jest.spyOn(engine.logger, 'error');
-      jest.spyOn(engine.logger, 'info');
+      vi.spyOn(engine.logger, 'error');
+      vi.spyOn(engine.logger, 'info');
     });
 
     it(`when calling fetchMoreResults consecutively many times with a small delay

@@ -1,34 +1,48 @@
+import {describe, it, vi, expect, beforeEach} from 'vitest';
+import {CoreEngine} from '../../../../../app/engine.js';
 import {
   registerCategoryFacetSearch,
   selectCategoryFacetSearchResult,
-} from '../../../../../features/facets/facet-search-set/category/category-facet-search-actions';
-import {defaultFacetSearchOptions} from '../../../../../features/facets/facet-search-set/facet-search-reducer-helpers';
-import {buildMockCategoryFacetSearch} from '../../../../../test/mock-category-facet-search';
-import {buildMockCategoryFacetSearchResult} from '../../../../../test/mock-category-facet-search-result';
+} from '../../../../../features/facets/facet-search-set/category/category-facet-search-actions.js';
+import {defaultFacetSearchOptions} from '../../../../../features/facets/facet-search-set/facet-search-reducer-helpers.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../../../../test/mock-engine';
+  CategoryFacetSearchSection,
+  ConfigurationSection,
+} from '../../../../../state/state-sections.js';
+import {buildMockCategoryFacetSearchResult} from '../../../../../test/mock-category-facet-search-result.js';
+import {buildMockCategoryFacetSearch} from '../../../../../test/mock-category-facet-search.js';
+import {
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../../../test/mock-engine-v2.js';
+import {createMockState} from '../../../../../test/mock-state.js';
 import {
   CategoryFacetSearchProps,
   CategoryFacetSearch,
   buildCoreCategoryFacetSearch,
-} from './headless-category-facet-search';
+} from './headless-category-facet-search.js';
+
+vi.mock(
+  '../../../../../features/facets/facet-search-set/category/category-facet-search-actions'
+);
 
 describe('CategoryFacetSearch', () => {
   const facetId = '1';
   let props: CategoryFacetSearchProps;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let controller: CategoryFacetSearch;
 
   function initEngine() {
-    engine = buildMockSearchAppEngine();
-    engine.state.categoryFacetSearchSet[facetId] =
-      buildMockCategoryFacetSearch();
+    const state = createMockState();
+    state.categoryFacetSearchSet[facetId] = buildMockCategoryFacetSearch();
+    engine = buildMockSearchEngine(state);
   }
 
   function initFacetSearch() {
-    controller = buildCoreCategoryFacetSearch(engine, props);
+    controller = buildCoreCategoryFacetSearch(
+      engine as CoreEngine<CategoryFacetSearchSection & ConfigurationSection>,
+      props
+    );
   }
 
   beforeEach(() => {
@@ -37,6 +51,9 @@ describe('CategoryFacetSearch', () => {
         ...defaultFacetSearchOptions,
         facetId,
       },
+      executeFacetSearchActionCreator: vi.fn(),
+      executeFieldSuggestActionCreator: vi.fn(),
+      select: vi.fn(),
       isForFieldSuggestions: false,
     };
 
@@ -45,14 +62,7 @@ describe('CategoryFacetSearch', () => {
   });
 
   it('on init, it dispatches a #registerCategoryFacetSearch action with the specified options', () => {
-    expect(engine.actions).toContainEqual(
-      registerCategoryFacetSearch(props.options)
-    );
-  });
-
-  it('calling #state returns the latest state', () => {
-    engine.state.categoryFacetSearchSet[facetId].isLoading = true;
-    expect(controller.state.isLoading).toBe(true);
+    expect(registerCategoryFacetSearch).toHaveBeenCalledWith(props.options);
   });
 
   describe('#select', () => {
@@ -63,21 +73,19 @@ describe('CategoryFacetSearch', () => {
     });
 
     it('dispatches #selectCategoryFacetSearchResult action', () => {
-      const action = selectCategoryFacetSearchResult({
+      expect(selectCategoryFacetSearchResult).toHaveBeenCalledWith({
         facetId,
         value,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('if numberOfValues is set it dispatches #selectCategoryFacetSearchResult with the correct retrieveCount', () => {
       props.options.numberOfValues = 3;
       initFacetSearch();
-      const action = selectCategoryFacetSearchResult({
+      expect(selectCategoryFacetSearchResult).toHaveBeenCalledWith({
         facetId,
         value,
       });
-      expect(engine.actions).toContainEqual(action);
     });
   });
 });

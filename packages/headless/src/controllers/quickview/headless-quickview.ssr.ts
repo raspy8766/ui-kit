@@ -1,14 +1,24 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
-import {Quickview, QuickviewProps, buildQuickview} from './headless-quickview';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
+import {
+  Quickview,
+  QuickviewProps,
+  buildQuickview,
+} from './headless-quickview.js';
 
-export * from './headless-quickview';
+export * from './headless-quickview.js';
+
+export interface QuickviewDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, Quickview> {}
 
 /**
- * @internal
- */
-export const defineQuickview = (
-  props: QuickviewProps
-): ControllerDefinitionWithoutProps<SearchEngine, Quickview> => ({
-  build: (engine) => buildQuickview(engine, props),
-});
+ * Defines a `Quickview` controller instance.
+ *
+ * @param props - The configurable `Quickview` properties.
+ * @returns The `Quickview` controller definition.
+ * */
+export function defineQuickview(props: QuickviewProps): QuickviewDefinition {
+  return {
+    build: (engine) => buildQuickview(engine, props),
+  };
+}

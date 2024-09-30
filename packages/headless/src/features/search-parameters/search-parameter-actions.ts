@@ -1,8 +1,8 @@
 import {createAction} from '@reduxjs/toolkit';
-import {validatePayload} from '../../utils/validate-payload';
-import {DateRangeRequest} from '../facets/range-facets/date-facet-set/interfaces/request';
-import {NumericRangeRequest} from '../facets/range-facets/numeric-facet-set/interfaces/request';
-import {searchParametersDefinition} from './search-parameter-schema';
+import {validatePayload} from '../../utils/validate-payload.js';
+import {DateRangeRequest} from '../facets/range-facets/date-facet-set/interfaces/request.js';
+import {NumericRangeRequest} from '../facets/range-facets/numeric-facet-set/interfaces/request.js';
+import {searchParametersDefinition} from './search-parameter-schema.js';
 
 /**
  * The parameters affecting the search response.
@@ -57,6 +57,10 @@ export interface SearchParameters {
    * A record of the numeric facets, where the key is the facet id, and value is an array containing the numeric ranges to request.
    */
   nf?: Record<string, NumericRangeRequest[]>;
+  /**
+   * A record of the manual numeric facets, where the key is the facet id, and the value is the selected numeric range.
+   */
+  mnf?: Record<string, NumericRangeRequest>;
 
   /**
    * The number of results to return.

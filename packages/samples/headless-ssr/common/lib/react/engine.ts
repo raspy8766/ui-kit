@@ -12,7 +12,16 @@ export const {
   hydrateStaticState,
   StaticStateProvider,
   HydratedStateProvider,
+  setNavigatorContextProvider,
 } = engineDefinition;
 
-export const {useResultList, useSearchBox, useAuthorFacet, useUrlManager} =
-  engineDefinition.controllers;
+export const {
+  useResultList,
+  useSearchBox,
+  useTabManager,
+  useTabAll,
+  useTabCountries,
+  useTabVideos,
+  useAuthorFacet,
+  useSearchParameterManager,
+} = engineDefinition.controllers;

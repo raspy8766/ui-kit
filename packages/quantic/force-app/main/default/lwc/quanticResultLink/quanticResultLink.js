@@ -8,6 +8,11 @@ import {ResultUtils} from 'c/quanticUtils';
 import {NavigationMixin} from 'lightning/navigation';
 import {LightningElement, api} from 'lwc';
 
+/**
+ * Some document types cannot be opened directly in Salesforce, but we need to open their parent record, as is the case for the Case Comment document type.
+ */
+const documentTypesRequiringParentRecord = ['CaseComment'];
+
 /** @typedef {import("coveo").Result} Result */
 /** @typedef {import("coveo").SearchEngine} SearchEngine */
 
@@ -47,14 +52,6 @@ export default class QuanticResultLink extends NavigationMixin(
    */
   @api target = '_self';
   /**
-   * Indicates the use case where this component is used.
-   * @api
-   * @type {'search'|'case-assist'}
-   * @deprecated The component uses the same Headless bundle as the interface it is bound to.
-   * @defaultValue `'search'`
-   */
-  @api useCase = 'search';
-  /**
    * A function used to set focus to the link.
    * @api
    * @type {VoidFunction}
@@ -66,6 +63,13 @@ export default class QuanticResultLink extends NavigationMixin(
       focusTarget.focus();
     }
   }
+  /**
+   * Indicates the result field to display as the link text.
+   * @api
+   * @type {string}
+   * @defaultValue `'title'`
+   */
+  @api displayedField = 'title';
 
   /** @type {SearchEngine} */
   engine;
@@ -109,7 +113,8 @@ export default class QuanticResultLink extends NavigationMixin(
     this.engine = engine;
     ResultUtils.bindClickEventsOnResult(
       this.engine,
-      this.result,
+      // Destructuring transforms the Proxy object created by Salesforce to a normal object so no unexpected behaviour will occur with the Headless library.
+      {...this.result, raw: {...this.result.raw}},
       this.template,
       this.headless.buildInteractiveResult
     );
@@ -139,7 +144,18 @@ export default class QuanticResultLink extends NavigationMixin(
     if (this.result?.raw?.sfkbid && this.result?.raw?.sfkavid) {
       return this.result.raw.sfkavid;
     }
+    if (this.shouldOpenParentRecord) {
+      return this.result?.raw?.sfparentid;
+    }
     return this.result.raw.sfid;
+  }
+
+  get shouldOpenParentRecord() {
+    return (
+      documentTypesRequiringParentRecord.includes(
+        this.result?.raw?.documenttype
+      ) && this.result?.raw?.sfparentid
+    );
   }
 
   /**
@@ -150,10 +166,13 @@ export default class QuanticResultLink extends NavigationMixin(
   }
 
   /**
-   * Returns the title of the link to display.
+   * Returns the result field to display as the link title.
    */
-  get displayedField() {
-    return this.result.title ? 'title' : 'clickUri';
+  get fieldToDisplay() {
+    return this.result[this.displayedField] ||
+      this.result.raw?.[this.displayedField]
+      ? this.displayedField
+      : 'clickUri';
   }
 
   /**

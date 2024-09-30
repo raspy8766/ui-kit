@@ -7,7 +7,7 @@
 const fs = require('fs');
 const {resolve} = require('path');
 const paramCase = require('change-case').paramCase;
-const xmlToJson = require('xml2json').toJson;
+const parseString = require('xml2js').parseString;
 const dump = require('jsdoc/util/dumper').dump;
 
 function formatType(type) {
@@ -99,7 +99,15 @@ function getMetadata(element) {
   const filePath = `${element.meta.path}/${element.meta.filename}-meta.xml`;
 
   const xmlData = fs.readFileSync(filePath, 'utf8');
-  return JSON.parse(xmlToJson(xmlData));
+  return new Promise((resolve, reject) => {
+    parseString(xmlData, {explicitArray: false}, function (err, result) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(result);
+      }
+    });
+  });
 }
 
 function getComponentCategories(element) {
@@ -119,7 +127,7 @@ const categoryMap = {
   recommendation: 'Recommendation',
 };
 
-function parseClass(element, parentNode, childNodes) {
+async function parseClass(element, parentNode, childNodes) {
   if (!parentNode.components) {
     parentNode.components = {};
     Object.keys(categoryMap).forEach(
@@ -127,7 +135,8 @@ function parseClass(element, parentNode, childNodes) {
     );
   }
 
-  element.xmlMeta = getMetadata(element).LightningComponentBundle;
+  const metadata = await getMetadata(element);
+  element.xmlMeta = metadata.LightningComponentBundle;
 
   const thisClass = {
     name: element.name,
@@ -180,36 +189,38 @@ function parseClass(element, parentNode, childNodes) {
   graft(thisClass, childNodes, element.longname);
 }
 
-function graft(parentNode, childNodes, parentLongname) {
-  childNodes
-    .filter(function (element) {
-      return element.memberof === parentLongname;
-    })
-    .forEach(function (element, _index) {
-      switch (element.kind) {
-        case 'function':
-          return parseFunction(element, parentNode);
-        case 'member':
-          return parseMember(element, parentNode);
-        case 'class':
-          return parseClass(element, parentNode, childNodes);
-        default:
-          return;
-      }
-    });
+async function graft(parentNode, childNodes, parentLongname) {
+  const elements = childNodes.filter(function (element) {
+    return element.memberof === parentLongname;
+  });
+
+  const promises = elements.map(function (element, _index) {
+    switch (element.kind) {
+      case 'function':
+        return parseFunction(element, parentNode);
+      case 'member':
+        return parseMember(element, parentNode);
+      case 'class':
+        return parseClass(element, parentNode, childNodes);
+      default:
+        return Promise.resolve();
+    }
+  });
+
+  await Promise.all(promises);
 }
 
 /**
  * @param {TAFFY} data
  * @param {object} opts
  */
-exports.publish = function (data, opts) {
+exports.publish = async function (data, opts) {
   let root = {};
 
   data({undocumented: true}).remove();
   const docs = data().get();
 
-  graft(root, docs);
+  await graft(root, docs);
 
   if (opts.destination === 'console') {
     console.log(dump(root));

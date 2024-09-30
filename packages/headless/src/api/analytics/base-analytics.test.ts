@@ -1,11 +1,11 @@
-import {SearchEventRequest} from 'coveo.analytics/dist/definitions/events';
-import {getConfigurationInitialState} from '../../features/configuration/configuration-state';
-import {getSearchHubInitialState} from '../../features/search-hub/search-hub-state';
-import {buildMockAnalyticsState} from '../../test/mock-analytics-state';
+import {SearchEventRequest} from 'coveo.analytics/dist/definitions/events.js';
+import {getConfigurationInitialState} from '../../features/configuration/configuration-state.js';
+import {getSearchHubInitialState} from '../../features/search-hub/search-hub-state.js';
+import {buildMockAnalyticsState} from '../../test/mock-analytics-state.js';
 import {
   BaseAnalyticsProvider,
   StateNeededByBaseAnalyticsProvider,
-} from './base-analytics';
+} from './base-analytics.js';
 
 class TestProvider extends BaseAnalyticsProvider<StateNeededByBaseAnalyticsProvider> {
   public getPipeline(): string {
@@ -29,11 +29,27 @@ class TestProvider extends BaseAnalyticsProvider<StateNeededByBaseAnalyticsProvi
 }
 
 describe('base analytics provider', () => {
+  const configuration = getConfigurationInitialState();
+  configuration.analytics.analyticsMode = 'legacy';
   const baseState: StateNeededByBaseAnalyticsProvider = {
-    configuration: getConfigurationInitialState(),
+    configuration,
   };
 
-  it('when context is not provided, #getBaseMetadata returns an object with version', () => {
+  it('when analyticMode=next, #getBaseMetadata returns an object without coveoHeadlessVersion', () => {
+    const state: StateNeededByBaseAnalyticsProvider = {
+      ...baseState,
+      configuration: {
+        ...baseState.configuration,
+        analytics: buildMockAnalyticsState({analyticsMode: 'next'}),
+      },
+    };
+    const provider = new TestProvider(() => state);
+    expect(provider.getBaseMetadata()).not.toHaveProperty(
+      'coveoHeadlessVersion'
+    );
+  });
+
+  it('when analyticMode=legacy, #getBaseMetadata returns an object with coveoHeadlessVersion', () => {
     const provider = new TestProvider(() => baseState);
     expect(provider.getBaseMetadata()).toEqual({
       coveoHeadlessVersion: expect.any(String),

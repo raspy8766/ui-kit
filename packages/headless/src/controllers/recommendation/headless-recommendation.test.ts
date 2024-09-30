@@ -1,38 +1,36 @@
-import {Action} from '@reduxjs/toolkit';
-import {configuration} from '../../app/common-reducers';
-import {updateNumberOfResults} from '../../features/pagination/pagination-actions';
+import {configuration} from '../../app/common-reducers.js';
+import {updateNumberOfResults} from '../../features/pagination/pagination-actions.js';
 import {
   getRecommendations,
   setRecommendationId,
-} from '../../features/recommendation/recommendation-actions';
-import {recommendationReducer} from '../../features/recommendation/recommendation-slice';
+} from '../../features/recommendation/recommendation-actions.js';
+import {recommendationReducer} from '../../features/recommendation/recommendation-slice.js';
 import {
-  buildMockRecommendationAppEngine,
-  MockRecommendationEngine,
-} from '../../test/mock-engine';
+  buildMockRecommendationEngine,
+  MockedRecommendationEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockRecommendationState} from '../../test/mock-recommendation-state.js';
 import {
   buildRecommendationList,
   RecommendationList,
-} from './headless-recommendation';
+} from './headless-recommendation.js';
 
-describe('headless recommendation', () => {
+vi.mock('../../features/recommendation/recommendation-actions');
+vi.mock('../../features/pagination/pagination-actions');
+
+describe('Recommendation', () => {
   let recommendation: RecommendationList;
-  let engine: MockRecommendationEngine;
+  let engine: MockedRecommendationEngine;
+
+  function initEngine(initialState = createMockRecommendationState()) {
+    engine = buildMockRecommendationEngine(initialState);
+  }
 
   beforeEach(() => {
-    engine = buildMockRecommendationAppEngine();
+    vi.resetAllMocks();
+    initEngine();
     recommendation = buildRecommendationList(engine);
   });
-
-  const expectContainAction = (action: Action) => {
-    const found = engine.actions.find((a) => a.type === action.type);
-    expect(engine.actions).toContainEqual(found);
-  };
-
-  const expectDoesNotContainAction = (action: Action) => {
-    const found = engine.actions.find((a) => a.type === action.type);
-    expect(engine.actions).not.toContainEqual(found);
-  };
 
   it('it adds the correct reducers to engine', () => {
     expect(engine.addReducers).toHaveBeenCalledWith({
@@ -42,25 +40,43 @@ describe('headless recommendation', () => {
   });
 
   it('when #options.id is set to a non empty value, it dispatches #setRecommendationId', () => {
+    const mockedSetRecommendationId = vi.mocked(setRecommendationId);
+
     recommendation = buildRecommendationList(engine, {options: {id: 'foo'}});
-    expectContainAction(setRecommendationId);
+
+    expect(mockedSetRecommendationId).toHaveBeenCalledWith({id: 'foo'});
+    expect(engine.dispatch).toHaveBeenCalledWith(
+      mockedSetRecommendationId.mock.results[0].value
+    );
   });
 
   it('when #options.id is set to an empty value, it does not dispatches #setRecommendationId', () => {
+    const mockedSetRecommendationId = vi.mocked(setRecommendationId);
+
     recommendation = buildRecommendationList(engine, {options: {id: ''}});
-    expectDoesNotContainAction(setRecommendationId);
+
+    expect(mockedSetRecommendationId).not.toHaveBeenCalled();
   });
 
   it('when #options.numberOfRecommendations is set, it dispatches #updateNumberOfResults', () => {
+    const mockedUpdateNumberOfResults = vi.mocked(updateNumberOfResults);
+
     recommendation = buildRecommendationList(engine, {
       options: {numberOfRecommendations: 20},
     });
-    expectContainAction(updateNumberOfResults);
+
+    expect(mockedUpdateNumberOfResults).toHaveBeenCalledWith(20);
+    expect(engine.dispatch).toHaveBeenCalledWith(
+      mockedUpdateNumberOfResults.mock.results[0].value
+    );
   });
 
   it('when #options.numberOfRecommendations is not set, it does not dispatches #updateNumberOfResults', () => {
+    const mockedUpdateNumberOfResults = vi.mocked(updateNumberOfResults);
+
     recommendation = buildRecommendationList(engine);
-    expectDoesNotContainAction(setRecommendationId);
+
+    expect(mockedUpdateNumberOfResults).not.toHaveBeenCalled();
   });
 
   it('when #options.id is set to an invalid value, it throws an error', () => {
@@ -69,8 +85,14 @@ describe('headless recommendation', () => {
     expect(fn).toThrow('Check the options of buildRecommendationList');
   });
 
-  it('getRecommendations dispatches #getRecommendations', () => {
+  it('#refresh dispatches #getRecommendations', () => {
+    const mockedGetRecommendations = vi.mocked(getRecommendations);
+
     recommendation.refresh();
-    expectContainAction(getRecommendations.pending);
+
+    expect(mockedGetRecommendations).toHaveBeenCalled();
+    expect(engine.dispatch).toHaveBeenCalledWith(
+      mockedGetRecommendations.mock.results[0].value
+    );
   });
 });

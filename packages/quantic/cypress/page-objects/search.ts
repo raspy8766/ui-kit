@@ -2,10 +2,15 @@ import {
   CyHttpMessages,
   HttpResponseInterceptor,
   RouteMatcher,
-  StaticResponse, // eslint-disable-next-line node/no-unpublished-import
+  StaticResponse,
 } from 'cypress/types/net-stubbing';
 import {getAnalyticsBodyFromRequest} from '../e2e/common-expectations';
 import {buildMockRaw, buildMockResult} from '../fixtures/mock-result';
+import {
+  aliasCitationClickEventRequest,
+  aliasSubmitFeedbackEventRequest,
+  nextAnalyticsAlias,
+} from '../utils/analytics-utils';
 import {useCaseEnum} from './use-case';
 
 type RequestParams = Record<string, string | number | boolean | undefined>;
@@ -76,10 +81,13 @@ export const InterceptAliases = {
       RetryGeneratedAnswer: uaAlias('retryGeneratedAnswer'),
       ShowGeneratedAnswer: uaAlias('generatedAnswerShowAnswers'),
       HideGeneratedAnswer: uaAlias('generatedAnswerHideAnswers'),
-      GeneratedAnswerFeedbackSubmit: uaAlias('generatedAnswerFeedbackSubmit'),
-      RephraseGeneratedAnswer: uaAlias('rephraseGeneratedAnswer'),
+      GeneratedAnswerFeedbackSubmitV2: uaAlias(
+        'generatedAnswerFeedbackSubmitV2'
+      ),
       GeneratedAnswerSourceHover: uaAlias('generatedAnswerSourceHover'),
       GeneratedAnswerCopyToClipboard: uaAlias('generatedAnswerCopyToClipboard'),
+      GeneratedAnswerCollapse: uaAlias('generatedAnswerCollapse'),
+      GeneratedAnswerExpand: uaAlias('generatedAnswerExpand'),
     },
     DidYouMean: uaAlias('didyoumeanAutomatic'),
     DidyoumeanClick: uaAlias('didyoumeanClick'),
@@ -89,6 +97,40 @@ export const InterceptAliases = {
     },
     UndoQuery: uaAlias('undoQuery'),
     SearchboxSubmit: uaAlias('searchboxSubmit'),
+    RecentQueries: {
+      ClearRecentQueries: uaAlias('clearRecentQueries'),
+      ClickRecentQueries: uaAlias('recentQueriesClick'),
+    },
+    OmniboxAnalytics: uaAlias('omniboxAnalytics'),
+  },
+  NextAnalytics: {
+    Qna: {
+      AnswerAction: nextAnalyticsAlias('Qna.AnswerAction'),
+      CitationHover: nextAnalyticsAlias('Qna.CitationHover'),
+      CitationClick: {
+        Source: nextAnalyticsAlias('Qna.CitationClick.Source'),
+        InlineLink: nextAnalyticsAlias('Qna.CitationClick.InlineLink'),
+      },
+      SubmitFeedback: {
+        Like: nextAnalyticsAlias('Qna.SubmitFeedback.Like'),
+        Dislike: nextAnalyticsAlias('Qna.SubmitFeedback.Dislike'),
+        ReasonSubmit: nextAnalyticsAlias('Qna.SubmitFeedback.ReasonSubmit'),
+      },
+      SubmitRgaFeedback: nextAnalyticsAlias('Qna.SubmitRgaFeedback'),
+    },
+    CaseAssist: {
+      DocumentSuggestionClick: nextAnalyticsAlias(
+        'caseAssist.documentSuggestionClick'
+      ),
+      DocumentSuggestionFeedback: nextAnalyticsAlias(
+        'caseAssist.documentSuggestionFeedback'
+      ),
+      SelectFieldClassification: nextAnalyticsAlias(
+        'caseAssist.selectFieldClassification'
+      ),
+      UpdateField: nextAnalyticsAlias('caseAssist.updateField'),
+    },
+    ItemClick: nextAnalyticsAlias('itemClick'),
   },
   QuerySuggestions: '@coveoQuerySuggest',
   Search: '@coveoSearch',
@@ -99,7 +141,8 @@ export const InterceptAliases = {
 };
 
 export const routeMatchers = {
-  analytics: '**/rest/ua/v15/analytics/*',
+  analytics: new RegExp(/\/rest(\/ua)?\/v15\/analytics\//i),
+  nextAnalytics: '**/events/v1?*',
   querySuggest: '**/rest/search/v2/querySuggest?*',
   search: '**/rest/search/v2?*',
   facetSearch: '**/rest/search/v2/facet?*',
@@ -116,6 +159,17 @@ export function interceptSearch() {
         req.alias = uaAlias(analyticsBody.actionCause as string).substring(1);
       } else if (req.body.eventType) {
         req.alias = uaAlias(analyticsBody.eventValue as string).substring(1);
+      }
+    })
+
+    .intercept('POST', routeMatchers.nextAnalytics, (req) => {
+      const eventType = req.body?.[0]?.meta.type;
+      if (eventType === 'Qna.SubmitFeedback') {
+        aliasSubmitFeedbackEventRequest(req);
+      } else if (eventType === 'Qna.CitationClick') {
+        aliasCitationClickEventRequest(req);
+      } else {
+        req.alias = nextAnalyticsAlias(eventType).substring(1);
       }
     })
 
@@ -162,7 +216,7 @@ export function mockNoMoreFacetValues(field: string, useCase?: string) {
   cy.intercept(getRoute(useCase), (req) => {
     req.continue((res) => {
       res.body.facets.find(
-        (facet) => facet.field === field
+        (facet: Record<string, unknown>) => facet.field === field
       ).moreValuesAvailable = false;
       res.send();
     });
@@ -243,6 +297,18 @@ export function mockSearchWithResults(
   }).as(InterceptAliases.Search.substring(1));
 }
 
+export function mockSearchWithCustomFunction(
+  mockResponseFunction: Function,
+  useCase?: string
+) {
+  cy.intercept(getRoute(useCase), (req) => {
+    req.continue((res) => {
+      mockResponseFunction(res);
+      res.send();
+    });
+  }).as(getQueryAlias(useCase).substring(1));
+}
+
 export function interceptResultHtmlContent() {
   cy.intercept('GET', routeMatchers.html).as(
     InterceptAliases.ResultHtml.substring(1)
@@ -290,7 +356,7 @@ export function getRoute(useCase?: string) {
     : routeMatchers.search;
 }
 
-export function mockSearchWithoutAnyFacetValues(useCase: string) {
+export function mockSearchWithoutAnyFacetValues(useCase?: string) {
   cy.intercept(getRoute(useCase), (req) => {
     req.continue((res) => {
       res.body.facets.forEach((facet: {values: string[]}) => {
@@ -318,10 +384,12 @@ export function mockSearchWithSmartSnippet(
     uri: string;
     permanentId: string;
     uriHash: string;
+    author?: string;
   },
-  useCase?: string
+  useCase?: string,
+  responseId?: string
 ) {
-  const {question, answer, title, uri, permanentId, uriHash} =
+  const {question, answer, title, uri, permanentId, uriHash, author} =
     smartSnippetOptions;
   cy.intercept(getRoute(useCase), (req) => {
     req.continue((res) => {
@@ -341,9 +409,16 @@ export function mockSearchWithSmartSnippet(
           title: title,
           clickUri: uri,
           uniqueId: '123',
-          raw: buildMockRaw({permanentid: permanentId, urihash: uriHash}),
+          raw: buildMockRaw({
+            permanentid: permanentId,
+            urihash: uriHash,
+            author,
+          }),
         }),
       ];
+      if (responseId) {
+        res.body.searchUid = responseId;
+      }
       res.send();
     });
   }).as(InterceptAliases.Search.substring(1));
@@ -367,13 +442,15 @@ export function mockSearchWithSmartSnippetSuggestions(
     answerSnippet: string;
     title: string;
     uri: string;
+    author?: string;
     documentId: {
       contentIdKey: string;
       contentIdValue: string;
     };
     uriHash: string;
   }>,
-  useCase?: string
+  useCase?: string,
+  responseId?: string
 ) {
   cy.intercept(getRoute(useCase), (req) => {
     req.continue((res) => {
@@ -385,7 +462,7 @@ export function mockSearchWithSmartSnippetSuggestions(
         },
       };
       res.body.results = relatedQuestions.map(
-        ({title, uri, documentId, uriHash}) =>
+        ({title, uri, documentId, uriHash, author}) =>
           buildMockResult({
             uri,
             title,
@@ -394,9 +471,13 @@ export function mockSearchWithSmartSnippetSuggestions(
             raw: buildMockRaw({
               permanentid: documentId.contentIdValue,
               urihash: uriHash,
+              author: author,
             }),
           })
       );
+      if (responseId) {
+        res.body.searchUid = responseId;
+      }
       res.send();
     });
   }).as(InterceptAliases.Search.substring(1));
@@ -413,19 +494,26 @@ export function mockSearchWithoutSmartSnippetSuggestions(useCase?: string) {
   }).as(InterceptAliases.Search.substring(1));
 }
 
-export function mockSearchWithGeneratedAnswer(streamId: string) {
-  cy.intercept(getRoute(), (req) => {
+export function mockSearchWithGeneratedAnswer(
+  streamId: string,
+  useCase?: string,
+  responseId?: string
+) {
+  cy.intercept(getRoute(useCase), (req) => {
     req.continue((res) => {
       res.body.extendedResults = {
         generativeQuestionAnsweringId: streamId,
       };
+      if (responseId) {
+        res.body.searchUid = responseId;
+      }
       res.send();
     });
   }).as(InterceptAliases.Search.substring(1));
 }
 
-export function mockSearchWithoutGeneratedAnswer() {
-  cy.intercept(getRoute(), (req) => {
+export function mockSearchWithoutGeneratedAnswer(useCase?: string) {
+  cy.intercept(getRoute(useCase), (req) => {
     req.continue((res) => {
       res.body.extendedResults = {};
       res.send();
@@ -443,8 +531,20 @@ export function mockStreamResponse(streamId: string, body: unknown) {
       url: `**/machinelearning/streaming/${streamId}`,
     },
     (request) => {
-      request.reply(200, `data: ${JSON.stringify(body)} \n\n`, {
-        'content-type': 'text/event-stream',
+      let bodyText = '';
+      if (!Array.isArray(body)) {
+        bodyText = `data: ${JSON.stringify(body)} \n\n`;
+      } else {
+        body.forEach((data) => {
+          bodyText += `data: ${JSON.stringify(data)} \n\n`;
+        });
+      }
+      request.reply({
+        statusCode: 200,
+        body: bodyText,
+        headers: {
+          'content-type': 'text/event-stream',
+        },
       });
     }
   ).as(getStreamInterceptAlias(streamId).substring(1));
@@ -556,4 +656,18 @@ export function mockSearchWithNotifyTrigger(
       res.send();
     });
   }).as(InterceptAliases.Search.substring(1));
+}
+
+export function mockQuerySuggestions(suggestions: string[]) {
+  cy.intercept(routeMatchers.querySuggest, (req) => {
+    req.continue((res) => {
+      res.body.completions = suggestions.map((suggestion) => ({
+        expression: suggestion,
+        highlighted: suggestion,
+      }));
+
+      res.body.responseId = crypto.randomUUID();
+      res.send();
+    });
+  }).as(InterceptAliases.QuerySuggestions.substring(1));
 }

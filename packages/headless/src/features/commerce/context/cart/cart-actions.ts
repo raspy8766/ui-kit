@@ -1,32 +1,65 @@
-import {createAction} from '@reduxjs/toolkit';
-import {CartItemParam} from '../../../../api/commerce/commerce-api-params';
+import {createAction, createAsyncThunk} from '@reduxjs/toolkit';
+import {AsyncThunkCommerceOptions} from '../../../../api/commerce/commerce-api-client.js';
+import {CommerceEngineState} from '../../../../app/commerce-engine/commerce-engine.js';
+import {validatePayload} from '../../../../utils/validate-payload.js';
 import {
-  requiredNonEmptyString,
-  validatePayload,
-} from '../../../../utils/validate-payload';
-import {cartItemDefinition, itemsDefinition} from './cart-validation';
+  CartActionDetails,
+  Transaction,
+  getECCartActionPayload,
+  getECPurchasePayload,
+} from './cart-selector.js';
+import {CartItemWithMetadata} from './cart-state.js';
+import {
+  setItemsPayloadDefinition,
+  itemPayloadDefinition,
+} from './cart-validation.js';
+
+export type SetItemsPayload = CartItemWithMetadata[];
 
 export const setItems = createAction(
   'commerce/cart/setItems',
-  (payload: CartItemParam[]) =>
-    validatePayload<CartItemParam[]>(payload, itemsDefinition)
+  (payload: SetItemsPayload) =>
+    validatePayload<SetItemsPayload>(payload, setItemsPayloadDefinition)
 );
 
-export type AddCartItemPayload = CartItemParam;
-
-export const addItem = createAction(
-  'commerce/cart/addItem',
-  (payload: AddCartItemPayload) => validatePayload(payload, cartItemDefinition)
-);
-
-export const removeItem = createAction(
-  'commerce/cart/removeItem',
-  (payload: string) => validatePayload(payload, requiredNonEmptyString)
-);
-
-export type UpdateItemQuantity = CartItemParam;
+export type UpdateItemQuantityPayload = CartItemWithMetadata;
 
 export const updateItemQuantity = createAction(
   'commerce/cart/updateItemQuantity',
-  (payload: UpdateItemQuantity) => validatePayload(payload, cartItemDefinition)
+  (payload: UpdateItemQuantityPayload) =>
+    validatePayload(payload, itemPayloadDefinition)
+);
+
+export const purchase = createAction('commerce/cart/purchase');
+
+export type PurchasePayload = Transaction;
+
+export const emitPurchaseEvent = createAsyncThunk<
+  void,
+  PurchasePayload,
+  AsyncThunkCommerceOptions<CommerceEngineState>
+>(
+  'commerce/cart/emit/purchaseEvent',
+  async (payload: PurchasePayload, {extra, getState}) => {
+    const relayPayload = getECPurchasePayload(payload, getState());
+    const {relay} = extra;
+
+    relay.emit('ec.purchase', relayPayload);
+  }
+);
+
+export type CartActionPayload = CartActionDetails;
+
+export const emitCartActionEvent = createAsyncThunk<
+  void,
+  CartActionPayload,
+  AsyncThunkCommerceOptions<CommerceEngineState>
+>(
+  'commerce/cart/emit/cartActionEvent',
+  async (payload: CartActionPayload, {extra, getState}) => {
+    const relayPayload = getECCartActionPayload(payload, getState());
+    const {relay} = extra;
+
+    relay.emit('ec.cartAction', relayPayload);
+  }
 );

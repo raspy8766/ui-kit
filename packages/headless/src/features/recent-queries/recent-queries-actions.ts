@@ -1,6 +1,6 @@
 import {ArrayValue, NumberValue, StringValue} from '@coveo/bueno';
 import {createAction} from '@reduxjs/toolkit';
-import {validatePayload} from '../../utils/validate-payload';
+import {validatePayload} from '../../utils/validate-payload.js';
 
 export interface RegisterRecentQueriesCreatorPayload {
   /**
@@ -13,7 +13,7 @@ export interface RegisterRecentQueriesCreatorPayload {
   maxLength: number;
 }
 
-const registerRecentQueriesPayloadDefinition = {
+export const registerRecentQueriesPayloadDefinition = {
   queries: new ArrayValue({
     required: true,
     each: new StringValue({emptyAllowed: false}),

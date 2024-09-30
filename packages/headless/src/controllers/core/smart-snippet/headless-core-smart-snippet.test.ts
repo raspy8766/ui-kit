@@ -1,4 +1,4 @@
-import {QuestionsAnswers} from '../../../api/search/search/question-answering';
+import {QuestionsAnswers} from '../../../api/search/search/question-answering.js';
 import {
   closeFeedbackModal,
   collapseSmartSnippet,
@@ -6,34 +6,40 @@ import {
   expandSmartSnippet,
   likeSmartSnippet,
   openFeedbackModal,
-} from '../../../features/question-answering/question-answering-actions';
+} from '../../../features/question-answering/question-answering-actions.js';
 import {
   SmartSnippetFeedback,
   smartSnippetAnalyticsClient,
-} from '../../../features/question-answering/question-answering-analytics-actions';
-import {questionAnsweringReducer as questionAnswering} from '../../../features/question-answering/question-answering-slice';
-import {searchReducer as search} from '../../../features/search/search-slice';
-import {emptyQuestionAnswer} from '../../../features/search/search-state';
-import {SearchAppState} from '../../../state/search-app-state';
+} from '../../../features/question-answering/question-answering-analytics-actions.js';
+import {questionAnsweringReducer as questionAnswering} from '../../../features/question-answering/question-answering-slice.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
+import {emptyQuestionAnswer} from '../../../features/search/search-state.js';
+import {SearchAppState} from '../../../state/search-app-state.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-  createMockState,
-} from '../../../test';
-import {buildMockSearchResponse} from '../../../test/mock-search-response';
-import {buildMockSearchState} from '../../../test/mock-search-state';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockSearchResponse} from '../../../test/mock-search-response.js';
+import {buildMockSearchState} from '../../../test/mock-search-state.js';
+import {createMockState} from '../../../test/mock-state.js';
 import {
   SmartSnippetCore,
   SmartSnippetState,
   buildCoreSmartSnippet,
-} from './headless-core-smart-snippet';
+} from './headless-core-smart-snippet.js';
+
+vi.mock('../../../features/question-answering/question-answering-actions');
+vi.mock(
+  '../../../features/question-answering/question-answering-analytics-actions'
+);
 
 describe('SmartSnippet', () => {
   let state: SearchAppState;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let smartSnippet: SmartSnippetCore;
 
   beforeEach(() => {
+    vi.resetAllMocks();
     initState();
     initController();
   });
@@ -49,7 +55,7 @@ describe('SmartSnippet', () => {
   }
 
   function initController() {
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
     smartSnippet = buildCoreSmartSnippet(engine, smartSnippetAnalyticsClient);
   }
 
@@ -82,54 +88,54 @@ describe('SmartSnippet', () => {
   });
 
   it('should not dispatch any action at initialization', () => {
-    expect(engine.actions.length).toEqual(0);
+    expect(engine.dispatch).not.toHaveBeenCalled();
   });
 
   it('#expand dispatches #expandSmartSnippet', () => {
     smartSnippet.expand();
-    expect(engine.actions).toContainEqual(expandSmartSnippet());
+    expect(expandSmartSnippet).toHaveBeenCalled();
   });
 
   it('#collapse dispatches #collapseSmartSnippet', () => {
     smartSnippet.collapse();
-    expect(engine.actions).toContainEqual(collapseSmartSnippet());
+    expect(collapseSmartSnippet).toHaveBeenCalled();
   });
 
   it('#like dispatches #likeSmartSnippet', () => {
     smartSnippet.like();
-    expect(engine.actions).toContainEqual(likeSmartSnippet());
+    expect(likeSmartSnippet).toHaveBeenCalled();
   });
 
   it('#dislike dispatches #dislikeSmartSnippet', () => {
     smartSnippet.dislike();
-    expect(engine.actions).toContainEqual(dislikeSmartSnippet());
+    expect(dislikeSmartSnippet).toHaveBeenCalled();
   });
 
   it('#openFeedbackModal dispatches #openFeedbackModal', () => {
     smartSnippet.openFeedbackModal();
-    expect(engine.actions).toContainEqual(openFeedbackModal());
+    expect(openFeedbackModal).toHaveBeenCalled();
   });
 
   it('#closeFeedbackModal dispatches #closeFeedbackModal', () => {
     smartSnippet.closeFeedbackModal();
-    expect(engine.actions).toContainEqual(closeFeedbackModal());
+    expect(closeFeedbackModal).toHaveBeenCalled();
   });
 
   it('#sendFeedback dispatches #closeFeedbackModal', () => {
     const mockFeedback: SmartSnippetFeedback = 'does_not_answer';
     smartSnippet.sendFeedback(mockFeedback);
-    expect(engine.actions).toContainEqual(closeFeedbackModal());
+    expect(closeFeedbackModal).toHaveBeenCalled();
   });
 
   it('#sendDetailedFeedback dispatches #closeFeedbackModal', () => {
     const mockFeedbackDetails = 'foo';
     smartSnippet.sendDetailedFeedback(mockFeedbackDetails);
-    expect(engine.actions).toContainEqual(closeFeedbackModal());
+    expect(closeFeedbackModal).toHaveBeenCalled();
   });
 
   it('#sendDetailedFeedback dispatches #closeFeedbackModal', () => {
     const mockFeedbackDetails = 'foo';
     smartSnippet.sendDetailedFeedback(mockFeedbackDetails);
-    expect(engine.actions).toContainEqual(closeFeedbackModal());
+    expect(closeFeedbackModal).toHaveBeenCalled();
   });
 });

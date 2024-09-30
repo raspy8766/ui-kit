@@ -5,6 +5,7 @@ import {LightningElement, api} from 'lwc';
 
 /**
  * The `QuanticResultText` component displays a given result field value.
+ * Make sure the field specified in this component is also included in the field array for the relevant template. See the this example: [Quantic usage](https://docs.coveo.com/en/quantic/latest/usage/#javascript).
  * @category Result Template
  * @example
  * <template if:true={result.raw.source}>
@@ -78,7 +79,9 @@ export default class QuanticResultText extends LightningElement {
    */
   get fieldValue() {
     // @ts-ignore
-    return this.field ? this.result?.raw[this.field] : undefined;
+    return this.field
+      ? (this.result?.raw[this.field] ?? this.result?.[this.field])
+      : undefined;
   }
 
   /**

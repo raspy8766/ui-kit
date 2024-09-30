@@ -4,21 +4,42 @@ import {
   InferHydratedState,
   defineResultList,
   defineSearchBox,
+  Result,
+  NavigatorContextProvider,
 } from '@coveo/headless/ssr';
 import {act, render, renderHook, screen} from '@testing-library/react';
+import {randomUUID} from 'crypto';
 import {PropsWithChildren} from 'react';
+import React from 'react';
+import {
+  vi,
+  expect,
+  describe,
+  test,
+  beforeEach,
+  MockInstance,
+  afterEach,
+} from 'vitest';
 import {MissingEngineProviderError} from './common.js';
 import {defineSearchEngine} from './search-engine.js';
 
 describe('Headless react SSR utils', () => {
-  let errorSpy: jest.SpyInstance;
+  let errorSpy: MockInstance;
+  const mockedNavigatorContextProvider: NavigatorContextProvider = () => {
+    return {
+      clientId: '123',
+      location: 'https://www.example.com',
+      referrer: 'https://www.google.com',
+      userAgent: 'Mozilla/5.0',
+    };
+  };
   const sampleConfig = {
     ...getSampleSearchEngineConfiguration(),
     analytics: {enabled: false}, // TODO: KIT-2585 Remove after analytics SSR support is added
   };
 
   beforeEach(() => {
-    errorSpy = jest.spyOn(console, 'error');
+    errorSpy = vi.spyOn(console, 'error');
   });
 
   afterEach(() => {
@@ -34,6 +55,7 @@ describe('Headless react SSR utils', () => {
       controllers,
       StaticStateProvider,
       HydratedStateProvider,
+      setNavigatorContextProvider,
       ...rest
     } = defineSearchEngine({
       configuration: sampleConfig,
@@ -46,6 +68,7 @@ describe('Headless react SSR utils', () => {
       useEngine,
       StaticStateProvider,
       HydratedStateProvider,
+      setNavigatorContextProvider,
     ].forEach((returnValue) => expect(typeof returnValue).toBe('function'));
 
     expect(controllers).toEqual({});
@@ -81,11 +104,43 @@ describe('Headless react SSR utils', () => {
       StaticStateProvider,
       HydratedStateProvider,
       controllers,
+      setNavigatorContextProvider,
       useEngine,
     } = engineDefinition;
 
     function TestResultList() {
+      const generateMockResult: () => Result = () => {
+        return {
+          absentTerms: [],
+          clickUri: '',
+          excerpt: '',
+          excerptHighlights: [],
+          firstSentences: '',
+          firstSentencesHighlights: [],
+          flags: '',
+          hasHtmlVersion: false,
+          isRecommendation: false,
+          isTopResult: false,
+          isUserActionView: false,
+          percentScore: 0,
+          printableUri: '',
+          printableUriHighlights: [],
+          rankingInfo: null,
+          raw: {urihash: ''},
+          score: 0,
+          searchUid: '',
+          summary: null,
+          summaryHighlights: [],
+          title: '',
+          titleHighlights: [],
+          uniqueId: randomUUID(),
+          uri: '',
+        };
+      };
+
       const {state} = controllers.useResultList();
+
+      state.results = Array.from({length: numResults}, generateMockResult);
       return (
         <ul>
           {state.results.map((result) => (
@@ -101,21 +156,23 @@ describe('Headless react SSR utils', () => {
       const results = await screen.findAllByTestId(resultItemTestId);
       expect(errorSpy).not.toHaveBeenCalled();
       expect(results).toHaveLength(numResults);
+
+      results.forEach((result) => result.remove());
     }
 
     function checkRenderError(
       renderFunction: CallableFunction,
       expectedErrMsg: string
     ) {
-      let err = undefined;
+      let err: Error | undefined = undefined;
       // Prevent expected error from being thrown in console when running tests
-      const consoleErrorStub = jest
+      const consoleErrorStub = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
       try {
         renderFunction();
       } catch (e) {
-        err = e as Error;
+        err = e! as Error;
       } finally {
         consoleErrorStub.mockReset();
       }
@@ -131,6 +188,7 @@ describe('Headless react SSR utils', () => {
     });
 
     test('should render with StaticStateProvider', async () => {
+      setNavigatorContextProvider(mockedNavigatorContextProvider);
       const staticState = await fetchStaticState();
       render(
         <StaticStateProvider controllers={staticState.controllers}>
@@ -142,6 +200,7 @@ describe('Headless react SSR utils', () => {
     });
 
     test('should hydrate results with HydratedStateProvider', async () => {
+      setNavigatorContextProvider(mockedNavigatorContextProvider);
       const staticState = await fetchStaticState();
       const {engine, controllers} = await hydrateStaticState(staticState);
 
@@ -159,6 +218,7 @@ describe('Headless react SSR utils', () => {
       let hydratedState: InferHydratedState<typeof engineDefinition>;
 
       beforeEach(async () => {
+        setNavigatorContextProvider(mockedNavigatorContextProvider);
         staticState = await fetchStaticState();
         hydratedState = await hydrateStaticState(staticState);
       });
@@ -233,7 +293,7 @@ describe('Headless react SSR utils', () => {
               wrapper: hydratedStateProviderWrapper,
             });
             const initialState = result.current.state;
-            const controllerSpy = jest.spyOn(
+            const controllerSpy = vi.spyOn(
               hydratedState.controllers.searchBox,
               'updateText'
             );

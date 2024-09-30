@@ -1,18 +1,26 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
 import {
   ResultsPerPage,
   ResultsPerPageProps,
   buildResultsPerPage,
-} from './headless-results-per-page';
+} from './headless-results-per-page.js';
 
-export * from './headless-results-per-page';
+export * from './headless-results-per-page.js';
+
+export interface ResultsPerPageDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, ResultsPerPage> {}
 
 /**
- * @internal
- */
-export const defineResultsPerPage = (
+ * Defines a `ResultsPerPage` controller instance.
+ *
+ * @param props - The configurable `ResultsPerPage` properties.
+ * @returns The `ResultsPerPage` controller definition.
+ * */
+export function defineResultsPerPage(
   props?: ResultsPerPageProps
-): ControllerDefinitionWithoutProps<SearchEngine, ResultsPerPage> => ({
-  build: (engine) => buildResultsPerPage(engine, props),
-});
+): ResultsPerPageDefinition {
+  return {
+    build: (engine) => buildResultsPerPage(engine, props),
+  };
+}

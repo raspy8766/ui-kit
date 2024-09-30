@@ -1,17 +1,21 @@
-import {executeSearch} from '../../../features/insight-search/insight-search-actions';
+import {executeSearch} from '../../../features/insight-search/insight-search-actions.js';
 import {
   buildDateSortCriterion,
   SortOrder,
-} from '../../../features/sort-criteria/criteria';
-import {updateSortCriterion} from '../../../features/sort-criteria/sort-criteria-actions';
+} from '../../../features/sort-criteria/criteria.js';
+import {updateSortCriterion} from '../../../features/sort-criteria/sort-criteria-actions.js';
 import {
-  MockInsightEngine,
+  MockedInsightEngine,
   buildMockInsightEngine,
-} from '../../../test/mock-engine';
-import {Sort, SortProps, buildSort} from './headless-insight-sort';
+} from '../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../test/mock-insight-state.js';
+import {Sort, SortProps, buildSort} from './headless-insight-sort.js';
+
+vi.mock('../../../features/sort-criteria/sort-criteria-actions');
+vi.mock('../../../features/insight-search/insight-search-actions');
 
 describe('InsightSort', () => {
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let props: SortProps;
   let sort: Sort;
 
@@ -20,7 +24,7 @@ describe('InsightSort', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockInsightEngine();
+    engine = buildMockInsightEngine(buildMockInsightState());
     props = {
       initialState: {},
     };
@@ -36,15 +40,11 @@ describe('InsightSort', () => {
     });
 
     it('dispatches an updateSortCriterion action with the passed criterion', () => {
-      const action = updateSortCriterion(criterion);
-      expect(engine.actions).toContainEqual(action);
+      expect(updateSortCriterion).toHaveBeenCalledWith(criterion);
     });
 
     it('dispatches an executeSearch', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 });

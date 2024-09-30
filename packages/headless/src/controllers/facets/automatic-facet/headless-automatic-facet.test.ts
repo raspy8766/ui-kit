@@ -1,29 +1,34 @@
-import {buildAutomaticFacet} from '../../../controllers/facets/automatic-facet/headless-automatic-facet';
+import {buildAutomaticFacet} from '../../../controllers/facets/automatic-facet/headless-automatic-facet.js';
 import {
   deselectAllAutomaticFacetValues,
   toggleSelectAutomaticFacetValue,
-} from '../../../features/facets/automatic-facet-set/automatic-facet-set-actions';
-import {executeSearch} from '../../../features/search/search-actions';
-import {SearchAppState} from '../../../state/search-app-state';
+} from '../../../features/facets/automatic-facet-set/automatic-facet-set-actions.js';
+import {executeSearch} from '../../../features/search/search-actions.js';
+import {SearchAppState} from '../../../state/search-app-state.js';
+import {buildMockAutomaticFacetSlice} from '../../../test/mock-automatic-facet-slice.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-  createMockState,
-} from '../../../test';
-import {buildMockAutomaticFacetSlice} from '../../../test/mock-automatic-facet-slice';
-import {buildMockFacetValue} from '../../../test/mock-facet-value';
-import {AutomaticFacet} from '../automatic-facet-generator/headless-automatic-facet-generator';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockFacetValue} from '../../../test/mock-facet-value.js';
+import {createMockState} from '../../../test/mock-state.js';
+import {AutomaticFacet} from '../automatic-facet-generator/headless-automatic-facet-generator.js';
+
+vi.mock(
+  '../../../features/facets/automatic-facet-set/automatic-facet-set-actions'
+);
+vi.mock('../../../features/search/search-actions');
 
 describe('automatic facet', () => {
   const field = 'field';
   const badField = 'badField';
   let state: SearchAppState;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let facet: AutomaticFacet;
   let emptyFacet: AutomaticFacet;
 
   function initFacet() {
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
     facet = buildAutomaticFacet(engine, {field});
     emptyFacet = buildAutomaticFacet(engine, {field: badField});
   }
@@ -63,41 +68,28 @@ describe('automatic facet', () => {
     it('dispatches a #toggleSelectAutomaticFacetValue with the passed facet value', () => {
       const facetValue = buildMockFacetValue({value: 'TED'});
       facet.toggleSelect(facetValue);
-
-      expect(engine.actions).toContainEqual(
-        toggleSelectAutomaticFacetValue({field, selection: facetValue})
-      );
+      expect(toggleSelectAutomaticFacetValue).toHaveBeenCalledWith({
+        field,
+        selection: facetValue,
+      });
     });
 
     it('dispatches a #executeSearch', () => {
       const facetValue = buildMockFacetValue({value: 'TED'});
       facet.toggleSelect(facetValue);
-
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: executeSearch.pending.type,
-        })
-      );
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
   describe('#deselectAll', () => {
     it('dispatches a #deselectAllAutomaticFacetValues with the passed field', () => {
       facet.deselectAll();
-
-      expect(engine.actions).toContainEqual(
-        deselectAllAutomaticFacetValues(field)
-      );
+      expect(deselectAllAutomaticFacetValues).toHaveBeenCalledWith(field);
     });
 
     it('dispatches a #executeSearch ', () => {
       facet.deselectAll();
-
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: executeSearch.pending.type,
-        })
-      );
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 });

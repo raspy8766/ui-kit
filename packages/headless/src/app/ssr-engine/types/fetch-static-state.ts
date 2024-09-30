@@ -1,21 +1,21 @@
-import {AnyAction} from '@reduxjs/toolkit';
-import {CoreEngine} from '../../engine';
+import {UnknownAction} from '@reduxjs/toolkit';
+import {CoreEngine, CoreEngineNext} from '../../engine.js';
 import {
-  ControllerStaticStateMap,
   ControllersMap,
   ControllersPropsMap,
+  ControllerStaticStateMap,
   EngineDefinitionControllersPropsOption,
   EngineStaticState,
   OptionsTuple,
-} from './common';
-import {FromBuildResult} from './from-build-result';
+} from './common.js';
+import {FromBuildResult} from './from-build-result.js';
 
 export type FetchStaticStateOptions = {};
 
 export type FetchStaticState<
-  TEngine extends CoreEngine,
+  TEngine extends CoreEngine | CoreEngineNext,
   TControllers extends ControllersMap,
-  TSearchAction extends AnyAction,
+  TSearchAction extends UnknownAction,
   TControllersStaticState extends ControllerStaticStateMap,
   TControllersProps extends ControllersPropsMap,
 > = {

@@ -1,33 +1,36 @@
 import {isNullOrUndefined} from '@coveo/bueno';
 import {EventDescription} from 'coveo.analytics';
-import {
-  getVisitorID,
-  historyStore,
-} from '../../api/analytics/coveo-analytics-utils';
-import {SearchRequest} from '../../api/search/search/search-request';
-import {SearchAppState} from '../../state/search-app-state';
-import {ConfigurationSection} from '../../state/state-sections';
-import {fromAnalyticsStateToAnalyticsParams} from '../configuration/analytics-params';
+import {getSearchApiBaseUrl} from '../../api/platform-client.js';
+import {SearchRequest} from '../../api/search/search/search-request.js';
+import {NavigatorContext} from '../../app/navigatorContextProvider.js';
+import {SearchAppState} from '../../state/search-app-state.js';
+import {ConfigurationSection} from '../../state/state-sections.js';
+import {fromAnalyticsStateToAnalyticsParams} from '../configuration/analytics-params.js';
 
 type StateNeededByExecuteSearchAndFolding = ConfigurationSection &
   Partial<SearchAppState>;
 
-export const buildSearchAndFoldingLoadCollectionRequest = async (
+export const buildSearchAndFoldingLoadCollectionRequest = (
   state: StateNeededByExecuteSearchAndFolding,
+  navigatorContext: NavigatorContext,
   eventDescription?: EventDescription
-): Promise<SearchRequest> => {
+): SearchRequest => {
   return {
     accessToken: state.configuration.accessToken,
     organizationId: state.configuration.organizationId,
-    url: state.configuration.search.apiBaseUrl,
+    url:
+      state.configuration.search.apiBaseUrl ??
+      getSearchApiBaseUrl(
+        state.configuration.organizationId,
+        state.configuration.environment
+      ),
     locale: state.configuration.search.locale,
     debug: state.debug,
     tab: state.configuration.analytics.originLevel2,
-    referrer: state.configuration.analytics.originLevel3,
+    referrer: navigatorContext.referrer,
     timezone: state.configuration.search.timezone,
     ...(state.configuration.analytics.enabled && {
-      visitorId: await getVisitorID(state.configuration.analytics),
-      actionsHistory: historyStore.getHistory(),
+      visitorId: navigatorContext.clientId,
     }),
     ...(state.advancedSearchQueries?.aq && {
       aq: state.advancedSearchQueries.aq,
@@ -65,10 +68,11 @@ export const buildSearchAndFoldingLoadCollectionRequest = async (
       sortCriteria: state.sortCriteria,
     }),
     ...(state.configuration.analytics.enabled &&
-      (await fromAnalyticsStateToAnalyticsParams(
+      fromAnalyticsStateToAnalyticsParams(
         state.configuration.analytics,
+        navigatorContext,
         eventDescription
-      ))),
+      )),
     ...(state.excerptLength &&
       !isNullOrUndefined(state.excerptLength.length) && {
         excerptLength: state.excerptLength.length,

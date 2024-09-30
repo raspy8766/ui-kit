@@ -1,14 +1,17 @@
 import {
   InsightAction,
-  makeInsightAnalyticsAction,
-} from '../analytics/analytics-utils';
-import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state';
-import {getSortCriteriaInitialState} from './sort-criteria-state';
+  makeInsightAnalyticsActionFactory,
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state.js';
+import {getSortCriteriaInitialState} from './sort-criteria-state.js';
 
 export const logResultsSort = (): InsightAction =>
-  makeInsightAnalyticsAction('analytics/sort/results', (client, state) =>
-    client.logResultsSort({
-      resultsSortBy: state.sortCriteria || getSortCriteriaInitialState(),
-      ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
-    })
+  makeInsightAnalyticsActionFactory(SearchPageEvents.resultsSort)(
+    'analytics/sort/results',
+    (client, state) =>
+      client.logResultsSort({
+        resultsSortBy: state.sortCriteria || getSortCriteriaInitialState(),
+        ...getCaseContextAnalyticsMetadata(state.insightCaseContext),
+      })
   );

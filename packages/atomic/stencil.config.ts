@@ -5,20 +5,40 @@ import {angularOutputTarget as angular} from '@stencil/angular-output-target';
 import {Config} from '@stencil/core';
 import {reactOutputTarget as react} from '@stencil/react-output-target';
 import autoprefixer from 'autoprefixer';
-import {readFileSync} from 'fs';
-import path from 'path';
+import {readFileSync, readdirSync} from 'fs';
 import focusVisible from 'postcss-focus-visible';
 import atImport from 'postcss-import';
+import postcssMap from 'postcss-map';
 import mixins from 'postcss-mixins';
 import postcssNesting from 'postcss-nested';
+import {PluginImpl} from 'rollup';
 import html from 'rollup-plugin-html';
 import {inlineSvg} from 'stencil-inline-svg';
 import tailwind from 'tailwindcss';
 import tailwindNesting from 'tailwindcss/nesting';
+import {generateExternalPackageMappings} from './scripts/externalPackageMappings';
 import {generateAngularModuleDefinition as angularModule} from './stencil-plugin/atomic-angular-module';
 
 const isProduction = process.env.BUILD === 'production';
+const isCDN = process.env.DEPLOYMENT_ENVIRONMENT === 'CDN';
 
+const packageMappings = generateExternalPackageMappings(__dirname);
+
+function generateAliasEntries() {
+  return Object.entries(packageMappings).map(([find, paths]) => ({
+    find,
+    replacement: paths.devWatch,
+  }));
+}
+
+function filterComponentsByUseCaseForReactOutput(useCasePath: string) {
+  return readdirSync(useCasePath, {
+    recursive: true,
+  })
+    .map((fileName) => /(atomic-[a-z-]+)\.tsx$/.exec(fileName.toString()))
+    .filter((m) => m !== null)
+    .flatMap((m) => m![1]);
+}
 function getPackageVersion(): string {
   return JSON.parse(readFileSync('package.json', 'utf-8')).version;
 }
@@ -47,11 +67,35 @@ function replace() {
   const env = isProduction ? 'production' : 'development';
   const version = getPackageVersion();
   return replacePlugin({
-    'process.env.NODE_ENV': JSON.stringify(env),
-    'process.env.VERSION': JSON.stringify(version),
+    values: {
+      'process.env.NODE_ENV': JSON.stringify(env),
+      'process.env.VERSION': JSON.stringify(version),
+    },
     preventAssignment: true,
   });
 }
+
+const externalizeDependenciesPlugin: PluginImpl = () => {
+  return {
+    name: 'externalize-dependencies',
+    resolveId: (source, _importer, _options) => {
+      const packageMapping = packageMappings[source];
+
+      if (packageMapping) {
+        if (!isCDN) {
+          return false;
+        }
+
+        return {
+          id: packageMapping.cdn,
+          external: 'absolute',
+        };
+      }
+
+      return null;
+    },
+  };
+};
 
 const isDevWatch: boolean =
   process.argv &&
@@ -59,20 +103,42 @@ const isDevWatch: boolean =
   process.argv.indexOf('--watch') > -1;
 
 export const config: Config = {
+  tsconfig: 'tsconfig.stencil.json',
   namespace: 'atomic',
   taskQueue: 'async',
   sourceMap: true,
   outputTargets: [
-    react({
-      componentCorePackage: '@coveo/atomic',
-      proxiesFile: '../atomic-react/src/components/stencil-generated/index.ts',
-      includeDefineCustomElements: true,
-      excludeComponents: [
-        'atomic-result-template',
-        'atomic-recs-result-template',
-        'atomic-field-condition',
-      ],
-    }),
+    !isDevWatch &&
+      react({
+        componentCorePackage: '@coveo/atomic',
+        proxiesFile:
+          '../atomic-react/src/components/stencil-generated/search/index.ts',
+        includeDefineCustomElements: true,
+        excludeComponents: [
+          'atomic-result-template',
+          'atomic-recs-result-template',
+          'atomic-field-condition',
+        ].concat(
+          filterComponentsByUseCaseForReactOutput('src/components/commerce')
+        ),
+      }),
+    !isDevWatch &&
+      react({
+        componentCorePackage: '@coveo/atomic',
+        proxiesFile:
+          '../atomic-react/src/components/stencil-generated/commerce/index.ts',
+        includeDefineCustomElements: true,
+        excludeComponents: [
+          'atomic-product-template',
+          'atomic-recs-result-template',
+          'atomic-field-condition',
+        ].concat(
+          filterComponentsByUseCaseForReactOutput('src/components/search'),
+          filterComponentsByUseCaseForReactOutput(
+            'src/components/recommendations'
+          )
+        ),
+      }),
     angular({
       componentCorePackage: '@coveo/atomic',
       directivesProxyFile:
@@ -117,16 +183,16 @@ export const config: Config = {
         },
       ].filter((n) => n.src),
     },
-  ],
+  ].filter(Boolean),
   testing: {
     browserArgs: ['--no-sandbox'],
     transform: {
       '^.+\\.html?$': 'html-loader-jest',
-      '^.+\\.svg$': './svg.transform.js',
+      '^.+\\.svg$': './svg.transform.cjs',
     },
     transformIgnorePatterns: [],
     testPathIgnorePatterns: ['.snap'],
-    setupFiles: ['jest-localstorage-mock'],
+    setupFiles: ['./jest/setup.cjs', 'jest-localstorage-mock'],
     resetMocks: false,
   },
   devServer: {
@@ -138,6 +204,11 @@ export const config: Config = {
     postcss({
       plugins: [
         atImport(),
+        postcssMap({
+          maps: [
+            'src/components/common/template-system/post-css-map-for-sections.yaml',
+          ],
+        }),
         mixins(),
         tailwindNesting(),
         tailwind(),
@@ -152,48 +223,13 @@ export const config: Config = {
     before: [
       isDevWatch &&
         alias({
-          entries: [
-            {
-              find: '@coveo/headless/case-assist',
-              replacement: path.resolve(
-                __dirname,
-                './src/external-builds/case-assist/headless.esm.js'
-              ),
-            },
-            {
-              find: '@coveo/headless/recommendation',
-              replacement: path.resolve(
-                __dirname,
-                './src/external-builds/recommendation/headless.esm.js'
-              ),
-            },
-            {
-              find: '@coveo/headless/product-recommendation',
-              replacement: path.resolve(
-                __dirname,
-                './src/external-builds/product-recommendation/headless.esm.js'
-              ),
-            },
-            {
-              find: '@coveo/headless/insight',
-              replacement: path.resolve(
-                __dirname,
-                './src/external-builds/insight/headless.esm.js'
-              ),
-            },
-            {
-              find: '@coveo/headless',
-              replacement: path.resolve(
-                __dirname,
-                './src/external-builds/headless.esm.js'
-              ),
-            },
-          ],
+          entries: generateAliasEntries(),
         }),
       html({
         include: 'src/templates/**/*.html',
       }),
       isDevWatch && replaceHeadlessMap(),
+      externalizeDependenciesPlugin(),
     ],
   },
   extras: {

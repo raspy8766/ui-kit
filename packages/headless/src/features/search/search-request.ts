@@ -1,29 +1,41 @@
 import {EventDescription} from 'coveo.analytics';
-import {SearchAppState} from '../..';
-import {ConfigurationSection} from '../../state/state-sections';
-import {sortFacets} from '../../utils/facet-utils';
-import {AutomaticFacetRequest} from '../facets/automatic-facet-set/interfaces/request';
-import {AutomaticFacetResponse} from '../facets/automatic-facet-set/interfaces/response';
-import {FacetSetState} from '../facets/facet-set/facet-set-state';
-import {getFacetRequests} from '../facets/generic/interfaces/generic-facet-request';
-import {AnyFacetValue} from '../facets/generic/interfaces/generic-facet-response';
-import {RangeFacetSetState} from '../facets/range-facets/generic/interfaces/range-facet';
-import {maximumNumberOfResultsFromIndex} from '../pagination/pagination-constants';
-import {buildSearchAndFoldingLoadCollectionRequest} from '../search-and-folding/search-and-folding-request';
-import {mapSearchRequest} from './search-mappings';
+import {NavigatorContext} from '../../app/navigatorContextProvider.js';
+import {SearchAppState} from '../../state/search-app-state.js';
+import {ConfigurationSection} from '../../state/state-sections.js';
+import {sortFacets} from '../../utils/facet-utils.js';
+import {AutomaticFacetRequest} from '../facets/automatic-facet-set/interfaces/request.js';
+import {AutomaticFacetResponse} from '../facets/automatic-facet-set/interfaces/response.js';
+import {FacetSetState} from '../facets/facet-set/facet-set-state.js';
+import {getFacetRequests} from '../facets/generic/interfaces/generic-facet-request.js';
+import {AnyFacetValue} from '../facets/generic/interfaces/generic-facet-response.js';
+import {RangeFacetSetState} from '../facets/range-facets/generic/interfaces/range-facet.js';
+import {maximumNumberOfResultsFromIndex} from '../pagination/pagination-constants.js';
+import {buildSearchAndFoldingLoadCollectionRequest as legacyBuildSearchAndFoldingLoadCollectionRequest} from '../search-and-folding/legacy/search-and-folding-request.js';
+import {buildSearchAndFoldingLoadCollectionRequest} from '../search-and-folding/search-and-folding-request.js';
+import {mapSearchRequest} from './search-mappings.js';
 
 type StateNeededBySearchRequest = ConfigurationSection &
   Partial<SearchAppState>;
 
 export const buildSearchRequest = async (
   state: StateNeededBySearchRequest,
+  navigatorContext: NavigatorContext,
   eventDescription?: EventDescription
 ) => {
   const cq = buildConstantQuery(state);
   const facets = getFacets(state);
   const automaticFacets = getAutomaticFacets(state);
   const sharedWithFoldingRequest =
-    await buildSearchAndFoldingLoadCollectionRequest(state, eventDescription);
+    state.configuration.analytics.analyticsMode === 'legacy'
+      ? await legacyBuildSearchAndFoldingLoadCollectionRequest(
+          state,
+          eventDescription
+        )
+      : buildSearchAndFoldingLoadCollectionRequest(
+          state,
+          navigatorContext,
+          eventDescription
+        );
 
   // Corner case:
   // If the number of results requested would go over the index limit (maximumNumberOfResultsFromIndex)
@@ -46,7 +58,19 @@ export const buildSearchRequest = async (
   return mapSearchRequest({
     ...sharedWithFoldingRequest,
     ...(state.didYouMean && {
-      enableDidYouMean: state.didYouMean.enableDidYouMean,
+      queryCorrection: {
+        enabled:
+          state.didYouMean.enableDidYouMean &&
+          state.didYouMean.queryCorrectionMode === 'next',
+        options: {
+          automaticallyCorrect: state.didYouMean.automaticallyCorrectQuery
+            ? ('whenNoResults' as const)
+            : ('never' as const),
+        },
+      },
+      enableDidYouMean:
+        state.didYouMean.enableDidYouMean &&
+        state.didYouMean.queryCorrectionMode === 'legacy',
     }),
     ...(cq && {cq}),
     ...(facets.length && {facets}),

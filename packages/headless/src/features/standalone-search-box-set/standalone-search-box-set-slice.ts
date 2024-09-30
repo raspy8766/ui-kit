@@ -5,20 +5,21 @@ import {
   resetStandaloneSearchBox,
   updateAnalyticsToOmniboxFromLink,
   updateAnalyticsToSearchFromLink,
-} from './standalone-search-box-set-actions';
+  updateStandaloneSearchBoxRedirectionUrl,
+} from './standalone-search-box-set-actions.js';
 import {
   getStandaloneSearchBoxSetInitialState,
   StandaloneSearchBoxEntry,
-} from './standalone-search-box-set-state';
+} from './standalone-search-box-set-state.js';
 
 export const standaloneSearchBoxSetReducer = createReducer(
   getStandaloneSearchBoxSetInitialState(),
   (builder) =>
     builder
       .addCase(registerStandaloneSearchBox, (state, action) => {
-        const {id, redirectionUrl} = action.payload;
+        const {id, redirectionUrl, overwrite} = action.payload;
 
-        if (id in state) {
+        if (!overwrite && id in state) {
           return;
         }
 
@@ -34,6 +35,15 @@ export const standaloneSearchBoxSetReducer = createReducer(
           );
           return;
         }
+      })
+      .addCase(updateStandaloneSearchBoxRedirectionUrl, (state, action) => {
+        const {id, redirectionUrl} = action.payload;
+
+        if (!(id in state)) {
+          return;
+        }
+
+        state[id] = buildStandaloneSearchBoxEntry(redirectionUrl);
       })
       .addCase(fetchRedirectUrl.pending, (state, action) => {
         const searchBox = state[action.meta.arg.id];

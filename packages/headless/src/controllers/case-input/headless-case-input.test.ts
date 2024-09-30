@@ -1,24 +1,30 @@
-import {configuration} from '../../app/common-reducers';
-import {caseAssistConfigurationReducer as caseAssistConfiguration} from '../../features/case-assist-configuration/case-assist-configuration-slice';
-import {fetchCaseClassifications} from '../../features/case-field/case-field-actions';
-import {caseFieldReducer as caseField} from '../../features/case-field/case-field-slice';
-import {updateCaseInput} from '../../features/case-input/case-input-actions';
-import {caseInputReducer as caseInput} from '../../features/case-input/case-input-slice';
-import {fetchDocumentSuggestions} from '../../features/document-suggestion/document-suggestion-actions';
-import {documentSuggestionReducer as documentSuggestion} from '../../features/document-suggestion/document-suggestion-slice';
-import {buildMockCaseAssistState} from '../../test/mock-case-assist-state';
+import {configuration} from '../../app/common-reducers.js';
+import {caseAssistConfigurationReducer as caseAssistConfiguration} from '../../features/case-assist-configuration/case-assist-configuration-slice.js';
+import {logUpdateCaseField} from '../../features/case-assist/case-assist-analytics-actions.js';
+import {fetchCaseClassifications} from '../../features/case-field/case-field-actions.js';
+import {caseFieldReducer as caseField} from '../../features/case-field/case-field-slice.js';
+import {updateCaseInput} from '../../features/case-input/case-input-actions.js';
+import {caseInputReducer as caseInput} from '../../features/case-input/case-input-slice.js';
+import {fetchDocumentSuggestions} from '../../features/document-suggestion/document-suggestion-actions.js';
+import {documentSuggestionReducer as documentSuggestion} from '../../features/document-suggestion/document-suggestion-slice.js';
+import {buildMockCaseAssistState} from '../../test/mock-case-assist-state.js';
 import {
   buildMockCaseAssistEngine,
-  MockCaseAssistEngine,
-} from '../../test/mock-engine';
+  MockedCaseAssistEngine,
+} from '../../test/mock-engine-v2.js';
 import {
   CaseInput,
   CaseInputOptions,
   buildCaseInput,
-} from './headless-case-input';
+} from './headless-case-input.js';
+
+vi.mock('../../features/case-input/case-input-actions');
+vi.mock('../../features/case-assist/case-assist-analytics-actions');
+vi.mock('../../features/case-field/case-field-actions');
+vi.mock('../../features/document-suggestion/document-suggestion-actions');
 
 describe('Case Input', () => {
-  let engine: MockCaseAssistEngine;
+  let engine: MockedCaseAssistEngine;
   let options: CaseInputOptions;
   let input: CaseInput;
 
@@ -28,11 +34,16 @@ describe('Case Input', () => {
     input = buildCaseInput(engine, {options});
   }
 
+  function initEngine(preloadedState = buildMockCaseAssistState()) {
+    engine = buildMockCaseAssistEngine(preloadedState);
+  }
+
   beforeEach(() => {
+    vi.resetAllMocks();
     options = {
       field: testFieldName,
     };
-    engine = buildMockCaseAssistEngine();
+    initEngine();
     initCaseInput();
   });
 
@@ -46,27 +57,33 @@ describe('Case Input', () => {
     });
   });
 
-  it('building a case input registers the input field in the state', () => {
-    expect(engine.actions).toContainEqual(
-      updateCaseInput({fieldName: testFieldName, fieldValue: ''})
+  it('dispatch #updateCaseInput on init if the field was not already registered', () => {
+    const mockedUpdateCaseInput = vi.mocked(updateCaseInput);
+
+    expect(mockedUpdateCaseInput).toHaveBeenCalledWith({
+      fieldName: testFieldName,
+      fieldValue: '',
+    });
+    expect(engine.dispatch).toHaveBeenCalledWith(
+      mockedUpdateCaseInput.mock.results[0].value
     );
   });
 
-  it('building a case input that was already registered does not register the input field again', () => {
-    engine = buildMockCaseAssistEngine({
-      state: {
-        ...buildMockCaseAssistState(),
-        caseInput: {
-          [testFieldName]: {
-            value: '',
-          },
+  it('do not dispatch #updateCaseInput on init if the field was already registered', () => {
+    vi.resetAllMocks();
+    const mockedUpdateCaseInput = vi.mocked(updateCaseInput);
+    initEngine({
+      ...buildMockCaseAssistState(),
+      caseInput: {
+        [testFieldName]: {
+          value: '',
         },
       },
     });
+
     initCaseInput();
-    expect(engine.actions).not.toContainEqual(
-      updateCaseInput({fieldName: testFieldName, fieldValue: ''})
-    );
+
+    expect(mockedUpdateCaseInput).not.toHaveBeenCalled();
   });
 
   it('building a case input specifying an empty field name throws', () => {
@@ -80,61 +97,95 @@ describe('Case Input', () => {
     const testValue = 'test input value';
 
     it('dispatches a #updateCaseInput action with the passed input value', () => {
-      const testValue = 'test input value';
+      vi.resetAllMocks();
+      const mockedUpdateCaseInput = vi.mocked(updateCaseInput);
+
       input.update(testValue);
 
-      expect(engine.actions).toContainEqual(
-        updateCaseInput({fieldName: testFieldName, fieldValue: testValue})
+      expect(mockedUpdateCaseInput).toHaveBeenCalledWith({
+        fieldName: testFieldName,
+        fieldValue: testValue,
+      });
+      expect(engine.dispatch).toHaveBeenCalledWith(
+        mockedUpdateCaseInput.mock.results[0].value
       );
     });
 
-    it('dispatches a #logCaseFieldUpdate analytics action', () => {
-      const testValue = 'test input value';
+    it('dispatches a #logUpdateCaseField analytics action', () => {
+      const mockedlogUpdateCaseField = vi.mocked(logUpdateCaseField);
+
       input.update(testValue);
 
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: 'analytics/caseAssist/case/field/update/pending',
-        })
+      expect(engine.dispatch).toHaveBeenCalledWith(
+        mockedlogUpdateCaseField.mock.results[0].value
       );
     });
 
-    it('dispatches a #fetchCaseClassifications action if requested', () => {
-      input.update(testValue, {caseClassifications: true});
+    it('dispatches a #fetchCaseClassifications action when required', () => {
+      const mockedFetchCaseClassifications = vi.mocked(
+        fetchCaseClassifications
+      );
 
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: fetchCaseClassifications.pending.type,
-        })
+      input.update(testValue, {
+        caseClassifications: true,
+      });
+
+      expect(mockedFetchCaseClassifications).toHaveBeenCalled();
+      expect(engine.dispatch).toHaveBeenCalledWith(
+        mockedFetchCaseClassifications.mock.results[0].value
       );
     });
 
-    it('dispatches a #fetchDocumentSuggestions if requested', () => {
-      input.update(testValue, {documentSuggestions: true});
+    it('dispatches a #fetchDocumentSuggestions action when required', () => {
+      const mockedFetchDocumentSuggestions = vi.mocked(
+        fetchDocumentSuggestions
+      );
 
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: fetchDocumentSuggestions.pending.type,
-        })
+      input.update(testValue, {
+        documentSuggestions: true,
+      });
+
+      expect(mockedFetchDocumentSuggestions).toHaveBeenCalled();
+      expect(engine.dispatch).toHaveBeenCalledWith(
+        mockedFetchDocumentSuggestions.mock.results[0].value
       );
     });
 
-    it('dispatches both if requested', () => {
+    it('dispatches both #fetchCaseClassifications and #fetchDocumentSuggestions when required', () => {
+      const mockedFetchCaseClassifications = vi.mocked(
+        fetchCaseClassifications
+      );
+      const mockedFetchDocumentSuggestions = vi.mocked(
+        fetchDocumentSuggestions
+      );
+
       input.update(testValue, {
         caseClassifications: true,
         documentSuggestions: true,
       });
 
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: fetchCaseClassifications.pending.type,
-        })
+      expect(mockedFetchDocumentSuggestions).toHaveBeenCalled();
+      expect(engine.dispatch).toHaveBeenCalledWith(
+        mockedFetchDocumentSuggestions.mock.results[0].value
       );
-      expect(engine.actions).toContainEqual(
-        expect.objectContaining({
-          type: fetchDocumentSuggestions.pending.type,
-        })
+      expect(mockedFetchCaseClassifications).toHaveBeenCalled();
+      expect(engine.dispatch).toHaveBeenCalledWith(
+        mockedFetchCaseClassifications.mock.results[0].value
       );
+    });
+
+    it('does not dispatch #fetchCaseClassifications nor #fetchDocumentSuggestions when not required', () => {
+      const mockedFetchCaseClassifications = vi.mocked(
+        fetchCaseClassifications
+      );
+      const mockedFetchDocumentSuggestions = vi.mocked(
+        fetchDocumentSuggestions
+      );
+
+      input.update(testValue);
+
+      expect(mockedFetchDocumentSuggestions).not.toHaveBeenCalled();
+      expect(mockedFetchCaseClassifications).not.toHaveBeenCalled();
     });
   });
 });

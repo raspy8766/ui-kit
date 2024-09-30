@@ -1,27 +1,34 @@
-import {AnyAction} from '@reduxjs/toolkit';
-import {buildController} from '../../controllers';
-import {executeSearch} from '../../features/search/search-actions';
+import {Middleware, UnknownAction} from '@reduxjs/toolkit';
+import {SearchResponseSuccess} from '../../api/search/search/search-response.js';
 import {
-  defineResultList,
-  loadPaginationActions,
-  InferStaticState,
-  InferHydratedState,
-  ControllerDefinitionWithoutProps,
+  buildController,
   Controller,
-  Middleware,
-} from '../../ssr.index';
-import {buildMockResult} from '../../test';
-import {InferBuildResult} from '../ssr-engine/types/core-engine';
-import {getSampleSearchEngineConfiguration} from './search-engine';
+} from '../../controllers/controller/headless-controller.js';
+import {defineResultList} from '../../controllers/result-list/headless-result-list.ssr.js';
+import {loadPaginationActions} from '../../features/pagination/pagination-actions-loader.js';
+import {executeSearch} from '../../features/search/search-actions.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {ControllerDefinitionWithoutProps} from '../ssr-engine/types/common.js';
+import {InferHydratedState} from '../ssr-engine/types/core-engine.js';
+import {InferStaticState} from '../ssr-engine/types/core-engine.js';
+import {InferBuildResult} from '../ssr-engine/types/core-engine.js';
+import {getSampleSearchEngineConfiguration} from './search-engine.js';
 import {
   SSRSearchEngine,
   SearchEngineDefinition,
   defineSearchEngine,
-} from './search-engine.ssr';
+} from './search-engine.ssr.js';
 
 interface CustomEngineStateReader<TState extends {}> extends Controller {
   state: TState;
 }
+
+type UnknownActionWithPossibleSearchResponsePayload = UnknownAction & {
+  payload: {
+    response: SearchResponseSuccess;
+  };
+  meta: {requestId: string};
+};
 
 function defineCustomEngineStateReader(): ControllerDefinitionWithoutProps<
   SSRSearchEngine,
@@ -40,13 +47,13 @@ function defineCustomEngineStateReader(): ControllerDefinitionWithoutProps<
 }
 
 function isSearchPendingAction(
-  action: AnyAction
+  action: UnknownAction
 ): action is ReturnType<(typeof executeSearch)['pending']> {
   return action.type === 'search/executeSearch/pending';
 }
 
 function isSearchFulfilledAction(
-  action: AnyAction
+  action: UnknownAction
 ): action is ReturnType<(typeof executeSearch)['fulfilled']> {
   return action.type === 'search/executeSearch/fulfilled';
 }
@@ -57,17 +64,25 @@ function createMockResultsMiddleware(options: {
   const numberOfResultsPerRequestId: {[requestId: string]: number | undefined} =
     {};
   return (api) => (next) => (action) => {
-    if (isSearchPendingAction(action)) {
+    const possibleSearchActionWithPayload =
+      action as UnknownActionWithPossibleSearchResponsePayload;
+    if (isSearchPendingAction(possibleSearchActionWithPayload)) {
       const state = api.getState() as SSRSearchEngine['state'];
-      numberOfResultsPerRequestId[action.meta.requestId] =
-        state.pagination?.numberOfResults ?? options.defaultNumberOfResults;
+      numberOfResultsPerRequestId[
+        possibleSearchActionWithPayload['meta']['requestId']
+      ] = state.pagination?.numberOfResults ?? options.defaultNumberOfResults;
       return next(action);
     }
-    if (isSearchFulfilledAction(action)) {
-      const newAction = JSON.parse(JSON.stringify(action)) as typeof action;
+    if (isSearchFulfilledAction(action as UnknownAction)) {
+      const newAction = JSON.parse(
+        JSON.stringify(possibleSearchActionWithPayload)
+      ) as UnknownActionWithPossibleSearchResponsePayload;
       newAction.payload.response.results = Array.from(
         {
-          length: numberOfResultsPerRequestId[action.meta.requestId]!,
+          length:
+            numberOfResultsPerRequestId[
+              possibleSearchActionWithPayload.meta.requestId
+            ]!,
         },
         (_, index) => buildMockResult({title: `Result #${index}`})
       );
@@ -95,10 +110,6 @@ describe('SSR', () => {
         state.controllers.engineStateReader.state.pagination?.numberOfResults ??
         defaultNumberOfResults
       );
-    }
-
-    function getResultsCount(state: AnyState) {
-      return state.controllers.resultList.state.results.length;
     }
 
     beforeEach(() => {
@@ -132,27 +143,27 @@ describe('SSR', () => {
     });
 
     it('fetches initial state of engine', async () => {
-      const {fetchStaticState} = engineDefinition;
+      const fetchStaticState = vi.mocked(engineDefinition.fetchStaticState);
       const staticState = await fetchStaticState();
       expect(staticState).toBeTruthy();
-      expect(getResultsCount(staticState)).toBe(defaultNumberOfResults);
       expect(getResultsPerPage(staticState)).toBe(defaultNumberOfResults);
     });
 
     describe('with a static state', () => {
       let staticState: StaticState;
       beforeEach(async () => {
-        const {fetchStaticState} = engineDefinition;
+        const fetchStaticState = vi.mocked(engineDefinition.fetchStaticState);
         staticState = await fetchStaticState();
       });
 
-      it('hydrates engine and fetches results using hydrated engine', async () => {
-        const {hydrateStaticState} = engineDefinition;
+      it('hydrates engine', async () => {
+        const hydrateStaticState = vi.mocked(
+          engineDefinition.hydrateStaticState
+        );
         const hydratedState = await hydrateStaticState(staticState);
         expect(hydratedState.engine.state.configuration.organizationId).toEqual(
           getSampleSearchEngineConfiguration().organizationId
         );
-        expect(getResultsCount(hydratedState)).toBe(defaultNumberOfResults);
         expect(getResultsPerPage(hydratedState)).toBe(defaultNumberOfResults);
       });
     });
@@ -161,7 +172,7 @@ describe('SSR', () => {
       const newNumberOfResults = 6;
 
       async function fetchBuildResultWithNewNumberOfResults() {
-        const {build} = engineDefinition;
+        const build = vi.mocked(engineDefinition.build);
         const buildResult = await build();
         const {registerNumberOfResults} = loadPaginationActions(
           buildResult.engine
@@ -174,33 +185,30 @@ describe('SSR', () => {
       }
 
       it('fetches initial state of engine from build result', async () => {
-        const {fetchStaticState} = engineDefinition;
+        const fetchStaticState = vi.mocked(engineDefinition.fetchStaticState);
         const staticState = await fetchStaticState.fromBuildResult({
           buildResult: await fetchBuildResultWithNewNumberOfResults(),
         });
         expect(staticState).toBeTruthy();
-        expect(getResultsCount(staticState)).toBe(newNumberOfResults);
         expect(getResultsPerPage(staticState)).toBe(newNumberOfResults);
       });
 
       describe('with the default static state', () => {
         let staticState: StaticState;
         beforeEach(async () => {
-          const {fetchStaticState} = engineDefinition;
+          const fetchStaticState = vi.mocked(engineDefinition.fetchStaticState);
           staticState = await fetchStaticState();
         });
 
         it('hydrates engine from build result', async () => {
-          const {hydrateStaticState} = engineDefinition;
+          const hydrateStaticState = vi.mocked(
+            engineDefinition.hydrateStaticState
+          );
           const buildResult = await fetchBuildResultWithNewNumberOfResults();
           const hydratedState = await hydrateStaticState.fromBuildResult({
             buildResult: buildResult,
             searchAction: staticState.searchAction,
           });
-          expect(getResultsCount(staticState)).toBe(defaultNumberOfResults);
-          expect(getResultsCount(hydratedState)).toBe(
-            getResultsCount(staticState)
-          );
           expect(getResultsPerPage(hydratedState)).toBe(newNumberOfResults);
         });
       });

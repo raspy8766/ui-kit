@@ -1,4 +1,4 @@
-@import '../../../common/result-list/styles/mixins.pcss';
+@import '../../../common/item-list/styles/mixins.pcss';
 
 [part~='divider'] {
   &:not(:last-child) {
@@ -21,7 +21,7 @@
     @mixin atomic-list-with-dividers;
 
     .result-component[part~='outline']::before {
-      @apply my-0 mx-6;
+      @apply mx-6 my-0;
     }
   }
 

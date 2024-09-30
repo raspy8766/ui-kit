@@ -1,5 +1,5 @@
-import {RETRYABLE_STREAM_ERROR_CODE} from '../../api/generated-answer/generated-answer-client';
-import {buildMockCitation} from '../../test/mock-citation';
+import {RETRYABLE_STREAM_ERROR_CODE} from '../../api/generated-answer/generated-answer-client.js';
+import {buildMockCitation} from '../../test/mock-citation.js';
 import {
   dislikeGeneratedAnswer,
   likeGeneratedAnswer,
@@ -15,13 +15,19 @@ import {
   closeGeneratedAnswerFeedbackModal,
   sendGeneratedAnswerFeedback,
   registerFieldsToIncludeInCitations,
-} from './generated-answer-actions';
-import {generatedAnswerReducer} from './generated-answer-slice';
-import {getGeneratedAnswerInitialState} from './generated-answer-state';
+  setAnswerContentFormat,
+  setIsAnswerGenerated,
+  expandGeneratedAnswer,
+  collapseGeneratedAnswer,
+  setIsEnabled,
+} from './generated-answer-actions.js';
+import {generatedAnswerReducer} from './generated-answer-slice.js';
+import {getGeneratedAnswerInitialState} from './generated-answer-state.js';
 import {
-  GeneratedAnswerStyle,
+  GeneratedContentFormat,
   GeneratedResponseFormat,
-} from './generated-response-format';
+  generatedContentFormat,
+} from './generated-response-format.js';
 
 const baseState = getGeneratedAnswerInitialState();
 
@@ -74,6 +80,7 @@ describe('generated answer slice', () => {
       const newCitations = [
         buildMockCitation({
           id: 'some-other-id',
+          uri: 'my-uri',
         }),
       ];
       const finalState = generatedAnswerReducer(
@@ -88,6 +95,30 @@ describe('generated answer slice', () => {
         ...existingCitations,
         ...newCitations,
       ]);
+    });
+
+    it('Shows only citations that have different Uris', () => {
+      const existingCitations = [
+        buildMockCitation({
+          id: 'current-id',
+          uri: 'my-uri',
+        }),
+      ];
+      const newCitations = [
+        buildMockCitation({
+          id: 'some-other-id',
+          uri: 'my-uri',
+        }),
+      ];
+      const finalState = generatedAnswerReducer(
+        {
+          ...getGeneratedAnswerInitialState(),
+          citations: existingCitations,
+        },
+        updateCitations({citations: newCitations})
+      );
+
+      expect(finalState.citations).toEqual([...newCitations]);
     });
   });
 
@@ -188,11 +219,13 @@ describe('generated answer slice', () => {
 
   describe('#resetAnswer', () => {
     it('should reset the answer', () => {
+      const responseFormat: GeneratedResponseFormat = {
+        contentFormat: ['text/markdown'],
+      };
       const persistentGeneratedAnswerState = {
         isVisible: false,
-        responseFormat: {
-          answerStyle: 'step' as GeneratedAnswerStyle,
-        },
+        responseFormat,
+        isEnabled: true,
         fieldsToIncludeInCitations: ['foo'],
       };
       const state = {
@@ -218,7 +251,7 @@ describe('generated answer slice', () => {
 
     it('should not reset the response format', () => {
       const responseFormat: GeneratedResponseFormat = {
-        answerStyle: 'step',
+        contentFormat: ['text/markdown'],
       };
       const state = {
         ...baseState,
@@ -230,6 +263,45 @@ describe('generated answer slice', () => {
       expect(finalState.responseFormat).toEqual(responseFormat);
     });
   });
+  it('should not reset the configuration id', () => {
+    const state = {
+      ...baseState,
+      answerConfigurationId: 'some-id',
+    };
+
+    const finalState = generatedAnswerReducer(state, resetAnswer());
+    expect(finalState.answerConfigurationId).toBe('some-id');
+  });
+
+  test.each(generatedContentFormat)(
+    '#setAnswerContentFormat should set the "%i" content format in the state',
+    (format: GeneratedContentFormat) => {
+      const finalState = generatedAnswerReducer(
+        baseState,
+        setAnswerContentFormat(format)
+      );
+
+      expect(finalState).toEqual({
+        ...getGeneratedAnswerInitialState(),
+        answerContentFormat: format,
+      });
+    }
+  );
+
+  test.each(generatedContentFormat)(
+    '#setAnswerContentFormat should set the "%i" content format in the state',
+    (format: GeneratedContentFormat) => {
+      const finalState = generatedAnswerReducer(
+        baseState,
+        setAnswerContentFormat(format)
+      );
+
+      expect(finalState).toEqual({
+        ...getGeneratedAnswerInitialState(),
+        answerContentFormat: format,
+      });
+    }
+  );
 
   it('#likeGeneratedAnswer should set the answer as liked in the state', () => {
     const finalState = generatedAnswerReducer(baseState, likeGeneratedAnswer());
@@ -290,6 +362,22 @@ describe('generated answer slice', () => {
     });
   });
 
+  it('#expandGeneratedAnswer should set expanded to true in the state', () => {
+    const finalState = generatedAnswerReducer(
+      {...baseState, expanded: false},
+      expandGeneratedAnswer()
+    );
+    expect(finalState.expanded).toBe(true);
+  });
+
+  it('#collapseGeneratedAnswer should set expanded to false in the state', () => {
+    const finalState = generatedAnswerReducer(
+      {...baseState, expanded: true},
+      collapseGeneratedAnswer()
+    );
+    expect(finalState.expanded).toBe(false);
+  });
+
   describe('#setIsLoading', () => {
     it('should set isLoading to true when given true', () => {
       const finalState = generatedAnswerReducer(
@@ -333,13 +421,13 @@ describe('generated answer slice', () => {
   describe('#updateResponseFormat', () => {
     it('should set the given response format', () => {
       const newResponseFormat: GeneratedResponseFormat = {
-        answerStyle: 'step',
+        contentFormat: ['text/markdown'],
       };
       const finalState = generatedAnswerReducer(
         {
           ...getGeneratedAnswerInitialState(),
           responseFormat: {
-            answerStyle: 'default',
+            contentFormat: ['text/plain'],
           },
         },
         updateResponseFormat(newResponseFormat)
@@ -383,6 +471,46 @@ describe('generated answer slice', () => {
       );
 
       expect(finalState.isVisible).toEqual(false);
+    });
+  });
+
+  describe('#setIsEnabled', () => {
+    it('should set isEnabled to true when given true', () => {
+      const finalState = generatedAnswerReducer(
+        {...baseState, isEnabled: false},
+        setIsEnabled(true)
+      );
+
+      expect(finalState.isEnabled).toEqual(true);
+    });
+
+    it('should set isEnabled to false when given false', () => {
+      const finalState = generatedAnswerReducer(
+        {...baseState, isEnabled: true},
+        setIsEnabled(false)
+      );
+
+      expect(finalState.isEnabled).toEqual(false);
+    });
+  });
+
+  describe('#setIsAnswerGenerated', () => {
+    it('should set isAnswerGenerated to true when given true', () => {
+      const finalState = generatedAnswerReducer(
+        {...baseState, isAnswerGenerated: false},
+        setIsAnswerGenerated(true)
+      );
+
+      expect(finalState.isAnswerGenerated).toEqual(true);
+    });
+
+    it('should set isAnswerGenerated to false when given false', () => {
+      const finalState = generatedAnswerReducer(
+        {...baseState, isAnswerGenerated: true},
+        setIsAnswerGenerated(false)
+      );
+
+      expect(finalState.isAnswerGenerated).toEqual(false);
     });
   });
 });

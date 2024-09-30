@@ -5,6 +5,7 @@ import {
   StringValue,
 } from '@coveo/bueno';
 import {type createRelay} from '@coveo/relay';
+import {ItemMetaData} from '@coveo/relay-event-types';
 import {
   AsyncThunk,
   AsyncThunkPayloadCreator,
@@ -19,56 +20,44 @@ import type {
   EventDescription,
   AnalyticsClientSendEventHook,
 } from 'coveo.analytics';
-import {AnalyticsClient} from 'coveo.analytics/dist/definitions/client/analytics';
-import {SearchEventResponse} from 'coveo.analytics/dist/definitions/events';
+import {AnalyticsClient} from 'coveo.analytics/dist/definitions/client/analytics.js';
+import {SearchEventResponse} from 'coveo.analytics/dist/definitions/events.js';
 import {
   PartialDocumentInformation,
   DocumentIdentifier,
-} from 'coveo.analytics/dist/definitions/searchPage/searchPageEvents';
+} from 'coveo.analytics/dist/definitions/searchPage/searchPageEvents.js';
 import {Logger} from 'pino';
+import {getRelayInstanceFromState} from '../../api/analytics/analytics-relay-client.js';
 import {
   CaseAssistAnalyticsProvider,
   configureCaseAssistAnalytics,
   StateNeededByCaseAssistAnalytics,
-} from '../../api/analytics/case-assist-analytics';
-import {
-  StateNeededByCommerceAnalyticsProvider,
-  CommerceAnalyticsProvider,
-  configureCommerceAnalytics,
-} from '../../api/analytics/commerce-analytics';
+} from '../../api/analytics/case-assist-analytics.js';
 import {
   configureInsightAnalytics,
   InsightAnalyticsProvider,
   StateNeededByInsightAnalyticsProvider,
-} from '../../api/analytics/insight-analytics';
-import {StateNeededByInstantResultsAnalyticsProvider} from '../../api/analytics/instant-result-analytics';
+} from '../../api/analytics/insight-analytics.js';
+import {StateNeededByInstantResultsAnalyticsProvider} from '../../api/analytics/instant-result-analytics.js';
 import {
-  configureProductListingAnalytics,
-  ProductListingAnalyticsProvider,
-  StateNeededByProductListingAnalyticsProvider,
-} from '../../api/analytics/product-listing-analytics';
-import {StateNeededByProductRecommendationsAnalyticsProvider} from '../../api/analytics/product-recommendations-analytics';
-import {
-  configureAnalytics,
   configureLegacyAnalytics,
   SearchAnalyticsProvider,
   StateNeededBySearchAnalyticsProvider,
-} from '../../api/analytics/search-analytics';
-import {PreprocessRequest} from '../../api/preprocess-request';
-import {Raw} from '../../api/search/search/raw';
-import {Result} from '../../api/search/search/result';
-import {ThunkExtraArguments} from '../../app/thunk-extra-arguments';
-import {ProductRecommendation} from '../../product-listing.index';
-import {RecommendationAppState} from '../../state/recommendation-app-state';
-import {SearchAppState} from '../../state/search-app-state';
+} from '../../api/analytics/search-analytics.js';
+import {PreprocessRequest} from '../../api/preprocess-request.js';
+import {Raw} from '../../api/search/search/raw.js';
+import {Result} from '../../api/search/search/result.js';
+import {ThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
+import {RecommendationAppState} from '../../state/recommendation-app-state.js';
+import {SearchAppState} from '../../state/search-app-state.js';
 import {
   ConfigurationSection,
   PipelineSection,
-} from '../../state/state-sections';
-import {requiredNonEmptyString} from '../../utils/validate-payload';
-import {ResultWithFolding} from '../folding/folding-slice';
-import {getAllIncludedResultsFrom} from '../folding/folding-utils';
-import {getPipelineInitialState} from '../pipeline/pipeline-state';
+} from '../../state/state-sections.js';
+import {requiredNonEmptyString} from '../../utils/validate-payload.js';
+import {ResultWithFolding} from '../folding/folding-slice.js';
+import {getAllIncludedResultsFrom} from '../folding/folding-utils.js';
+import {getPipelineInitialState} from '../pipeline/pipeline-state.js';
 
 export interface PreparableAnalyticsActionOptions<
   StateNeeded extends ConfigurationSection,
@@ -137,15 +126,6 @@ export type InsightAction =
 
 export type CaseAssistAction =
   PreparableAnalyticsAction<StateNeededByCaseAssistAnalytics>;
-
-export type ProductRecommendationAction =
-  PreparableAnalyticsAction<StateNeededByProductRecommendationsAnalyticsProvider>;
-
-export type ProductListingAction =
-  PreparableAnalyticsAction<StateNeededByProductListingAnalyticsProvider>;
-
-export type ProductListingV2Action =
-  PreparableAnalyticsAction<StateNeededByCommerceAnalyticsProvider>;
 
 export interface AsyncThunkAnalyticsOptions<
   T extends StateNeededBySearchAnalyticsProvider,
@@ -242,7 +222,7 @@ export type AnalyticsActionOptions<
   LegacyProvider,
   Client,
   PayloadType,
-> = Exclude<
+> = Omit<
   LegacyAnalyticsOptions<LegacyStateNeeded, Client, LegacyProvider>,
   '__legacy__getBuilder'
 > &
@@ -431,7 +411,6 @@ type InternalMakeAnalyticsActionOptions<
 
 type InternalLegacyStateNeeded =
   | StateNeededBySearchAnalyticsProvider
-  | StateNeededByProductListingAnalyticsProvider
   | StateNeededByCaseAssistAnalytics;
 
 interface LegacyProviderCommon {
@@ -509,7 +488,7 @@ const internalMakeAnalyticsAction = <
           );
         }
       });
-      const emitEvent = configureAnalytics(state);
+      const {emit} = getRelayInstanceFromState(state);
       loggers.push(async (state: LegacyStateNeeded & StateNeeded) => {
         if (
           shouldSendNextEvent(state) &&
@@ -517,7 +496,7 @@ const internalMakeAnalyticsAction = <
           analyticsPayloadBuilder
         ) {
           const payload = analyticsPayloadBuilder(state);
-          await logNextEvent(emitEvent, analyticsType, payload);
+          await logNextEvent(emit, analyticsType, payload);
         }
       });
       return analyticsAction;
@@ -547,20 +526,23 @@ type LogFunction<Client, StateNeeded> = (
   state: StateNeeded
 ) => Promise<void | SearchEventResponse> | void | null;
 
-const fromLogToLegacyBuilder =
-  <Client extends CommonClient, StateNeeded>(
+const fromLogToLegacyBuilderFactory = (actionCause: string) => {
+  const fromLogToLegacyBuilder = <Client extends CommonClient, StateNeeded>(
     log: (
       client: Client,
       state: StateNeeded
     ) => Promise<void | SearchEventResponse> | void | null
-  ): ((client: Client, state: StateNeeded) => Promise<EventBuilder>) =>
-  (client, state) =>
-    Promise.resolve({
-      description: {actionCause: 'caseAssist'},
-      log: async (_metadata: {searchUID: string}) => {
-        log(client, state);
-      },
-    });
+  ): ((client: Client, state: StateNeeded) => Promise<EventBuilder>) => {
+    return (client, state) =>
+      Promise.resolve({
+        description: {actionCause: actionCause},
+        log: async (_metadata: {searchUID: string}) => {
+          log(client, state);
+        },
+      });
+  };
+  return fromLogToLegacyBuilder;
+};
 
 export const makeAnalyticsAction = makeAnalyticsActionFactory<
   StateNeededBySearchAnalyticsProvider,
@@ -577,39 +559,24 @@ export const makeCaseAssistAnalyticsAction = makeAnalyticsActionFactory<
   LogFunction<CaseAssistClient, StateNeededByCaseAssistAnalytics>
 >(
   configureCaseAssistAnalytics,
-  fromLogToLegacyBuilder,
+  fromLogToLegacyBuilderFactory('caseAssist'),
   CaseAssistAnalyticsProvider
 );
 
-export const makeInsightAnalyticsAction = makeAnalyticsActionFactory<
-  StateNeededByInsightAnalyticsProvider,
-  StateNeededByInsightAnalyticsProvider,
-  CoveoInsightClient,
-  InsightAnalyticsProvider,
-  LogFunction<CoveoInsightClient, StateNeededByInsightAnalyticsProvider>
->(configureInsightAnalytics, fromLogToLegacyBuilder, InsightAnalyticsProvider);
-
-export const makeCommerceAnalyticsAction = makeAnalyticsActionFactory<
-  StateNeededByCommerceAnalyticsProvider,
-  StateNeededByCommerceAnalyticsProvider,
-  CoveoSearchPageClient,
-  CommerceAnalyticsProvider
->(
-  configureCommerceAnalytics,
-  (original) => original,
-  CommerceAnalyticsProvider
-);
-
-export const makeProductListingAnalyticsAction = makeAnalyticsActionFactory<
-  StateNeededByProductListingAnalyticsProvider,
-  StateNeededByProductListingAnalyticsProvider,
-  CoveoSearchPageClient,
-  ProductListingAnalyticsProvider
->(
-  configureProductListingAnalytics,
-  (original) => original,
-  ProductListingAnalyticsProvider
-);
+export const makeInsightAnalyticsActionFactory = (actionCause: string) => {
+  const makeInsightAnalyticsAction = makeAnalyticsActionFactory<
+    StateNeededByInsightAnalyticsProvider,
+    StateNeededByInsightAnalyticsProvider,
+    CoveoInsightClient,
+    InsightAnalyticsProvider,
+    LogFunction<CoveoInsightClient, StateNeededByInsightAnalyticsProvider>
+  >(
+    configureInsightAnalytics,
+    fromLogToLegacyBuilderFactory(actionCause),
+    InsightAnalyticsProvider
+  );
+  return makeInsightAnalyticsAction;
+};
 
 export const makeNoopAnalyticsAction = () =>
   makeAnalyticsAction('analytics/noop', () => null);
@@ -707,11 +674,6 @@ export const resultPartialDefinition = {
   rankingModifier: new StringValue({required: false, emptyAllowed: true}),
 };
 
-export const productRecommendationPartialDefinition = {
-  permanentid: requiredNonEmptyString,
-  documentUri: requiredNonEmptyString,
-  clickUri: requiredNonEmptyString,
-};
 function partialRawPayload(raw: Raw): Partial<Raw> {
   return Object.assign(
     {},
@@ -771,10 +733,6 @@ function findPositionWithUniqueId(
   return results.findIndex(({uniqueId}) => uniqueId === targetResult.uniqueId);
 }
 
-export const validateProductRecommendationPayload = (
-  productRec: ProductRecommendation
-) => new Schema(productRecommendationPartialDefinition).validate(productRec);
-
 async function logNextEvent<PayloadType>(
   emitEvent: ReturnType<typeof createRelay>['emit'],
   type: string,
@@ -784,3 +742,18 @@ async function logNextEvent<PayloadType>(
   await emitEvent(type, payload);
   return;
 }
+
+export const analyticsEventItemMetadata = (
+  result: Result,
+  state: Partial<SearchAppState>
+): ItemMetaData => {
+  const identifier = documentIdentifier(result);
+  const information = partialDocumentInformation(result, state);
+  return {
+    uniqueFieldName: identifier.contentIDKey,
+    uniqueFieldValue: identifier.contentIDValue,
+    title: information.documentTitle,
+    author: information.documentAuthor,
+    url: information.documentUri,
+  };
+};

@@ -1,7 +1,7 @@
 import {AsyncThunkAction, PayloadAction} from '@reduxjs/toolkit';
-import {AsyncThunkSearchOptions} from '../../api/search/search-api-client';
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {standaloneSearchBoxSetReducer as standaloneSearchBoxSet} from '../../features/standalone-search-box-set/standalone-search-box-set-slice';
+import {AsyncThunkSearchOptions} from '../../api/search/search-api-client.js';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {standaloneSearchBoxSetReducer as standaloneSearchBoxSet} from '../../features/standalone-search-box-set/standalone-search-box-set-slice.js';
 import {
   registerStandaloneSearchBox,
   RegisterStandaloneSearchBoxActionCreatorPayload,
@@ -14,7 +14,8 @@ import {
   StateNeededForRedirect,
   resetStandaloneSearchBox,
   ResetStandaloneSearchBoxActionCreatorPayload,
-} from './standalone-search-box-set-actions';
+  updateStandaloneSearchBoxRedirectionUrl,
+} from './standalone-search-box-set-actions.js';
 
 export type {
   RegisterStandaloneSearchBoxActionCreatorPayload,
@@ -63,6 +64,15 @@ export interface StandaloneSearchBoxSetActionCreators {
   >;
 
   /**
+   * Updates the redirection URL of the standalone search box.
+   * @param payload - The action creator payload.
+   * @returns A dispatchable action.
+   */
+  updateStandaloneSearchBoxRedirectionUrl(
+    payload: RegisterStandaloneSearchBoxActionCreatorPayload
+  ): PayloadAction<RegisterStandaloneSearchBoxActionCreatorPayload>;
+
+  /**
    * Updates the standalone search box analytics data to reflect a search submitted using the search box.
    *
    * @param payload - The action creator payload.
@@ -97,6 +107,7 @@ export function loadStandaloneSearchBoxSetActions(
   return {
     registerStandaloneSearchBox,
     fetchRedirectUrl,
+    updateStandaloneSearchBoxRedirectionUrl,
     updateAnalyticsToSearchFromLink,
     updateAnalyticsToOmniboxFromLink,
     resetStandaloneSearchBox,

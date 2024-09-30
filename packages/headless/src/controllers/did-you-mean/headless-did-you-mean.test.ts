@@ -1,42 +1,45 @@
 import {
   applyDidYouMeanCorrection,
   enableDidYouMean,
-} from '../../features/did-you-mean/did-you-mean-actions';
-import {executeSearch} from '../../features/search/search-actions';
+} from '../../features/did-you-mean/did-you-mean-actions.js';
+import {executeSearch} from '../../features/search/search-actions.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
-import {buildDidYouMean, DidYouMean} from './headless-did-you-mean';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {buildDidYouMean, DidYouMean} from './headless-did-you-mean.js';
+
+vi.mock('../../features/did-you-mean/did-you-mean-actions');
+vi.mock('../../features/search/search-actions');
 
 describe('did you mean', () => {
   let dym: DidYouMean;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
 
   function initDidYouMean() {
     dym = buildDidYouMean(engine);
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initDidYouMean();
   });
 
   it('should enable did you mean', () => {
-    expect(engine.actions).toContainEqual(enableDidYouMean());
+    expect(enableDidYouMean).toHaveBeenCalled();
   });
 
   it('should allow to update query correction', () => {
-    engine.state.didYouMean.queryCorrection.correctedQuery = 'bar';
+    engine.state.didYouMean!.queryCorrection.correctedQuery = 'bar';
     initDidYouMean();
 
     dym.applyCorrection();
-    expect(engine.actions).toContainEqual(applyDidYouMeanCorrection('bar'));
+    expect(applyDidYouMeanCorrection).toHaveBeenCalledWith('bar');
   });
 
   it('dispatches #executeSearch', () => {
     dym.applyCorrection();
-    const action = engine.findAsyncAction(executeSearch.pending);
-    expect(action).toBeTruthy();
+    expect(executeSearch).toHaveBeenCalled();
   });
 });

@@ -1,65 +1,62 @@
-import {configuration} from '../../app/common-reducers';
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {toggleSelectAutomaticFacetValue} from '../../features/facets/automatic-facet-set/automatic-facet-set-actions';
-import {AutomaticFacetResponse} from '../../features/facets/automatic-facet-set/interfaces/response';
-import {deselectAllCategoryFacetValues} from '../../features/facets/category-facet-set/category-facet-set-actions';
+import {configuration} from '../../app/common-reducers.js';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {toggleSelectAutomaticFacetValue} from '../../features/facets/automatic-facet-set/automatic-facet-set-actions.js';
+import {AutomaticFacetResponse} from '../../features/facets/automatic-facet-set/interfaces/response.js';
+import {deselectAllCategoryFacetValues} from '../../features/facets/category-facet-set/category-facet-set-actions.js';
 import {
   categoryBreadcrumbFacet,
   logCategoryFacetBreadcrumb,
-} from '../../features/facets/category-facet-set/category-facet-set-analytics-actions';
-import {categoryFacetResponseSelectedValuesSelector} from '../../features/facets/category-facet-set/category-facet-set-selectors';
-import {categoryFacetSetReducer as categoryFacetSet} from '../../features/facets/category-facet-set/category-facet-set-slice';
+} from '../../features/facets/category-facet-set/category-facet-set-analytics-actions.js';
+import {categoryFacetResponseSelectedValuesSelector} from '../../features/facets/category-facet-set/category-facet-set-selectors.js';
+import {categoryFacetSetReducer as categoryFacetSet} from '../../features/facets/category-facet-set/category-facet-set-slice.js';
 import {
   toggleExcludeFacetValue,
   toggleSelectFacetValue,
   updateFreezeCurrentValues,
-} from '../../features/facets/facet-set/facet-set-actions';
+} from '../../features/facets/facet-set/facet-set-actions.js';
 import {
   breadcrumbFacet,
   logFacetBreadcrumb,
-} from '../../features/facets/facet-set/facet-set-analytics-actions';
-import {facetResponseActiveValuesSelector} from '../../features/facets/facet-set/facet-set-selectors';
-import {facetSetReducer as facetSet} from '../../features/facets/facet-set/facet-set-slice';
-import {FacetSlice} from '../../features/facets/facet-set/facet-set-state';
-import {FacetValue} from '../../features/facets/facet-set/interfaces/response';
-import {
-  breadcrumbResetAll,
-  logClearBreadcrumbs,
-} from '../../features/facets/generic/facet-generic-analytics-actions';
+} from '../../features/facets/facet-set/facet-set-analytics-actions.js';
+import {facetResponseActiveValuesSelector} from '../../features/facets/facet-set/facet-set-selectors.js';
+import {facetSetReducer as facetSet} from '../../features/facets/facet-set/facet-set-slice.js';
+import {FacetSlice} from '../../features/facets/facet-set/facet-set-state.js';
+import {FacetValue} from '../../features/facets/facet-set/interfaces/response.js';
+import {logClearBreadcrumbs} from '../../features/facets/generic/facet-generic-analytics-actions.js';
 import {
   toggleExcludeDateFacetValue,
   toggleSelectDateFacetValue,
-} from '../../features/facets/range-facets/date-facet-set/date-facet-actions';
+} from '../../features/facets/range-facets/date-facet-set/date-facet-actions.js';
 import {
   dateBreadcrumbFacet,
   logDateFacetBreadcrumb,
-} from '../../features/facets/range-facets/date-facet-set/date-facet-analytics-actions';
-import {dateFacetActiveValuesSelector} from '../../features/facets/range-facets/date-facet-set/date-facet-selectors';
-import {dateFacetSetReducer as dateFacetSet} from '../../features/facets/range-facets/date-facet-set/date-facet-set-slice';
-import {DateFacetSlice} from '../../features/facets/range-facets/date-facet-set/date-facet-set-state';
+} from '../../features/facets/range-facets/date-facet-set/date-facet-analytics-actions.js';
+import {dateFacetActiveValuesSelector} from '../../features/facets/range-facets/date-facet-set/date-facet-selectors.js';
+import {dateFacetSetReducer as dateFacetSet} from '../../features/facets/range-facets/date-facet-set/date-facet-set-slice.js';
+import {DateFacetSlice} from '../../features/facets/range-facets/date-facet-set/date-facet-set-state.js';
 import {
   toggleExcludeNumericFacetValue,
   toggleSelectNumericFacetValue,
-} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions';
+} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions.js';
 import {
   logNumericFacetBreadcrumb,
   numericBreadcrumbFacet,
-} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-analytics-actions';
-import {numericFacetActiveValuesSelector} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-selectors';
-import {numericFacetSetReducer as numericFacetSet} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-slice';
-import {NumericFacetSlice} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-state';
-import {executeSearch} from '../../features/search/search-actions';
-import {searchReducer as search} from '../../features/search/search-slice';
+} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-analytics-actions.js';
+import {numericFacetActiveValuesSelector} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-selectors.js';
+import {numericFacetSetReducer as numericFacetSet} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-slice.js';
+import {NumericFacetSlice} from '../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-state.js';
+import {executeSearch} from '../../features/search/search-actions.js';
+import {searchReducer as search} from '../../features/search/search-slice.js';
 import {
   logStaticFilterDeselect,
   staticFilterDeselect,
   toggleExcludeStaticFilterValue,
   toggleSelectStaticFilterValue,
-} from '../../features/static-filter-set/static-filter-set-actions';
+} from '../../features/static-filter-set/static-filter-set-actions.js';
 import {
   StaticFilterSlice,
   StaticFilterValue,
-} from '../../features/static-filter-set/static-filter-set-state';
+} from '../../features/static-filter-set/static-filter-set-state.js';
 import {
   CategoryFacetSection,
   ConfigurationSection,
@@ -67,8 +64,8 @@ import {
   FacetSection,
   NumericFacetSection,
   SearchSection,
-} from '../../state/state-sections';
-import {loadReducerError} from '../../utils/errors';
+} from '../../state/state-sections.js';
+import {loadReducerError} from '../../utils/errors.js';
 import {
   Breadcrumb,
   BreadcrumbManager as CoreBreadcrumbManager,
@@ -83,7 +80,7 @@ import {
   GetBreadcrumbsConfiguration,
   NumericFacetBreadcrumb,
   StaticFilterBreadcrumb,
-} from '../core/breadcrumb-manager/headless-core-breadcrumb-manager';
+} from '../core/breadcrumb-manager/headless-core-breadcrumb-manager.js';
 
 export type {
   NumericFacetBreadcrumb,
@@ -156,7 +153,7 @@ export function buildBreadcrumbManager(
               facetId: facetId,
               facetValue: selection.value,
             }),
-            next: breadcrumbFacet(facetId, selection.value),
+            next: breadcrumbFacet(),
           })
         );
       },
@@ -171,7 +168,7 @@ export function buildBreadcrumbManager(
               facetId: facetId,
               facetValue: selection.value,
             }),
-            next: breadcrumbFacet(facetId, selection.value),
+            next: breadcrumbFacet(),
           })
         );
       },
@@ -192,7 +189,7 @@ export function buildBreadcrumbManager(
         dispatch(
           executeSearch({
             legacy: logNumericFacetBreadcrumb(payload),
-            next: numericBreadcrumbFacet(payload.facetId, payload.selection),
+            next: numericBreadcrumbFacet(),
           })
         );
       },
@@ -201,7 +198,7 @@ export function buildBreadcrumbManager(
         dispatch(
           executeSearch({
             legacy: logNumericFacetBreadcrumb(payload),
-            next: numericBreadcrumbFacet(payload.facetId, payload.selection),
+            next: numericBreadcrumbFacet(),
           })
         );
       },
@@ -220,7 +217,7 @@ export function buildBreadcrumbManager(
           dispatch(
             executeSearch({
               legacy: logDateFacetBreadcrumb(payload),
-              next: dateBreadcrumbFacet(payload.facetId, payload.selection),
+              next: dateBreadcrumbFacet(),
             })
           );
         },
@@ -229,7 +226,7 @@ export function buildBreadcrumbManager(
           dispatch(
             executeSearch({
               legacy: logDateFacetBreadcrumb(payload),
-              next: dateBreadcrumbFacet(payload.facetId, payload.selection),
+              next: dateBreadcrumbFacet(),
             })
           );
         },
@@ -264,10 +261,7 @@ export function buildBreadcrumbManager(
               ),
               categoryFacetId: facetId,
             }),
-            next: categoryBreadcrumbFacet(
-              facetId,
-              path.map((v) => v.value)
-            ),
+            next: categoryBreadcrumbFacet(),
           })
         );
       },
@@ -310,7 +304,7 @@ export function buildBreadcrumbManager(
               staticFilterId: id,
               staticFilterValue: {caption, expression},
             }),
-            next: staticFilterDeselect(id, {caption, expression}),
+            next: staticFilterDeselect(),
           })
         );
       },
@@ -319,9 +313,9 @@ export function buildBreadcrumbManager(
 
   const getAutomaticFacetBreadcrumbs = (): AutomaticFacetBreadcrumb[] => {
     const set = getState().automaticFacetSet?.set ?? {};
-    return Object.values(set).map((slice) =>
-      buildAutomaticFacetBreadcrumb(slice.response)
-    );
+    return Object.values(set)
+      .map((slice) => buildAutomaticFacetBreadcrumb(slice.response))
+      .filter((breadcrumb) => breadcrumb.values.length > 0);
   };
 
   const buildAutomaticFacetBreadcrumb = (
@@ -329,7 +323,7 @@ export function buildBreadcrumbManager(
   ): AutomaticFacetBreadcrumb => {
     const {field, label} = response;
     const values = response.values
-      .filter((value) => value.state === 'selected')
+      .filter((value) => value.state !== 'idle')
       .map((value) => buildAutomaticFacetBreadcrumbValue(field, value));
     return {
       facetId: field,
@@ -358,7 +352,7 @@ export function buildBreadcrumbManager(
               facetId: field,
               facetValue: selection.value,
             }),
-            next: breadcrumbFacet(field, selection.value),
+            next: breadcrumbFacet(),
           })
         );
       },
@@ -396,7 +390,6 @@ export function buildBreadcrumbManager(
       dispatch(
         executeSearch({
           legacy: logClearBreadcrumbs(),
-          next: breadcrumbResetAll(),
         })
       );
     },

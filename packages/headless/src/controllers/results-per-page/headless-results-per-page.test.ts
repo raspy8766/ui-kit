@@ -1,37 +1,70 @@
-import {configuration} from '../../app/common-reducers';
+import {AsyncThunk, UnknownAction} from '@reduxjs/toolkit';
+import {ThunkDispatch} from 'redux-thunk';
+import {GeneratedAnswerAPIClient} from '../../api/generated-answer/generated-answer-client.js';
+import {SearchAPIClient} from '../../api/search/search-api-client.js';
+import {SearchAPIErrorWithStatusCode} from '../../api/search/search-api-error-response.js';
+import {configuration} from '../../app/common-reducers.js';
+import {ClientThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
 import {
   registerNumberOfResults,
   updateNumberOfResults,
-} from '../../features/pagination/pagination-actions';
-import {paginationReducer as pagination} from '../../features/pagination/pagination-slice';
-import {fetchPage} from '../../features/search/search-actions';
+} from '../../features/pagination/pagination-actions.js';
+import {paginationReducer as pagination} from '../../features/pagination/pagination-slice.js';
+import {StateNeededByExecuteSearch} from '../../features/search/search-actions-thunk-processor.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-} from '../../test/mock-engine';
-import {buildMockPagination} from '../../test/mock-pagination';
-import {createMockState} from '../../test/mock-state';
+  ExecuteSearchThunkReturn,
+  fetchPage,
+  TransitiveSearchAction,
+} from '../../features/search/search-actions.js';
+import {
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {buildMockPagination} from '../../test/mock-pagination.js';
+import {createMockState} from '../../test/mock-state.js';
 import {
   ResultsPerPage,
   ResultsPerPageProps,
   buildResultsPerPage,
-} from './headless-results-per-page';
+} from './headless-results-per-page.js';
+
+vi.mock('../../features/pagination/pagination-actions');
+vi.mock('../../features/search/search-actions');
 
 describe('ResultsPerPage', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let props: ResultsPerPageProps;
   let resultsPerPage: ResultsPerPage;
-
+  let mockedFetchPage: jest.MockedFunctionDeep<
+    AsyncThunk<
+      ExecuteSearchThunkReturn,
+      TransitiveSearchAction,
+      {
+        rejectValue: SearchAPIErrorWithStatusCode;
+        state: StateNeededByExecuteSearch;
+        extra: ClientThunkExtraArguments<
+          SearchAPIClient,
+          GeneratedAnswerAPIClient
+        >;
+        dispatch?: ThunkDispatch<unknown, unknown, UnknownAction>;
+        serializedErrorType?: unknown;
+        pendingMeta?: unknown;
+        fulfilledMeta?: unknown;
+        rejectedMeta?: unknown;
+      }
+    >
+  >;
   function initResultsPerPage() {
     resultsPerPage = buildResultsPerPage(engine, props);
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine({});
+    vi.resetAllMocks();
+    engine = buildMockSearchEngine(createMockState());
     props = {
       initialState: {},
     };
-
+    mockedFetchPage = vi.mocked(fetchPage);
     initResultsPerPage();
   });
 
@@ -47,7 +80,7 @@ describe('ResultsPerPage', () => {
     props.initialState!.numberOfResults = num;
     initResultsPerPage();
 
-    expect(engine.actions).toContainEqual(registerNumberOfResults(num));
+    expect(registerNumberOfResults).toHaveBeenCalledWith(num);
   });
 
   it('when the #numberOfResults option is specified to 0, it dispatches a register action', () => {
@@ -55,15 +88,11 @@ describe('ResultsPerPage', () => {
     props.initialState!.numberOfResults = num;
     initResultsPerPage();
 
-    expect(engine.actions).toContainEqual(registerNumberOfResults(num));
+    expect(registerNumberOfResults).toHaveBeenCalledWith(num);
   });
 
   it('when the #numberOfResults option is not specified, it does not dispatch a register action', () => {
-    const action = engine.actions.find(
-      (a) => a.type === registerNumberOfResults.type
-    );
-
-    expect(action).toBe(undefined);
+    expect(registerNumberOfResults).not.toHaveBeenCalled();
   });
 
   it('when #numberOfResults is set to a string, it throws an error with a context message', () => {
@@ -78,16 +107,19 @@ describe('ResultsPerPage', () => {
     const num = 10;
     resultsPerPage.set(num);
 
-    expect(engine.actions).toContainEqual(updateNumberOfResults(num));
+    expect(updateNumberOfResults).toHaveBeenCalledWith(num);
   });
 
   it('calling #set executes a fetchPage', () => {
     resultsPerPage.set(10);
 
-    const action = engine.actions.find(
-      (a) => a.type === fetchPage.pending.type
-    );
-    expect(action).toBeTruthy();
+    expect(fetchPage).toHaveBeenCalled();
+  });
+
+  it('calling #set executes a fetchPage with the proper analytics payload', () => {
+    resultsPerPage.set(10);
+
+    expect(mockedFetchPage.mock.lastCall).toMatchSnapshot();
   });
 
   describe('when the state #numberOfResults is set to a value', () => {
@@ -98,7 +130,7 @@ describe('ResultsPerPage', () => {
         numberOfResults: numOfResultsInState,
       });
       const state = createMockState({pagination});
-      engine = buildMockSearchAppEngine({state});
+      engine = buildMockSearchEngine(state);
       initResultsPerPage();
     });
 

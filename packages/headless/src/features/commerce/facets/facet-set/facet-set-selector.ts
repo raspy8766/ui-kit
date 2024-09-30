@@ -1,48 +1,12 @@
-import {
-  CommerceFacetSetSection,
-  ProductListingV2Section,
-} from '../../../../state/state-sections';
-import {AnyFacetResponse} from './interfaces/response';
+import {createSelector} from '@reduxjs/toolkit';
+import {CommerceFacetSetSection} from '../../../../state/state-sections.js';
+import {AnyFacetRequest} from './interfaces/request.js';
 
-function isFacetResponse(
-  state: CommerceFacetSetSection,
-  response: AnyFacetResponse | undefined
-): response is AnyFacetResponse {
-  return !!response && response.facetId in state.commerceFacetSet;
-}
-
-function baseCommerceFacetResponseSelector(
-  state: ProductListingV2Section,
-  facetId: string
-) {
-  const findById = (response: {facetId: string}) =>
-    response.facetId === facetId;
-
-  if ('productListing' in state) {
-    return state.productListing.facets.find(findById);
+export const facetRequestSelector = createSelector(
+  (state: CommerceFacetSetSection, facetId: string) => ({
+    facetRequestSelector: state.commerceFacetSet[facetId],
+  }),
+  ({facetRequestSelector}): AnyFacetRequest | undefined => {
+    return facetRequestSelector?.request;
   }
-
-  return undefined;
-}
-
-export const commerceFacetResponseSelector = (
-  state: ProductListingV2Section & CommerceFacetSetSection,
-  facetId: string
-) => {
-  const response = baseCommerceFacetResponseSelector(state, facetId);
-  if (isFacetResponse(state, response)) {
-    return response;
-  }
-
-  return undefined;
-};
-
-export const isCommerceFacetLoadingResponseSelector = (
-  state: ProductListingV2Section
-) => {
-  if ('productListing' in state) {
-    return state.productListing.isLoading;
-  }
-
-  return undefined;
-};
+);

@@ -1,22 +1,22 @@
 import {
   formatRelativeDateForSearchApi,
   isRelativeDateFormat,
-} from '../../api/search/date/relative-date';
-import {SearchAPIClientResponse} from '../../api/search/search-api-client';
-import {SearchAPIErrorWithStatusCode} from '../../api/search/search-api-error-response';
-import {FacetsParam} from '../../api/search/search-api-params';
-import {SearchRequest} from '../../api/search/search/search-request';
-import {SearchResponseSuccess} from '../../api/search/search/search-response';
-import {AnyFacetRequest} from '../facets/generic/interfaces/generic-facet-request';
-import {AnyFacetResponse} from '../facets/generic/interfaces/generic-facet-response';
+} from '../../api/search/date/relative-date.js';
+import {SearchAPIClientResponse} from '../../api/search/search-api-client.js';
+import {SearchAPIErrorWithStatusCode} from '../../api/search/search-api-error-response.js';
+import {FacetsParam} from '../../api/search/search-api-params.js';
+import {SearchRequest} from '../../api/search/search/search-request.js';
+import {SearchResponseSuccess} from '../../api/search/search/search-response.js';
+import {AnyFacetRequest} from '../facets/generic/interfaces/generic-facet-request.js';
+import {AnyFacetResponse} from '../facets/generic/interfaces/generic-facet-response.js';
 import {
   DateRangeRequest,
   isDateFacetRequest,
-} from '../facets/range-facets/date-facet-set/interfaces/request';
+} from '../facets/range-facets/date-facet-set/interfaces/request.js';
 import {
   DateFacetResponse,
   DateFacetValue,
-} from '../facets/range-facets/date-facet-set/interfaces/response';
+} from '../facets/range-facets/date-facet-set/interfaces/response.js';
 
 function formatStartFacetValue(value: string) {
   return `start${value}`;
@@ -26,11 +26,11 @@ function formatEndFacetValue(value: string) {
   return `end${value}`;
 }
 
-interface SearchMappings {
+export interface SearchMappings {
   dateFacetValueMap: Record<string, Record<string, string>>;
 }
 
-const initialSearchMappings: () => SearchMappings = () => ({
+export const initialSearchMappings: () => SearchMappings = () => ({
   dateFacetValueMap: {},
 });
 
@@ -54,7 +54,7 @@ function mapDateRangeRequest(
   return {...value, start, end};
 }
 
-function mapFacetRequest(
+export function mapFacetRequest(
   facetRequest: AnyFacetRequest,
   mappings: SearchMappings
 ) {

@@ -3,13 +3,15 @@ import {createAction, createAsyncThunk} from '@reduxjs/toolkit';
 import {
   getVisitorID,
   historyStore,
-} from '../../api/analytics/coveo-analytics-utils';
-import {QuerySuggestRequest} from '../../api/search/query-suggest/query-suggest-request';
-import {QuerySuggestSuccessResponse} from '../../api/search/query-suggest/query-suggest-response';
+} from '../../api/analytics/coveo-analytics-utils.js';
+import {getSearchApiBaseUrl} from '../../api/platform-client.js';
+import {QuerySuggestRequest} from '../../api/search/query-suggest/query-suggest-request.js';
+import {QuerySuggestSuccessResponse} from '../../api/search/query-suggest/query-suggest-response.js';
 import {
   isErrorResponse,
   AsyncThunkSearchOptions,
-} from '../../api/search/search-api-client';
+} from '../../api/search/search-api-client.js';
+import {NavigatorContext} from '../../app/navigatorContextProvider.js';
 import {
   ConfigurationSection,
   ContextSection,
@@ -17,13 +19,14 @@ import {
   QuerySetSection,
   QuerySuggestionSection,
   SearchHubSection,
-} from '../../state/state-sections';
+} from '../../state/state-sections.js';
 import {
   validatePayload,
   requiredNonEmptyString,
   requiredEmptyAllowedString,
-} from '../../utils/validate-payload';
-import {fromAnalyticsStateToAnalyticsParams} from '../configuration/analytics-params';
+} from '../../utils/validate-payload.js';
+import {fromAnalyticsStateToAnalyticsParams} from '../configuration/analytics-params.js';
+import {fromAnalyticsStateToAnalyticsParams as legacyFromAnalyticsStateToAnalyticsParams} from '../configuration/legacy-analytics-params.js';
 
 export type StateNeededByQuerySuggest = ConfigurationSection &
   QuerySuggestionSection &
@@ -40,7 +43,7 @@ export interface QuerySuggestionID {
 
 export interface RegisterQuerySuggestActionCreatorPayload {
   /**
-   * A unique identifier for the new query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`).
+   * A unique identifier for the new query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`). Usually, this will be the ID of the search box controller that requests the query suggestions.
    */
   id: string;
 
@@ -68,7 +71,7 @@ export const unregisterQuerySuggest = createAction(
 
 export interface SelectQuerySuggestionActionCreatorPayload {
   /**
-   * The unique identifier of the target query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`).
+   * The unique identifier of the target query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`). Usually, this will be the ID of the search box controller that requests the query suggestions.
    */
   id: string;
 
@@ -89,7 +92,7 @@ export const selectQuerySuggestion = createAction(
 
 export interface ClearQuerySuggestActionCreatorPayload {
   /**
-   * The unique identifier of the target query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`).
+   * The unique identifier of the target query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`). Usually, this will be the ID of the search box controller that requests the query suggestions.
    */
   id: string;
 }
@@ -102,7 +105,7 @@ export const clearQuerySuggest = createAction(
 
 export interface FetchQuerySuggestionsActionCreatorPayload {
   /**
-   * The unique identifier of the target query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`).
+   * The unique identifier of the target query suggest entity (e.g., `b953ab2e-022b-4de4-903f-68b2c0682942`). Usually, this will be the ID of the search box controller that requests the query suggestions.
    */
   id: string;
 }
@@ -125,11 +128,19 @@ export const fetchQuerySuggestions = createAsyncThunk<
 
   async (
     payload: {id: string},
-    {getState, rejectWithValue, extra: {apiClient, validatePayload}}
+    {
+      getState,
+      rejectWithValue,
+      extra: {apiClient, validatePayload, navigatorContext},
+    }
   ) => {
     validatePayload(payload, idDefinition);
     const id = payload.id;
-    const request = await buildQuerySuggestRequest(id, getState());
+    const request = await buildQuerySuggestRequest(
+      id,
+      getState(),
+      navigatorContext
+    );
     const response = await apiClient.querySuggest(request);
 
     if (isErrorResponse(response)) {
@@ -146,12 +157,18 @@ export const fetchQuerySuggestions = createAsyncThunk<
 
 export const buildQuerySuggestRequest = async (
   id: string,
-  s: StateNeededByQuerySuggest
+  s: StateNeededByQuerySuggest,
+  navigatorContext: NavigatorContext
 ): Promise<QuerySuggestRequest> => {
   return {
     accessToken: s.configuration.accessToken,
     organizationId: s.configuration.organizationId,
-    url: s.configuration.search.apiBaseUrl,
+    url:
+      s.configuration.search.apiBaseUrl ??
+      getSearchApiBaseUrl(
+        s.configuration.organizationId,
+        s.configuration.environment
+      ),
     count: s.querySuggest[id]!.count,
     q: s.querySet[id],
     locale: s.configuration.search.locale,
@@ -162,10 +179,18 @@ export const buildQuerySuggestRequest = async (
     ...(s.context && {context: s.context.contextValues}),
     ...(s.pipeline && {pipeline: s.pipeline}),
     ...(s.searchHub && {searchHub: s.searchHub}),
+    tab: s.configuration.analytics.originLevel2,
     ...(s.configuration.analytics.enabled && {
       visitorId: await getVisitorID(s.configuration.analytics),
       ...(s.configuration.analytics.enabled &&
-        (await fromAnalyticsStateToAnalyticsParams(s.configuration.analytics))),
+      s.configuration.analytics.analyticsMode === 'legacy'
+        ? await legacyFromAnalyticsStateToAnalyticsParams(
+            s.configuration.analytics
+          )
+        : fromAnalyticsStateToAnalyticsParams(
+            s.configuration.analytics,
+            navigatorContext
+          )),
     }),
     ...(s.configuration.search.authenticationProviders.length && {
       authentication: s.configuration.search.authenticationProviders.join(','),

@@ -1,3 +1,60 @@
+## <small>2.0.1 (2024-09-24)</small>
+
+- chore(headless,atomic): add type "module" to atomic, atomic-react and headless (#4442) ([21896c3](https://github.com/coveo/ui-kit/commits/21896c3)), closes [#4442](https://github.com/coveo/ui-kit/issues/4442) [/github.com/coveo/ui-kit/pull/4449/files#diff-75f80b97846615f5b074710648b8191f74aa4f00fd1536c45bc344b284ca8e87](https://github.com//github.com/coveo/ui-kit/pull/4449/files/issues/diff-75f80b97846615f5b074710648b8191f74aa4f00fd1536c45bc344b284ca8e87)
+
+## 2.0.0 (2024-09-18)
+
+- chore: update tsconfigs to match node version (#4402) ([e5bf6b8](https://github.com/coveo/ui-kit/commits/e5bf6b8)), closes [#4402](https://github.com/coveo/ui-kit/issues/4402)
+- chore!: update node engine definition in all exported packages (#4330) ([d6d8a1a](https://github.com/coveo/ui-kit/commits/d6d8a1a)), closes [#4330](https://github.com/coveo/ui-kit/issues/4330)
+
+### BREAKING CHANGE
+
+- update node engine definition in all exported packages (#4330)
+
+## 1.11.22 (2024-07-31)
+
+## 1.11.21 (2024-06-06)
+
+## 1.11.20 (2024-05-15)
+
+## 1.11.19 (2024-05-06)
+
+## 1.11.18 (2024-04-24)
+
+## 1.11.17 (2024-04-10)
+
+## 1.11.16 (2024-03-20)
+
+## 1.11.15 (2024-03-12)
+
+## 1.11.14 (2024-03-11)
+
+## 1.11.12 (2024-03-06)
+
+## 1.11.11 (2024-02-21)
+
+## 1.11.10 (2024-02-14)
+
+## 1.11.9 (2024-02-09)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3576](https://github.com/coveo/ui-kit/issues/3576)) ([4887772](https://github.com/coveo/ui-kit/commits/48877723d6f8c5e5446a48296326519f009ae850))
+
+## 1.11.8 (2024-01-31)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3535](https://github.com/coveo/ui-kit/issues/3535)) ([8cbc113](https://github.com/coveo/ui-kit/commits/8cbc113c323134c73ec9643260ee4580289e891b))
+
+## 1.11.7 (2024-01-24)
+
+### Bug Fixes
+
+- **deps-dev:** bump vite from 5.0.4 to 5.0.12 ([#3539](https://github.com/coveo/ui-kit/issues/3539)) ([be18b0e](https://github.com/coveo/ui-kit/commits/be18b0e8b892af0ac056283c5fd3b5670b39acb8))
+
+## 1.11.6 (2024-01-10)
+
 ## 1.11.5 (2023-12-06)
 
 ## 1.11.4 (2023-11-16)

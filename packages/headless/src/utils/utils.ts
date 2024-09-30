@@ -1,5 +1,4 @@
-import {Middleware, AnyAction} from '@reduxjs/toolkit';
-import {btoa as btoashim} from 'abab';
+import {Middleware, Action} from '@reduxjs/toolkit';
 
 export const randomID = (prepend?: string, length = 5) =>
   prepend +
@@ -30,9 +29,7 @@ export function removeDuplicates<T>(arr: T[], predicate: (value: T) => string) {
 }
 
 export function encodedBtoa(stringToEncode: string) {
-  return (typeof btoa !== 'undefined' ? btoa : btoashim)(
-    encodeURI(stringToEncode)
-  )!;
+  return btoa(encodeURI(stringToEncode))!;
 }
 
 export function omit<T>(key: keyof T, obj: T) {
@@ -45,9 +42,15 @@ export function getObjectHash<T>(obj: T) {
 }
 
 const doNotTrackValues = new Set(['1', 1, 'yes', true]);
+// TODO KIT-2844
 
 /**
  * Logic copied from coveo.analytics.
+ *
+ * @deprecated V4 - Starting with Event Protocol, Coveo will no longer respect the DNT standard.
+ * Instead, we will provide implementers with documentation on privacy best-practices, letting
+ * them decide which standards to respect.
+ * For more context behind the decision, see: https://coveord.atlassian.net/browse/LENS-1502
  */
 export function doNotTrack() {
   if (typeof navigator === 'undefined' || typeof window === 'undefined') {
@@ -97,6 +100,17 @@ export function mapObject<TKey extends string, TInitialValue, TNewValue>(
   ) as Record<TKey, TNewValue>;
 }
 
+export function filterObject<TKey extends string, TValue>(
+  obj: Record<TKey, TValue>,
+  predicate: (value: TValue, key: TKey) => boolean
+): Record<TKey, TValue> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([key, value]) =>
+      predicate(value as TValue, key as TKey)
+    )
+  ) as Record<TKey, TValue>;
+}
+
 // TODO: Could eventually be replaced with `structuredClone`.
 // However, this is not compatible with salesforce locker service.
 export function clone<T>(value: T): T {
@@ -129,8 +143,8 @@ function createDeferredPromise<T>(): {
   return {promise, resolve: resolve!, reject: reject!};
 }
 
-export function createWaitForActionMiddleware<TAction extends AnyAction>(
-  isDesiredAction: (action: AnyAction) => action is TAction
+export function createWaitForActionMiddleware<TAction extends Action>(
+  isDesiredAction: (action: unknown) => action is TAction
 ): {promise: Promise<TAction>; middleware: Middleware} {
   const {promise, resolve} = createDeferredPromise<TAction>();
 

@@ -30,7 +30,7 @@
       "c/quanticPlaceholder": ["quanticPlaceholder/quanticPlaceholder.js"],
       "c/quanticQueryError": ["quanticQueryError/quanticQueryError.js"],
       "c/quanticResult": ["quanticResult/quanticResult.js"],
-      "c/quanticResultBadge": ["quanticResultBadge/quanticResultBadge.js"],
+      "c/quanticResultTag": ["quanticResultTag/quanticResultTag.js"],
       "c/quanticResultLabel": ["quanticResultLabel/quanticResultLabel.js"],
       "c/quanticResultPrintableUri": [
         "quanticResultPrintableUri/quanticResultPrintableUri.js"
@@ -57,6 +57,9 @@
         "quanticResultsPerPage/quanticResultsPerPage.js"
       ],
       "c/quanticSearchBox": ["quanticSearchBox/quanticSearchBox.js"],
+      "c/quanticSearchBoxInput": [
+        "quanticSearchBoxInput/quanticSearchBoxInput.js"
+      ],
       "c/quanticSearchBoxSuggestionsList": [
         "quanticSearchBoxSuggestionsList/quanticSearchBoxSuggestionsList.js"
       ],
@@ -71,7 +74,19 @@
       "c/quanticTimeframeFacet": [
         "quanticTimeframeFacet/quanticTimeframeFacet.js"
       ],
-      "c/quanticFeedbackModal": ["quanticFeedbackModal/quanticFeedbackModal.js"]
+      "c/quanticFeedbackModal": [
+        "quanticFeedbackModal/quanticFeedbackModal.js"
+      ],
+      "c/quanticFeedbackModalQna": [
+        "quanticFeedbackModalQna/quanticFeedbackModalQna.js"
+      ],
+      "c/quanticRadioButtonsGroup": [
+        "quanticRadioButtonsGroup/quanticRadioButtonsGroup.js"
+      ],
+      "c/quanticGeneratedAnswerContent": [
+        "quanticGeneratedAnswerContent/quanticGeneratedAnswerContent.js"
+      ],
+      "c/*": ["*"]
     }
   },
   "include": [

@@ -1,9 +1,13 @@
-import {InsightEngine} from '../../../../../app/insight-engine/insight-engine';
+import {InsightEngine} from '../../../../../app/insight-engine/insight-engine.js';
+import {
+  facetClearAll,
+  facetSelect,
+} from '../../../../../features/facets/facet-set/facet-set-analytics-actions.js';
 import {
   logFacetClearAll,
   logFacetSelect,
-} from '../../../../../features/facets/facet-set/facet-set-insight-analytics-actions';
-import {executeSearch} from '../../../../../features/insight-search/insight-search-actions';
+} from '../../../../../features/facets/facet-set/facet-set-insight-analytics-actions.js';
+import {executeSearch} from '../../../../../features/insight-search/insight-search-actions.js';
 import {
   NumericFilterOptions,
   NumericFilterInitialState,
@@ -12,7 +16,7 @@ import {
   NumericFilterState,
   NumericFilter,
   buildCoreNumericFilter,
-} from '../../../../core/facets/range-facet/numeric-facet/headless-core-numeric-filter';
+} from '../../../../core/facets/range-facet/numeric-facet/headless-core-numeric-filter.js';
 
 export type {
   NumericFilterOptions,
@@ -41,18 +45,24 @@ export function buildNumericFilter(
     ...coreController,
     clear: () => {
       coreController.clear();
-      dispatch(executeSearch(logFacetClearAll(getFacetId())));
+      dispatch(
+        executeSearch({
+          legacy: logFacetClearAll(getFacetId()),
+          next: facetClearAll(),
+        })
+      );
     },
     setRange: (range) => {
       const success = coreController.setRange(range);
       if (success) {
         dispatch(
-          executeSearch(
-            logFacetSelect({
+          executeSearch({
+            legacy: logFacetSelect({
               facetId: getFacetId(),
               facetValue: `${range.start}..${range.end}`,
-            })
-          )
+            }),
+            next: facetSelect(),
+          })
         );
       }
       return success;

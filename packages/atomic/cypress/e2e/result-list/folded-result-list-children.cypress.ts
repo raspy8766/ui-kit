@@ -7,6 +7,7 @@ import {
 } from './folded-result-list-actions';
 import {
   ExpectedHierarchy,
+  ExpectedHierarchyWith10foldedResultsRequested,
   assertRendersGrandchildren,
   assertRendersWholeCollection,
 } from './folded-result-list-assertions';
@@ -40,6 +41,8 @@ describe('Folded Result List Component - Children results', () => {
       )
       .init();
 
+    FoldedResultListSelectors.childrenRoot().should('be.visible');
+
     FoldedResultListSelectors.firstResult()
       .contains(ExpectedHierarchy.rootName)
       .should('be.visible');
@@ -52,16 +55,30 @@ describe('Folded Result List Component - Children results', () => {
       .contains(ExpectedHierarchy.children[1].name);
   });
 
-  it('should show a "no results" label when no child results are found', () => {
+  it('should show more child results when the number of folded results exceed the default', () => {
     new TestFixture()
       .with(setSourceAndSortCriteria)
       .with(
-        addFoldedResultList(buildTemplateWithoutSections(buildResultTopChild()))
+        addFoldedResultList(
+          buildTemplateWithoutSections(buildResultTopChild()),
+          {'number-of-folded-results': 10}
+        )
       )
-      .with(removeResultChildrenFromResponse)
       .init();
 
-    FoldedResultListSelectors.noResultsLabel().should('be.visible');
+    FoldedResultListSelectors.firstResult()
+      .contains(ExpectedHierarchyWith10foldedResultsRequested.rootName)
+      .should('be.visible');
+
+    FoldedResultListSelectors.childResultAtIndex(0)
+      .find(resultLinkComponent)
+      .contains(ExpectedHierarchyWith10foldedResultsRequested.children[0].name);
+    FoldedResultListSelectors.childResultAtIndex(1)
+      .find(resultLinkComponent)
+      .contains(ExpectedHierarchyWith10foldedResultsRequested.children[1].name);
+    FoldedResultListSelectors.childResultAtIndex(2)
+      .find(resultLinkComponent)
+      .contains(ExpectedHierarchyWith10foldedResultsRequested.children[2].name);
   });
 
   it('should not show a "no results" label when no child results are found when no-result-text is empty', () => {

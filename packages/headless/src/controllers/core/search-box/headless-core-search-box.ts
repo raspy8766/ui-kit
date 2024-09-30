@@ -1,58 +1,59 @@
 import {AsyncThunkAction} from '@reduxjs/toolkit';
-import {CoreEngine} from '../../..';
-import {configuration} from '../../../app/common-reducers';
+import {configuration} from '../../../app/common-reducers.js';
+import {CoreEngine} from '../../../app/engine.js';
 import {
   InsightAction,
   LegacySearchAction,
-} from '../../../features/analytics/analytics-utils';
+} from '../../../features/analytics/analytics-utils.js';
 import {
   registerQuerySetQuery,
   updateQuerySetQuery,
-} from '../../../features/query-set/query-set-actions';
-import {querySetReducer as querySet} from '../../../features/query-set/query-set-slice';
+} from '../../../features/query-set/query-set-actions.js';
+import {querySetReducer as querySet} from '../../../features/query-set/query-set-slice.js';
 import {
   clearQuerySuggest,
   FetchQuerySuggestionsActionCreatorPayload,
   registerQuerySuggest,
   selectQuerySuggestion,
-} from '../../../features/query-suggest/query-suggest-actions';
+} from '../../../features/query-suggest/query-suggest-actions.js';
 import {
   logQuerySuggestionClick,
   omniboxAnalytics,
-} from '../../../features/query-suggest/query-suggest-analytics-actions';
-import {querySuggestReducer as querySuggest} from '../../../features/query-suggest/query-suggest-slice';
-import {QuerySuggestState} from '../../../features/query-suggest/query-suggest-state';
-import {logSearchboxSubmit} from '../../../features/query/query-analytics-actions';
-import {queryReducer as query} from '../../../features/query/query-slice';
+} from '../../../features/query-suggest/query-suggest-analytics-actions.js';
+import {querySuggestReducer as querySuggest} from '../../../features/query-suggest/query-suggest-slice.js';
+import {QuerySuggestState} from '../../../features/query-suggest/query-suggest-state.js';
+import {logSearchboxSubmit} from '../../../features/query/query-analytics-actions.js';
+import {queryReducer as query} from '../../../features/query/query-slice.js';
 import {
+  SearchAction,
   TransitiveSearchAction,
   prepareForSearchWithQuery,
-} from '../../../features/search/search-actions';
-import {searchReducer as search} from '../../../features/search/search-slice';
+} from '../../../features/search/search-actions.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
 import {
   ConfigurationSection,
   QuerySection,
   QuerySetSection,
   QuerySuggestionSection,
   SearchSection,
-} from '../../../state/state-sections';
-import {loadReducerError} from '../../../utils/errors';
+} from '../../../state/state-sections.js';
+import {loadReducerError} from '../../../utils/errors.js';
 import {
   SuggestionHighlightingOptions,
   Delimiters,
   getHighlightedSuggestion,
-} from '../../../utils/highlight';
-import {randomID} from '../../../utils/utils';
-import {validateOptions} from '../../../utils/validate-payload';
+} from '../../../utils/highlight.js';
+import {randomID} from '../../../utils/utils.js';
+import {validateOptions} from '../../../utils/validate-payload.js';
 import {
   buildController,
   Controller,
-} from '../../controller/headless-controller';
+} from '../../controller/headless-controller.js';
 import {
   defaultSearchBoxOptions,
   SearchBoxOptions,
   searchBoxOptionsSchema,
-} from './headless-core-search-box-options';
+} from './headless-core-search-box-options.js';
 
 export type {SearchBoxOptions, SuggestionHighlightingOptions, Delimiters};
 
@@ -136,6 +137,11 @@ export interface SearchBoxState {
    * Determines if a query suggest request is in progress.
    */
   isLoadingSuggestions: boolean;
+
+  /**
+   * The search box ID.
+   */
+  searchBoxId: string;
 }
 
 export interface Suggestion {
@@ -151,6 +157,7 @@ export interface Suggestion {
 }
 
 /**
+ * @internal
  * The `SearchBox` headless controller offers a high-level interface for designing a common search box UI controller
  * with [highlighting for query suggestions](https://docs.coveo.com/en/headless/latest/usage/highlighting/).
  */
@@ -182,9 +189,13 @@ export interface SearchBox extends Controller {
   /**
    * Deselects all facets and triggers a search query.
    *
-   * @param analytics -  The analytics action to log after submitting a query.
+   * @param legacyAnalytics -  The legacy analytics action to log after submitting a query.
+   * @param nextAnalytics - The next analytics action to log after submitting a query.
    */
-  submit(analytics?: LegacySearchAction): void;
+  submit(
+    legacyAnalytics?: LegacySearchAction,
+    nextAnalytics?: SearchAction
+  ): void;
 
   /**
    * The state of the `SearchBox` controller.
@@ -193,6 +204,7 @@ export interface SearchBox extends Controller {
 }
 
 /**
+ * @internal
  * Creates a `SearchBox` controller instance.
  *
  * @param engine - The headless engine instance.
@@ -271,16 +283,19 @@ export function buildCoreSearchBox(
       dispatch(selectQuerySuggestion({id, expression: value}));
       performSearch({
         legacy: logQuerySuggestionClick({id, suggestion: value}),
-        next: omniboxAnalytics(id, value),
+        next: omniboxAnalytics(),
       }).then(() => {
         dispatch(clearQuerySuggest({id}));
       });
     },
 
     submit(
-      analytics: LegacySearchAction | InsightAction = logSearchboxSubmit()
+      legacyAnalytics:
+        | LegacySearchAction
+        | InsightAction = logSearchboxSubmit(),
+      nextAnalytics: SearchAction
     ) {
-      performSearch({legacy: analytics});
+      performSearch({legacy: legacyAnalytics, next: nextAnalytics});
       dispatch(clearQuerySuggest({id}));
     },
 
@@ -296,6 +311,7 @@ export function buildCoreSearchBox(
         : false;
 
       return {
+        searchBoxId: id,
         value: getValue(),
         suggestions,
         isLoading: state.search.isLoading,

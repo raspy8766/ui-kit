@@ -1,3 +1,152 @@
+## <small>3.1.1 (2024-09-24)</small>
+
+- docs: document headless, atomic, and atomic-react entry points (#4455) ([3853bdc](https://github.com/coveo/ui-kit/commits/3853bdc)), closes [#4455](https://github.com/coveo/ui-kit/issues/4455)
+
+## 3.1.0 (2024-09-24)
+
+- chore(atomic, headless): make bueno external (#4433) ([e1f7f2d](https://github.com/coveo/ui-kit/commits/e1f7f2d)), closes [#4433](https://github.com/coveo/ui-kit/issues/4433)
+- chore(headless,atomic): add type "module" to atomic, atomic-react and headless (#4442) ([21896c3](https://github.com/coveo/ui-kit/commits/21896c3)), closes [#4442](https://github.com/coveo/ui-kit/issues/4442) [/github.com/coveo/ui-kit/pull/4449/files#diff-75f80b97846615f5b074710648b8191f74aa4f00fd1536c45bc344b284ca8e87](https://github.com//github.com/coveo/ui-kit/pull/4449/files/issues/diff-75f80b97846615f5b074710648b8191f74aa4f00fd1536c45bc344b284ca8e87)
+- feat(atomic): atomic insight user actions toggle component created (#4298) ([bad4ff5](https://github.com/coveo/ui-kit/commits/bad4ff5)), closes [#4298](https://github.com/coveo/ui-kit/issues/4298)
+- docs(atomic-react): update examples in readme (#4432) ([037b2ca](https://github.com/coveo/ui-kit/commits/037b2ca)), closes [#4432](https://github.com/coveo/ui-kit/issues/4432)
+
+## <small>3.0.1 (2024-09-18)</small>
+
+- fix(atomic, atomic-react): use root-relative URL for CDN (#4431) ([39313ea](https://github.com/coveo/ui-kit/commits/39313ea)), closes [#4431](https://github.com/coveo/ui-kit/issues/4431)
+
+## 3.0.0 (2024-09-18)
+
+- chore!: update node engine definition in all exported packages (#4330) ([d6d8a1a](https://github.com/coveo/ui-kit/commits/d6d8a1a)), closes [#4330](https://github.com/coveo/ui-kit/issues/4330)
+- chore(atomic-react)!: add exports field in package.json (#4424) ([9a54cac](https://github.com/coveo/ui-kit/commits/9a54cac)), closes [#4424](https://github.com/coveo/ui-kit/issues/4424)
+- chore(atomic)!: externalize dependencies (#4393) ([b599477](https://github.com/coveo/ui-kit/commits/b599477)), closes [#4393](https://github.com/coveo/ui-kit/issues/4393)
+- chore(headless, atomic, quantic)!: remove deprecated functions/properties (#4350) ([8de5406](https://github.com/coveo/ui-kit/commits/8de5406)), closes [#4350](https://github.com/coveo/ui-kit/issues/4350)
+- chore(headless, atomic)!: remove deprecated product recommendations (#4349) ([475a217](https://github.com/coveo/ui-kit/commits/475a217)), closes [#4349](https://github.com/coveo/ui-kit/issues/4349)
+- chore(headless)!: add export field in package.json (#4392) ([a834c2f](https://github.com/coveo/ui-kit/commits/a834c2f)), closes [#4392](https://github.com/coveo/ui-kit/issues/4392)
+- chore(headless)!: remove headless fetch & crypto polyfills (#4358) ([583e30a](https://github.com/coveo/ui-kit/commits/583e30a)), closes [#4358](https://github.com/coveo/ui-kit/issues/4358)
+- feat(atomic)!: delete atomic-load-more-children-results and put functionality in atomic-result-child ([b12331f](https://github.com/coveo/ui-kit/commits/b12331f)), closes [#4341](https://github.com/coveo/ui-kit/issues/4341)
+- fix(atomic-react)!: remove analytics from atomic search interface (#4348) ([27828af](https://github.com/coveo/ui-kit/commits/27828af)), closes [#4348](https://github.com/coveo/ui-kit/issues/4348)
+- chore: update tsconfigs to match node version (#4402) ([e5bf6b8](https://github.com/coveo/ui-kit/commits/e5bf6b8)), closes [#4402](https://github.com/coveo/ui-kit/issues/4402)
+- chore(atomic-react): disable iife output (#4428) ([47debe7](https://github.com/coveo/ui-kit/commits/47debe7)), closes [#4428](https://github.com/coveo/ui-kit/issues/4428)
+- chore(atomic): replace @internal tags with @alpha tags in commerce components JS doc annotations (#4 ([1060eb5](https://github.com/coveo/ui-kit/commits/1060eb5)), closes [#4382](https://github.com/coveo/ui-kit/issues/4382)
+- feat(atomic): user actions timeline component created (#4272) ([7c110bc](https://github.com/coveo/ui-kit/commits/7c110bc)), closes [#4272](https://github.com/coveo/ui-kit/issues/4272)
+
+### BREAKING CHANGE
+
+- add export field in package.json (#4392)
+- add exports field in package.json (#4424)
+- delete atomic-load-more-children-results and put functionality in atomic-result-children (#4341)
+- externalize dependencies (#4393)
+- remove analytics from atomic search interface (#4348)
+- remove deprecated functions/properties (#4350)
+- remove deprecated product recommendations (#4349)
+- remove headless fetch & crypto polyfills (#4358)
+- update node engine definition in all exported packages (#4330)
+
+# 2.14.0 (2024-08-27)
+
+### Features
+
+- **atomic:** allow user to customize grid card click behavior/links ([#4287](https://github.com/coveo/ui-kit/issues/4287)) ([e5961ca](https://github.com/coveo/ui-kit/commits/e5961ca33490499a2916bb9eb8818d360ff85c18)), closes [#4267](https://github.com/coveo/ui-kit/issues/4267)
+
+## 2.13.1 (2024-08-07)
+
+# 2.13.0 (2024-07-31)
+
+### Features
+
+- **atomic-commerce:** products-per-page ([#4107](https://github.com/coveo/ui-kit/issues/4107)) ([81e31cf](https://github.com/coveo/ui-kit/commits/81e31cff63c19f19b12babd4b10aa5b2e60c19e6))
+
+# 2.12.0 (2024-07-09)
+
+### Features
+
+- **atomic:** add new atomic-commerce-refine-toggle component ([#4155](https://github.com/coveo/ui-kit/issues/4155)) ([71d81ba](https://github.com/coveo/ui-kit/commits/71d81ba6a60c8ab83a2d744cb56097d85f691383))
+
+# 2.11.0 (2024-07-03)
+
+### Features
+
+- **commerce:** add atomic-commerce-breadbox ([#4121](https://github.com/coveo/ui-kit/issues/4121)) ([d96287a](https://github.com/coveo/ui-kit/commits/d96287a7efb853f575700fe982b898ab6c1e7744))
+
+## 2.10.7 (2024-07-03)
+
+### Bug Fixes
+
+- **commerce:** remove `executeFirstSearch` & friend from commerce engine ([#4095](https://github.com/coveo/ui-kit/issues/4095)) ([64cda10](https://github.com/coveo/ui-kit/commits/64cda1085a8be29e92e8965222962c0c90762d89))
+
+## 2.10.5 (2024-06-26)
+
+### Bug Fixes
+
+- **atomic:** add query-summary E2E tests ([#4102](https://github.com/coveo/ui-kit/issues/4102)) ([6f73da7](https://github.com/coveo/ui-kit/commits/6f73da703b5d948b713680d187f03da1d207976a))
+
+## 2.10.4 (2024-06-19)
+
+### Bug Fixes
+
+- expose atomic-commerce-load-more-products to react ([#4097](https://github.com/coveo/ui-kit/issues/4097)) ([d7214c7](https://github.com/coveo/ui-kit/commits/d7214c7b988e169ccb4bb9b84a4b471721f329cb))
+
+# 2.10.0 (2024-06-06)
+
+### Features
+
+- **atomic,headless:** support for atomic-commerce-did-you-mean ([#4029](https://github.com/coveo/ui-kit/issues/4029)) ([5e860a5](https://github.com/coveo/ui-kit/commits/5e860a52ea93a7fa7fa442a5c9612ba5febadaf1))
+- **atomic:** add commerce-no-products component ([#4013](https://github.com/coveo/ui-kit/issues/4013)) ([5374847](https://github.com/coveo/ui-kit/commits/5374847bc2ac08a168317586fa0380d12cd283cf))
+- **atomic:** add date facet ([#4024](https://github.com/coveo/ui-kit/issues/4024)) ([ea5c9b1](https://github.com/coveo/ui-kit/commits/ea5c9b1443311048d1f2cfb80a174c6f6023816d))
+- **commerce:** atomic-product-field-condition ([#3959](https://github.com/coveo/ui-kit/issues/3959)) ([5e14eec](https://github.com/coveo/ui-kit/commits/5e14eec2b037a7cbe9842dc8ffac73645d2b6741)), closes [#3956](https://github.com/coveo/ui-kit/issues/3956)
+
+## 2.9.6 (2024-05-29)
+
+## 2.9.5 (2024-05-22)
+
+## 2.9.4 (2024-05-22)
+
+## 2.9.3 (2024-05-15)
+
+## 2.9.2 (2024-05-10)
+
+## 2.9.1 (2024-05-06)
+
+# 2.9.0 (2024-05-02)
+
+### Features
+
+- **Commerce Atomic:** add atomic-commerce-interface ([#3868](https://github.com/coveo/ui-kit/issues/3868)) ([4527419](https://github.com/coveo/ui-kit/commits/45274198ea6af6e1d4a2acd6472dbf706b279588))
+- **Commerce Atomic:** add atomic-commerce-result-list ([#3872](https://github.com/coveo/ui-kit/issues/3872)) ([8db0aee](https://github.com/coveo/ui-kit/commits/8db0aee7690a70f517e136c206c7c20d926086d0))
+
+## 2.8.34 (2024-04-24)
+
+## 2.8.32 (2024-04-10)
+
+## 2.8.19 (2024-03-11)
+
+## 2.8.15 (2024-03-06)
+
+## 2.8.13 (2024-02-21)
+
+## 2.8.11 (2024-02-14)
+
+## 2.8.10 (2024-02-09)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3576](https://github.com/coveo/ui-kit/issues/3576)) ([4887772](https://github.com/coveo/ui-kit/commits/48877723d6f8c5e5446a48296326519f009ae850))
+
+## 2.8.8 (2024-01-31)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3535](https://github.com/coveo/ui-kit/issues/3535)) ([8cbc113](https://github.com/coveo/ui-kit/commits/8cbc113c323134c73ec9643260ee4580289e891b))
+
+## 2.8.6 (2024-01-19)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3522](https://github.com/coveo/ui-kit/issues/3522)) ([59c3ac7](https://github.com/coveo/ui-kit/commits/59c3ac76c8a5c4d61cb2fa7cfc90fd2b901b0535))
+
+## 2.8.5 (2024-01-10)
+
+## 2.8.4 (2024-01-03)
+
 ## 2.8.3 (2023-12-13)
 
 ## 2.8.1 (2023-12-06)

@@ -1,28 +1,51 @@
-import {StringValue} from '@coveo/bueno';
+import {BooleanValue, StringValue} from '@coveo/bueno';
 import {createAction, createAsyncThunk} from '@reduxjs/toolkit';
-import {getVisitorID} from '../../api/analytics/coveo-analytics-utils';
-import {ExecutionPlan} from '../../api/search/plan/plan-endpoint';
-import {PlanRequest} from '../../api/search/plan/plan-request';
+import {getVisitorID} from '../../api/analytics/coveo-analytics-utils.js';
+import {getSearchApiBaseUrl} from '../../api/platform-client.js';
+import {ExecutionPlan} from '../../api/search/plan/plan-endpoint.js';
+import {PlanRequest} from '../../api/search/plan/plan-request.js';
 import {
   AsyncThunkSearchOptions,
   isErrorResponse,
-} from '../../api/search/search-api-client';
+} from '../../api/search/search-api-client.js';
+import {NavigatorContext} from '../../app/navigatorContextProvider.js';
 import {
   ConfigurationSection,
   ContextSection,
   PipelineSection,
   QuerySection,
   SearchHubSection,
-} from '../../state/state-sections';
+} from '../../state/state-sections.js';
 import {
   requiredNonEmptyString,
   validatePayload,
-} from '../../utils/validate-payload';
-import {CustomAction, makeAnalyticsAction} from '../analytics/analytics-utils';
-import {fromAnalyticsStateToAnalyticsParams} from '../configuration/analytics-params';
-import {OmniboxSuggestionMetadata} from '../query-suggest/query-suggest-analytics-actions';
+} from '../../utils/validate-payload.js';
+import {
+  CustomAction,
+  makeAnalyticsAction,
+} from '../analytics/analytics-utils.js';
+import {fromAnalyticsStateToAnalyticsParams} from '../configuration/analytics-params.js';
+import {fromAnalyticsStateToAnalyticsParams as legacyFromAnalyticsStateToAnalyticsParams} from '../configuration/legacy-analytics-params.js';
+import {OmniboxSuggestionMetadata} from '../query-suggest/query-suggest-analytics-actions.js';
 
 export interface RegisterStandaloneSearchBoxActionCreatorPayload {
+  /**
+   * The standalone search box id.
+   */
+  id: string;
+
+  /**
+   * The default URL to which to redirect the user.
+   */
+  redirectionUrl: string;
+
+  /**
+   * Whether to overwrite the existing standalone search box with the same id.
+   */
+  overwrite?: boolean;
+}
+
+export interface UpdateStandaloneSearchBoxPayload {
   /**
    * The standalone search box id.
    */
@@ -37,6 +60,16 @@ export interface RegisterStandaloneSearchBoxActionCreatorPayload {
 export const registerStandaloneSearchBox = createAction(
   'standaloneSearchBox/register',
   (payload: RegisterStandaloneSearchBoxActionCreatorPayload) =>
+    validatePayload(payload, {
+      id: requiredNonEmptyString,
+      redirectionUrl: requiredNonEmptyString,
+      overwrite: new BooleanValue({required: false}),
+    })
+);
+
+export const updateStandaloneSearchBoxRedirectionUrl = createAction(
+  'standaloneSearchBox/updateRedirectionUrl',
+  (payload: UpdateStandaloneSearchBoxPayload) =>
     validatePayload(payload, {
       id: requiredNonEmptyString,
       redirectionUrl: requiredNonEmptyString,
@@ -107,10 +140,15 @@ export const fetchRedirectUrl = createAsyncThunk<
   'standaloneSearchBox/fetchRedirect',
   async (
     payload,
-    {dispatch, getState, rejectWithValue, extra: {apiClient, validatePayload}}
+    {
+      dispatch,
+      getState,
+      rejectWithValue,
+      extra: {apiClient, validatePayload, navigatorContext},
+    }
   ) => {
     validatePayload(payload, {id: new StringValue({emptyAllowed: false})});
-    const request = await buildPlanRequest(getState());
+    const request = await buildPlanRequest(getState(), navigatorContext);
     const response = await apiClient.plan(request);
     if (isErrorResponse(response)) {
       return rejectWithValue(response.error);
@@ -132,12 +170,18 @@ const logRedirect = (url: string): CustomAction =>
   );
 
 export const buildPlanRequest = async (
-  state: StateNeededForRedirect
+  state: StateNeededForRedirect,
+  navigatorContext: NavigatorContext
 ): Promise<PlanRequest> => {
   return {
     accessToken: state.configuration.accessToken,
     organizationId: state.configuration.organizationId,
-    url: state.configuration.search.apiBaseUrl,
+    url:
+      state.configuration.search.apiBaseUrl ??
+      getSearchApiBaseUrl(
+        state.configuration.organizationId,
+        state.configuration.environment
+      ),
     locale: state.configuration.search.locale,
     timezone: state.configuration.search.timezone,
     q: state.query.q,
@@ -148,9 +192,14 @@ export const buildPlanRequest = async (
       visitorId: await getVisitorID(state.configuration.analytics),
     }),
     ...(state.configuration.analytics.enabled &&
-      (await fromAnalyticsStateToAnalyticsParams(
-        state.configuration.analytics
-      ))),
+    state.configuration.analytics.analyticsMode === 'legacy'
+      ? await legacyFromAnalyticsStateToAnalyticsParams(
+          state.configuration.analytics
+        )
+      : fromAnalyticsStateToAnalyticsParams(
+          state.configuration.analytics,
+          navigatorContext
+        )),
     ...(state.configuration.search.authenticationProviders.length && {
       authentication:
         state.configuration.search.authenticationProviders.join(','),

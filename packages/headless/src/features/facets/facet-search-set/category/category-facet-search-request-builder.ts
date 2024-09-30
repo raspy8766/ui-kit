@@ -1,11 +1,14 @@
-import {CategoryFacetSearchRequest} from '../../../../api/search/facet-search/category-facet-search/category-facet-search-request';
-import {buildSearchRequest} from '../../../search/search-request';
-import {CategoryFacetRequest} from '../../category-facet-set/interfaces/request';
-import {StateNeededForCategoryFacetSearch} from '../generic/generic-facet-search-state';
+import {getSearchApiBaseUrl} from '../../../../api/platform-client.js';
+import {CategoryFacetSearchRequest} from '../../../../api/search/facet-search/category-facet-search/category-facet-search-request.js';
+import {NavigatorContext} from '../../../../app/navigatorContextProvider.js';
+import {buildSearchRequest} from '../../../search/search-request.js';
+import {CategoryFacetRequest} from '../../category-facet-set/interfaces/request.js';
+import {StateNeededForCategoryFacetSearch} from '../generic/generic-facet-search-state.js';
 
 export const buildCategoryFacetSearchRequest = async (
   id: string,
   state: StateNeededForCategoryFacetSearch,
+  navigatorContext: NavigatorContext,
   isFieldSuggestionsRequest: boolean
 ): Promise<CategoryFacetSearchRequest> => {
   const options = state.categoryFacetSearchSet[id].options;
@@ -19,7 +22,12 @@ export const buildCategoryFacetSearchRequest = async (
   const newQuery = `*${query}*`;
 
   return {
-    url: state.configuration.search.apiBaseUrl,
+    url:
+      state.configuration.search.apiBaseUrl ??
+      getSearchApiBaseUrl(
+        state.configuration.organizationId,
+        state.configuration.environment
+      ),
     accessToken: state.configuration.accessToken,
     organizationId: state.configuration.organizationId,
     ...(state.configuration.search.authenticationProviders.length && {
@@ -37,7 +45,10 @@ export const buildCategoryFacetSearchRequest = async (
     type: 'hierarchical',
     ...(isFieldSuggestionsRequest
       ? {}
-      : {searchContext: (await buildSearchRequest(state)).request}),
+      : {
+          searchContext: (await buildSearchRequest(state, navigatorContext))
+            .request,
+        }),
   };
 };
 

@@ -1,35 +1,33 @@
-import {
-  SearchEngine,
-  buildSearchEngine,
-} from '../app/search-engine/search-engine';
+import {Result} from '../api/search/search/result.js';
 import {
   getSampleSearchEngineConfiguration,
   SearchEngineConfiguration,
-} from '../app/search-engine/search-engine-configuration';
+} from '../app/search-engine/search-engine-configuration.js';
+import {
+  SearchEngine,
+  buildSearchEngine,
+} from '../app/search-engine/search-engine.js';
 import {
   CategoryFacet,
-  Facet,
+  buildCategoryFacet,
+} from '../controllers/facets/category-facet/headless-category-facet.js';
+import {Facet, FacetValue} from '../controllers/facets/facet/headless-facet.js';
+import {buildFacet} from '../controllers/facets/facet/headless-facet.js';
+import {
   ResultList,
+  buildResultList,
+} from '../controllers/result-list/headless-result-list.js';
+import {
   SearchBox,
-  Sort,
-} from '../controllers';
+  buildSearchBox,
+} from '../controllers/search-box/headless-search-box.js';
+import {Sort, buildSort} from '../controllers/sort/headless-sort.js';
 import {
   buildDateSortCriterion,
   buildRelevanceSortCriterion,
   SortOrder,
-} from '../features/sort-criteria/criteria';
-import {
-  buildSearchBox,
-  buildResultList,
-  buildFacet,
-  buildSort,
-  buildCategoryFacet,
-  Result,
-  FacetValue,
-} from '../index';
-
-const sleep = (seconds: number) =>
-  new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+} from '../features/sort-criteria/criteria.js';
+import {waitForNextStateChange} from '../test/functional-test-utils.js';
 
 let configuration: SearchEngineConfiguration;
 let engine: SearchEngine;
@@ -65,8 +63,10 @@ describe('search app', () => {
     initEngine();
     initControllers();
 
-    engine.executeFirstSearch();
-    await sleep(2);
+    await waitForNextStateChange(engine, {
+      action: () => engine.executeFirstSearch(),
+      expectedSubscriberCalls: 2,
+    });
   });
 
   it('displays 10 results in the result list', () => {
@@ -78,7 +78,7 @@ describe('search app', () => {
   });
 
   it('displays 5 values in the category facet', () => {
-    expect(categoryFacet.state.values.length).toBe(5);
+    expect(categoryFacet.state.valuesAsTrees.length).toBe(5);
   });
 
   describe('SearchBox: submit query', () => {
@@ -90,16 +90,20 @@ describe('search app', () => {
       initialFacetValues = facet.state.values;
 
       searchBox.updateText('TED');
-      searchBox.submit();
 
-      await sleep(2);
+      await waitForNextStateChange(searchBox, {
+        action: () => searchBox.submit(),
+        expectedSubscriberCalls: 3,
+      });
     });
 
     afterAll(async () => {
       searchBox.updateText('');
-      searchBox.submit();
 
-      await sleep(2);
+      await waitForNextStateChange(searchBox, {
+        action: () => searchBox.submit(),
+        expectedSubscriberCalls: 2,
+      });
     });
 
     it('updates the result list', () => {
@@ -116,14 +120,18 @@ describe('search app', () => {
 
     beforeAll(async () => {
       initialResults = resultList.state.results;
-      sort.sortBy(buildDateSortCriterion(SortOrder.Descending));
 
-      await sleep(2);
+      await waitForNextStateChange(resultList, {
+        action: () => sort.sortBy(buildDateSortCriterion(SortOrder.Descending)),
+        expectedSubscriberCalls: 2,
+      });
     });
 
     afterAll(async () => {
-      sort.sortBy(buildRelevanceSortCriterion());
-      await sleep(2);
+      await waitForNextStateChange(resultList, {
+        action: () => sort.sortBy(buildRelevanceSortCriterion()),
+        expectedSubscriberCalls: 2,
+      });
     });
 
     it('updates the results', () => {
@@ -139,15 +147,19 @@ describe('search app', () => {
       initialFacetValues = facet.state.values;
       initialResults = resultList.state.results;
 
-      const [firstFacetValue] = categoryFacet.state.values;
-      categoryFacet.toggleSelect(firstFacetValue);
+      const [firstFacetValue] = categoryFacet.state.valuesAsTrees;
 
-      await sleep(2);
+      await waitForNextStateChange(facet, {
+        action: () => categoryFacet.toggleSelect(firstFacetValue),
+        expectedSubscriberCalls: 2,
+      });
     });
 
     afterAll(async () => {
-      facet.deselectAll();
-      await sleep(2);
+      await waitForNextStateChange(facet, {
+        action: () => facet.deselectAll(),
+        expectedSubscriberCalls: 2,
+      });
     });
 
     it('updates the facet values', () => {
@@ -173,8 +185,10 @@ describe('search app with expired token and #renewAccessToken configured to retu
     initEngine();
     initControllers();
 
-    engine.executeFirstSearch();
-    await sleep(2);
+    await waitForNextStateChange(engine, {
+      action: () => engine.executeFirstSearch(),
+      expectedSubscriberCalls: 5,
+    });
   });
 
   it('sets the valid token in state', () => {

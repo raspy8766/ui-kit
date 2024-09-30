@@ -1,15 +1,13 @@
-import {
-  buildSearchEngine,
-  getSampleSearchEngineConfiguration,
-  SearchEngine,
-  buildCategoryFieldSuggestions,
-  CategoryFieldSuggestions,
-  buildCategoryFacet,
-  CategoryFacet,
-  Facet,
-  buildFacet,
-} from '..';
-import {waitForNextStateChange} from '../test/functional-test-utils';
+import {SearchEngine} from '../app/search-engine/search-engine.js';
+import {getSampleSearchEngineConfiguration} from '../app/search-engine/search-engine.js';
+import {buildSearchEngine} from '../app/search-engine/search-engine.js';
+import {CategoryFacet} from '../controllers/facets/category-facet/headless-category-facet.js';
+import {buildCategoryFacet} from '../controllers/facets/category-facet/headless-category-facet.js';
+import {buildFacet} from '../controllers/facets/facet/headless-facet.js';
+import {Facet} from '../controllers/facets/facet/headless-facet.js';
+import {CategoryFieldSuggestions} from '../controllers/field-suggestions/category-facet/headless-category-field-suggestions.js';
+import {buildCategoryFieldSuggestions} from '../controllers/field-suggestions/category-facet/headless-category-field-suggestions.js';
+import {waitForNextStateChange} from '../test/functional-test-utils.js';
 
 describe('category field suggestions', () => {
   let engine: SearchEngine;
@@ -30,7 +28,7 @@ describe('category field suggestions', () => {
     let categoryFieldSuggestions: CategoryFieldSuggestions;
 
     function getSelectedValue() {
-      return categoryFacet.state.parents.slice(-1)[0];
+      return categoryFacet.state.selectedValueAncestry.slice(-1)[0];
     }
 
     beforeEach(async () => {
@@ -68,7 +66,6 @@ describe('category field suggestions', () => {
           action: () => categoryFieldSuggestions.select(firstToggledValue),
           expectedSubscriberCalls: 2,
         });
-        console.log(categoryFacet.state.values);
         expect(getSelectedValue().value).toEqual(firstToggledValue.rawValue);
         await waitForNextStateChange(categoryFacet, {
           action: () => categoryFieldSuggestions.select(secondToggledValue),
@@ -109,7 +106,7 @@ describe('category field suggestions', () => {
       });
 
       afterEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
       });
 
       it('has more values', () => {

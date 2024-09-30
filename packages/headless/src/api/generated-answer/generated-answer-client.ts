@@ -1,15 +1,13 @@
 import {fetchEventSource} from '@microsoft/fetch-event-source';
 import {Logger} from 'pino';
-import {SearchAppState} from '../..';
-import {AsyncThunkOptions} from '../../app/async-thunk-options';
-import {ClientThunkExtraArguments} from '../../app/thunk-extra-arguments';
-import {GeneratedAnswerErrorPayload} from '../../features/generated-answer/generated-answer-actions';
-import {createAbortController} from '../../utils/abort-controller-polyfill';
-import {URLPath} from '../../utils/url-utils';
-import {resetTimeout} from '../../utils/utils';
-import {SearchAPIClient} from '../search/search-api-client';
-import {GeneratedAnswerStreamEventData} from './generated-answer-event-payload';
-import {GeneratedAnswerStreamRequest} from './generated-answer-request';
+import {AsyncThunkOptions} from '../../app/async-thunk-options.js';
+import {ClientThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
+import {GeneratedAnswerErrorPayload} from '../../features/generated-answer/generated-answer-actions.js';
+import {SearchAppState} from '../../state/search-app-state.js';
+import {URLPath} from '../../utils/url-utils.js';
+import {resetTimeout} from '../../utils/utils.js';
+import {GeneratedAnswerStreamEventData} from './generated-answer-event-payload.js';
+import {GeneratedAnswerStreamRequest} from './generated-answer-request.js';
 
 export interface GeneratedAnswerAPIClientOptions {
   logger: Logger;
@@ -19,7 +17,7 @@ export interface AsyncThunkGeneratedAnswerOptions<
   T extends Partial<SearchAppState>,
 > extends AsyncThunkOptions<
     T,
-    ClientThunkExtraArguments<SearchAPIClient, GeneratedAnswerAPIClient>
+    ClientThunkExtraArguments<GeneratedAnswerAPIClient>
   > {}
 
 const buildStreamingUrl = (url: string, orgId: string, streamId: string) =>
@@ -100,15 +98,17 @@ export class GeneratedAnswerAPIClient {
       timeoutStateManager.add(timeout);
     };
 
-    const abortController = createAbortController();
+    const abortController = new AbortController();
 
     const stream = () =>
       fetchEventSource(buildStreamingUrl(url, organizationId, streamId), {
         method: 'GET',
+        fetch,
         headers: {
           Authorization: `Bearer ${accessToken}`,
           accept: '*/*',
         },
+        openWhenHidden: true,
         signal: abortController?.signal,
         async onopen(response) {
           if (
@@ -131,6 +131,9 @@ export class GeneratedAnswerAPIClient {
           }
         },
         onmessage: (event) => {
+          if (abortController?.signal.aborted) {
+            return;
+          }
           const data: GeneratedAnswerStreamEventData = JSON.parse(event.data);
           if (data.finishReason === 'ERROR') {
             timeoutStateManager.remove(timeout!);
@@ -151,6 +154,9 @@ export class GeneratedAnswerAPIClient {
           }
         },
         onerror: (err) => {
+          if (abortController?.signal.aborted) {
+            return;
+          }
           timeoutStateManager.remove(timeout!);
           if (err instanceof FatalError) {
             abortController?.abort();

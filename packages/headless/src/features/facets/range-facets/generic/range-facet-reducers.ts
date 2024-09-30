@@ -1,10 +1,10 @@
-import {RangeFacetOptionalParameters} from './interfaces/options';
+import {RangeFacetOptionalParameters} from './interfaces/options.js';
 import {
   RangeFacetRequest,
   RangeFacetResponse,
   RangeFacetValue,
   RangeValueRequest,
-} from './interfaces/range-facet';
+} from './interfaces/range-facet.js';
 
 type RangeFacetSlice<
   RequestType extends RangeFacetRequest = RangeFacetRequest,
@@ -166,6 +166,19 @@ export function onRangeFacetRequestFulfilled<
 function findRange(values: RangeValueRequest[], value: RangeValueRequest) {
   const {start, end} = value;
   return values.find((range) => range.start === start && range.end === end);
+}
+
+export function findExactRangeValue(
+  values: RangeValueRequest[],
+  value: RangeValueRequest
+) {
+  const {start, end, endInclusive} = value;
+  return values.find(
+    (range) =>
+      range.start === start &&
+      range.end === end &&
+      range.endInclusive === endInclusive
+  );
 }
 
 function calculateNumberOfValues(request: RangeFacetRequest) {

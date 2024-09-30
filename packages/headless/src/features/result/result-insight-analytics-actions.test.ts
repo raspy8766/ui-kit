@@ -1,21 +1,40 @@
-import {buildMockInsightEngine} from '../../test/mock-engine';
-import {buildMockInsightState} from '../../test/mock-insight-state';
-import {buildMockNonEmptyResult} from '../../test/mock-result';
-import {buildMockSearchState} from '../../test/mock-search-state';
-import {logDocumentOpen} from './result-insight-analytics-actions';
+import {createRelay} from '@coveo/relay';
+import {InsightEngine} from '../../app/insight-engine/insight-engine.js';
+import {ThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
+import {buildMockInsightEngine} from '../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../test/mock-insight-state.js';
+import {buildMockRaw} from '../../test/mock-raw.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {buildMockSearchResponse} from '../../test/mock-search-response.js';
+import {buildMockSearchState} from '../../test/mock-search-state.js';
+import {clearMicrotaskQueue} from '../../test/unit-test-utils.js';
+import {getConfigurationInitialState} from '../configuration/configuration-state.js';
+import {logDocumentOpen} from './result-insight-analytics-actions.js';
 
-const mockLogDocumentOpen = jest.fn();
+const mockLogDocumentOpen = vi.fn();
+const emit = vi.fn();
 
-jest.mock('coveo.analytics', () => {
-  const mockCoveoInsightClient = jest.fn(() => ({
+vi.mock('@coveo/relay');
+
+vi.mock('coveo.analytics', () => {
+  const mockCoveoInsightClient = vi.fn(() => ({
     disable: () => {},
     logDocumentOpen: mockLogDocumentOpen,
   }));
 
   return {
     CoveoInsightClient: mockCoveoInsightClient,
-    history: {HistoryStore: jest.fn()},
+    history: {HistoryStore: vi.fn()},
   };
+});
+
+vi.mocked(createRelay).mockReturnValue({
+  emit,
+  getMeta: vi.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
+  updateConfig: vi.fn(),
+  version: 'foo',
 });
 
 const exampleSubject = 'example subject';
@@ -42,7 +61,7 @@ const expectedDocumentInfo = {
   documentTitle: 'example documentTitle',
   documentUrl: 'example documentUrl',
   rankingModifier: 'example rankingModifier',
-  documentAuthor: 'unknown',
+  documentAuthor: 'example author',
 };
 
 const expectedDocumentIdentifier = {
@@ -50,37 +69,115 @@ const expectedDocumentIdentifier = {
   contentIDValue: 'example contentIDValue',
 };
 
-const testResult = buildMockNonEmptyResult();
+const resultParams = {
+  title: 'example documentTitle',
+  uri: 'example documentUri',
+  printableUri: 'printable-uri',
+  clickUri: 'example documentUrl',
+  uniqueId: 'unique-id',
+  excerpt: 'excerpt',
+  firstSentences: 'first-sentences',
+  flags: 'flags',
+  rankingModifier: 'example rankingModifier',
+  searchUid: 'example searchUid',
+  raw: buildMockRaw({
+    author: 'example author',
+    urihash: 'example documentUriHash',
+    source: 'example sourceName',
+    collection: 'example collectionName',
+    permanentid: 'example contentIDValue',
+  }),
+};
 
-describe('logDocumentOpen', () => {
-  it('should log #logDocumentOpen with the right payload', async () => {
-    const engine = buildMockInsightEngine({
-      state: buildMockInsightState({
-        search: buildMockSearchState({
-          results: [testResult],
-        }),
-        insightCaseContext: {
-          caseContext: {
-            Case_Subject: exampleSubject,
-            Case_Description: exampleDescription,
+const testResult = buildMockResult(resultParams);
+
+describe('result insight analytics actions', () => {
+  let engine: InsightEngine;
+  const searchState = buildMockSearchState({
+    results: [testResult],
+    response: buildMockSearchResponse(),
+  });
+  const caseContextState = {
+    caseContext: {
+      Case_Subject: exampleSubject,
+      Case_Description: exampleDescription,
+    },
+    caseId: exampleCaseId,
+    caseNumber: exampleCaseNumber,
+  };
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('when analyticsMode is `legacy`', () => {
+    beforeEach(() => {
+      engine = buildMockInsightEngine(
+        buildMockInsightState({
+          search: searchState,
+          configuration: {
+            ...getConfigurationInitialState(),
+            analytics: {
+              ...getConfigurationInitialState().analytics,
+              analyticsMode: 'legacy',
+            },
           },
-          caseId: exampleCaseId,
-          caseNumber: exampleCaseNumber,
-        },
-      }),
+          insightCaseContext: caseContextState,
+        })
+      );
     });
 
-    await engine.dispatch(logDocumentOpen(testResult));
+    describe('logDocumentOpen', () => {
+      it('should call coveo.analytics.logDocumentOpen properly', async () => {
+        await logDocumentOpen(testResult)()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
 
-    expect(mockLogDocumentOpen).toBeCalledTimes(1);
-    expect(mockLogDocumentOpen.mock.calls[0][0]).toStrictEqual(
-      expectedDocumentInfo
-    );
-    expect(mockLogDocumentOpen.mock.calls[0][1]).toStrictEqual(
-      expectedDocumentIdentifier
-    );
-    expect(mockLogDocumentOpen.mock.calls[0][2]).toStrictEqual(
-      expectedMetadata
-    );
+        expect(mockLogDocumentOpen).toHaveBeenCalledTimes(1);
+        expect(mockLogDocumentOpen.mock.calls[0][0]).toStrictEqual(
+          expectedDocumentInfo
+        );
+        expect(mockLogDocumentOpen.mock.calls[0][1]).toStrictEqual(
+          expectedDocumentIdentifier
+        );
+        expect(mockLogDocumentOpen.mock.calls[0][2]).toStrictEqual(
+          expectedMetadata
+        );
+      });
+    });
+  });
+
+  describe('when analyticsMode is `next`', () => {
+    beforeEach(() => {
+      engine = buildMockInsightEngine(
+        buildMockInsightState({
+          search: searchState,
+          configuration: {
+            ...getConfigurationInitialState(),
+            analytics: {
+              ...getConfigurationInitialState().analytics,
+              analyticsMode: 'next',
+            },
+          },
+          insightCaseContext: caseContextState,
+        })
+      );
+    });
+
+    describe('logDocumentOpen', () => {
+      it('should call relay.emit properly', async () => {
+        await logDocumentOpen(testResult)()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
+        await clearMicrotaskQueue();
+
+        expect(emit).toHaveBeenCalledTimes(1);
+        expect(emit.mock.calls[0]).toMatchSnapshot();
+      });
+    });
   });
 });

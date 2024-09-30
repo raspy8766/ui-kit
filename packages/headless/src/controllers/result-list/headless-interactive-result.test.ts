@@ -1,22 +1,25 @@
-import {Result} from '../../api/search/search/result';
-import {configuration} from '../../app/common-reducers';
-import {pushRecentResult} from '../../features/recent-results/recent-results-actions';
-import {logDocumentOpen} from '../../features/result/result-analytics-actions';
-import {buildMockResult} from '../../test';
+import {Result} from '../../api/search/search/result.js';
+import {configuration} from '../../app/common-reducers.js';
+import {pushRecentResult} from '../../features/recent-results/recent-results-actions.js';
+import {logDocumentOpen} from '../../features/result/result-analytics-actions.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {createMockState} from '../../test/mock-state.js';
 import {
   buildInteractiveResult,
   InteractiveResult,
-} from './headless-interactive-result';
+} from './headless-interactive-result.js';
+
+vi.mock('../../features/recent-results/recent-results-actions');
+vi.mock('../../features/result/result-analytics-actions');
 
 describe('InteractiveResult', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let mockResult: Result;
   let interactiveResult: InteractiveResult;
-  let logDocumentOpenPendingActionType: string;
 
   const resultStringParams = {
     title: 'title',
@@ -31,35 +34,19 @@ describe('InteractiveResult', () => {
 
   function initializeInteractiveResult(delay?: number) {
     const result = (mockResult = buildMockResult(resultStringParams));
-    logDocumentOpenPendingActionType = logDocumentOpen(mockResult).pending.type;
     interactiveResult = buildInteractiveResult(engine, {
       options: {result, selectionDelay: delay},
     });
   }
 
-  function findLogDocumentAction() {
-    return (
-      engine.actions.find(
-        (action) => action.type === logDocumentOpenPendingActionType
-      ) ?? null
-    );
-  }
-
-  function expectLogDocumentActionPending() {
-    const action = findLogDocumentAction();
-    expect(action).toEqual(
-      logDocumentOpen(mockResult).pending(action!.meta.requestId)
-    );
-  }
-
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initializeInteractiveResult();
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('it adds the correct reducers to engine', () => {
@@ -68,15 +55,12 @@ describe('InteractiveResult', () => {
 
   it('when calling select() should add the result to recent results list', () => {
     interactiveResult.select();
-    jest.runAllTimers();
-
-    expect(
-      engine.actions.find((a) => a.type === pushRecentResult.type)
-    ).toBeDefined();
+    vi.runAllTimers();
+    expect(pushRecentResult).toHaveBeenCalled();
   });
 
   it('when calling select(), logs documentOpen', () => {
     interactiveResult.select();
-    expectLogDocumentActionPending();
+    expect(logDocumentOpen).toHaveBeenCalledWith(mockResult);
   });
 });

@@ -1,6 +1,7 @@
 import {
   SearchEngineConfiguration,
   AnalyticsConfiguration,
+  EngineConfiguration,
 } from '@coveo/headless';
 import {AnalyticsClientSendEventHook} from '@coveo/headless';
 import {getAtomicEnvironment} from '../../../global/environment';
@@ -35,4 +36,37 @@ export function augmentAnalyticsConfigWithDocument(): AnalyticsConfiguration {
     documentLocation: document.location.href,
     ...(document.referrer && {originLevel3: document.referrer}),
   };
+}
+
+const versionMatcher = /^(\d+\.\d+\.\d+)/;
+
+export function augmentAnalyticsConfigWithAtomicVersion(): Required<
+  Pick<AnalyticsConfiguration, 'source'>
+> {
+  return {
+    source: {
+      '@coveo/atomic':
+        versionMatcher.exec(getAtomicEnvironment().version)?.[0] || '0.0.0',
+    },
+  };
+}
+
+export function getNextAnalyticsConfig(
+  searchEngineConfig: EngineConfiguration,
+  enabled: boolean
+): AnalyticsConfiguration {
+  const configuration: AnalyticsConfiguration = {
+    enabled,
+    documentLocation: document.location.href,
+    ...(document.referrer && {originLevel3: document.referrer}),
+  };
+
+  const analyticsConfiguration = searchEngineConfig.analytics ?? {};
+  Object.assign(
+    analyticsConfiguration,
+    augmentAnalyticsConfigWithAtomicVersion()
+  );
+  Object.assign(configuration, analyticsConfiguration);
+
+  return configuration;
 }

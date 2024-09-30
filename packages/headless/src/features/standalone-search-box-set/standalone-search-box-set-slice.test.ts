@@ -1,14 +1,15 @@
-import {buildMockOmniboxSuggestionMetadata} from '../../test/mock-omnibox-suggestion-metadata';
-import {buildMockStandaloneSearchBoxEntry} from '../../test/mock-standalone-search-box-entry';
+import {buildMockOmniboxSuggestionMetadata} from '../../test/mock-omnibox-suggestion-metadata.js';
+import {buildMockStandaloneSearchBoxEntry} from '../../test/mock-standalone-search-box-entry.js';
 import {
   fetchRedirectUrl,
   registerStandaloneSearchBox,
   updateAnalyticsToOmniboxFromLink,
   updateAnalyticsToSearchFromLink,
   resetStandaloneSearchBox,
-} from './standalone-search-box-set-actions';
-import {standaloneSearchBoxSetReducer} from './standalone-search-box-set-slice';
-import {StandaloneSearchBoxSetState} from './standalone-search-box-set-state';
+  updateStandaloneSearchBoxRedirectionUrl,
+} from './standalone-search-box-set-actions.js';
+import {standaloneSearchBoxSetReducer} from './standalone-search-box-set-slice.js';
+import {StandaloneSearchBoxSetState} from './standalone-search-box-set-state.js';
 
 describe('standalone search box slice', () => {
   const id = '1';
@@ -44,6 +45,41 @@ describe('standalone search box slice', () => {
       const finalState = standaloneSearchBoxSetReducer(state, action);
 
       expect(state[id]).toEqual(finalState[id]);
+    });
+
+    it('when the id exists and the overwrite option is true, it registers the payload', () => {
+      const action = registerStandaloneSearchBox({
+        id,
+        redirectionUrl: 'url',
+        overwrite: true,
+      });
+      const finalState = standaloneSearchBoxSetReducer(state, action);
+
+      expect(finalState[id]).toEqual(
+        buildMockStandaloneSearchBoxEntry({defaultRedirectionUrl: 'url'})
+      );
+    });
+  });
+
+  describe('#updateStandaloneSearchBoxRedirectionUrl', () => {
+    it('when the id exists, it sets the default redirection url', () => {
+      const action = updateStandaloneSearchBoxRedirectionUrl({
+        id,
+        redirectionUrl: '/newpage',
+      });
+      const finalState = standaloneSearchBoxSetReducer(state, action);
+
+      expect(finalState[id]!.defaultRedirectionUrl).toBe('/newpage');
+    });
+
+    it('when the id does not exist, it does not edit the state', () => {
+      const action = updateStandaloneSearchBoxRedirectionUrl({
+        id: 'invalid',
+        redirectionUrl: '/newpage',
+      });
+      const finalState = standaloneSearchBoxSetReducer(state, action);
+
+      expect(finalState).toBe(state);
     });
   });
 

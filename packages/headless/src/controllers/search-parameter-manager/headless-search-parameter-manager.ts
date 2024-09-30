@@ -1,13 +1,16 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {getDebugInitialState} from '../../features/debug/debug-state';
-import {getPaginationInitialState} from '../../features/pagination/pagination-state';
-import {getQueryInitialState} from '../../features/query/query-state';
-import {SearchParameters} from '../../features/search-parameters/search-parameter-actions';
-import {logParametersChange} from '../../features/search-parameters/search-parameter-analytics-actions';
-import {executeSearch} from '../../features/search/search-actions';
-import {StaticFilterValue} from '../../features/static-filter-set/static-filter-set-state';
-import {SearchParametersState} from '../../state/search-app-state';
-import {deepEqualAnyOrder} from '../../utils/compare-utils';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {getDebugInitialState} from '../../features/debug/debug-state.js';
+import {getPaginationInitialState} from '../../features/pagination/pagination-state.js';
+import {getQueryInitialState} from '../../features/query/query-state.js';
+import {SearchParameters} from '../../features/search-parameters/search-parameter-actions.js';
+import {
+  legacyLogParametersChange,
+  parametersChange,
+} from '../../features/search-parameters/search-parameter-analytics-actions.js';
+import {executeSearch} from '../../features/search/search-actions.js';
+import {StaticFilterValue} from '../../features/static-filter-set/static-filter-set-state.js';
+import {SearchParametersState} from '../../state/search-app-state.js';
+import {deepEqualAnyOrder} from '../../utils/compare-utils.js';
 import {
   buildCoreSearchParameterManager,
   enrichParameters,
@@ -17,7 +20,7 @@ import {
   SearchParameterManagerProps,
   SearchParameterManagerState,
   validateParams,
-} from '../core/search-parameter-manager/headless-core-search-parameter-manager';
+} from '../core/search-parameter-manager/headless-core-search-parameter-manager.js';
 
 export type {
   SearchParameters,
@@ -59,7 +62,10 @@ export function buildSearchParameterManager(
 
       controller.synchronize(parameters);
       dispatch(
-        executeSearch({legacy: logParametersChange(oldParams, newParams)})
+        executeSearch({
+          legacy: legacyLogParametersChange(oldParams, newParams),
+          next: parametersChange(oldParams, newParams),
+        })
       );
     },
 

@@ -1,4 +1,3 @@
-import {TestFixture} from '../fixtures/test-fixture';
 import {should} from './common-assertions';
 import {GeneratedAnswerSelectors} from './generated-answer-selectors';
 
@@ -8,6 +7,22 @@ export function assertLogOpenGeneratedAnswerSource() {
 
 export function assertLogGeneratedAnswerSourceHover() {
   cy.expectCustomEvent('generatedAnswer', 'generatedAnswerSourceHover');
+}
+
+export function assertLogGeneratedAnswerStreamEnd() {
+  cy.expectCustomEvent('generatedAnswer', 'generatedAnswerStreamEnd');
+}
+
+export function assertLogLikeGeneratedAnswer() {
+  cy.expectCustomEvent('generatedAnswer', 'likeGeneratedAnswer');
+}
+
+export function assertLogDislikeGeneratedAnswer() {
+  cy.expectCustomEvent('generatedAnswer', 'dislikeGeneratedAnswer');
+}
+
+export function assertLogCopyGeneratedAnswer() {
+  cy.expectCustomEvent('generatedAnswer', 'generatedAnswerCopyToClipboard');
 }
 
 export function assertAnswerVisibility(isVisible: boolean) {
@@ -36,6 +51,14 @@ export function assertToggleValue(checked: boolean) {
   });
 }
 
+export function assertToggleVisibility(isVisible: boolean) {
+  it(`${should(isVisible)} show the toggle button`, () => {
+    GeneratedAnswerSelectors.toggle().should(
+      isVisible ? 'be.visible' : 'not.exist'
+    );
+  });
+}
+
 export function assertLocalStorageData(data: {isVisible: boolean}) {
   it(`should have value in local storage: ${JSON.stringify(data)}`, () => {
     cy.window().then((win) => {
@@ -47,12 +70,15 @@ export function assertLocalStorageData(data: {isVisible: boolean}) {
   });
 }
 
-export function assertAnswerStyle(expected: string) {
-  cy.wait(TestFixture.interceptAliases.Search).should((firstSearch) => {
-    expect(
-      firstSearch.request.body.pipelineRuleParameters
-        .mlGenerativeQuestionAnswering.responseFormat
-    ).to.have.property('answerStyle', expected);
+export function assertLogHideGeneratedAnswer() {
+  it('should log generatedAnswerHideAnswers analytics event', () => {
+    cy.expectCustomEvent('generatedAnswer', 'generatedAnswerHideAnswers');
+  });
+}
+
+export function assertLogShowGeneratedAnswer() {
+  it('should log generatedAnswerShowAnswers analytics event', () => {
+    cy.expectCustomEvent('generatedAnswer', 'generatedAnswerShowAnswers');
   });
 }
 
@@ -69,5 +95,40 @@ export function assertAnswerCopiedToClipboard(answer: string) {
     win.navigator.clipboard.readText().then((text) => {
       expect(text).to.eq(answer);
     });
+  });
+}
+
+export function assertDisclaimer(isDisplayed: boolean) {
+  it(`${should(isDisplayed)} show the disclaimer`, () => {
+    GeneratedAnswerSelectors.disclaimer().should(
+      isDisplayed ? 'exist' : 'not.exist'
+    );
+  });
+}
+
+export function assertShowButton(isDisplayed: boolean) {
+  it(`${should(isDisplayed)} show the show button`, () => {
+    GeneratedAnswerSelectors.showButton().should(
+      isDisplayed ? 'be.visible' : 'be.hidden'
+    );
+  });
+}
+
+export function assertAnswerCollapsed(isCollapsed: boolean) {
+  it(`${should(isCollapsed)} show the answer collapsed`, () => {
+    GeneratedAnswerSelectors.answerContainer().should(
+      isCollapsed ? 'have.class' : 'not.have.class',
+      'answer-collapsed'
+    );
+  });
+}
+
+export function assertShowMoreLabel(isShowMore: boolean) {
+  const expectedLabel = isShowMore ? 'show more' : 'show less';
+  it(`should show the ${expectedLabel} label`, () => {
+    GeneratedAnswerSelectors.showButton().should(
+      'have.text',
+      isShowMore ? 'Show more' : 'Show less'
+    );
   });
 }

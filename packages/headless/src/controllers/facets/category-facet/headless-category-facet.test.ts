@@ -1,52 +1,58 @@
-import {configuration} from '../../../app/common-reducers';
-import {updateFacetOptions} from '../../../features/facet-options/facet-options-actions';
+import {configuration} from '../../../app/common-reducers.js';
+import {updateFacetOptions} from '../../../features/facet-options/facet-options-actions.js';
 import {
   registerCategoryFacet,
   toggleSelectCategoryFacetValue,
   deselectAllCategoryFacetValues,
   updateCategoryFacetNumberOfValues,
   updateCategoryFacetSortCriterion,
-} from '../../../features/facets/category-facet-set/category-facet-set-actions';
-import {categoryFacetSetReducer as categoryFacetSet} from '../../../features/facets/category-facet-set/category-facet-set-slice';
-import {defaultCategoryFacetOptions} from '../../../features/facets/category-facet-set/category-facet-set-slice';
+} from '../../../features/facets/category-facet-set/category-facet-set-actions.js';
+import {categoryFacetSetReducer as categoryFacetSet} from '../../../features/facets/category-facet-set/category-facet-set-slice.js';
+import {defaultCategoryFacetOptions} from '../../../features/facets/category-facet-set/category-facet-set-slice.js';
 import {
   CategoryFacetRequest,
   CategoryFacetSortCriterion,
-} from '../../../features/facets/category-facet-set/interfaces/request';
-import {categoryFacetSearchSetReducer as categoryFacetSearchSet} from '../../../features/facets/facet-search-set/category/category-facet-search-set-slice';
+} from '../../../features/facets/category-facet-set/interfaces/request.js';
+import {categoryFacetSearchSetReducer as categoryFacetSearchSet} from '../../../features/facets/facet-search-set/category/category-facet-search-set-slice.js';
 import {
   executeSearch,
   fetchFacetValues,
-} from '../../../features/search/search-actions';
-import {searchReducer as search} from '../../../features/search/search-slice';
-import {SearchAppState} from '../../../state/search-app-state';
+} from '../../../features/search/search-actions.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
+import {SearchAppState} from '../../../state/search-app-state.js';
+import {buildMockCategoryFacetRequest} from '../../../test/mock-category-facet-request.js';
+import {buildMockCategoryFacetResponse} from '../../../test/mock-category-facet-response.js';
+import {buildMockCategoryFacetSearch} from '../../../test/mock-category-facet-search.js';
+import {buildMockCategoryFacetSlice} from '../../../test/mock-category-facet-slice.js';
+import {buildMockCategoryFacetValue} from '../../../test/mock-category-facet-value.js';
 import {
-  buildMockSearchAppEngine,
-  createMockState,
-  MockSearchEngine,
-} from '../../../test';
-import {buildMockCategoryFacetRequest} from '../../../test/mock-category-facet-request';
-import {buildMockCategoryFacetResponse} from '../../../test/mock-category-facet-response';
-import {buildMockCategoryFacetSearch} from '../../../test/mock-category-facet-search';
-import {buildMockCategoryFacetSlice} from '../../../test/mock-category-facet-slice';
-import {buildMockCategoryFacetValue} from '../../../test/mock-category-facet-value';
-import * as FacetIdDeterminor from '../../core/facets/_common/facet-id-determinor';
-import * as CategoryFacetSearch from '../../core/facets/facet-search/category/headless-category-facet-search';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {createMockState} from '../../../test/mock-state.js';
+import * as FacetIdDeterminor from '../../core/facets/_common/facet-id-determinor.js';
+import * as CategoryFacetSearch from '../../core/facets/facet-search/category/headless-category-facet-search.js';
 import {
   buildCategoryFacet,
   CategoryFacet,
   CategoryFacetOptions,
-} from './headless-category-facet';
+} from './headless-category-facet.js';
+
+vi.mock(
+  '../../../features/facets/category-facet-set/category-facet-set-actions'
+);
+vi.mock('../../../features/search/search-actions');
+vi.mock('../../../features/facet-options/facet-options-actions');
 
 describe('category facet', () => {
   const facetId = '1';
   let options: CategoryFacetOptions;
   let state: SearchAppState;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let categoryFacet: CategoryFacet;
 
   function initCategoryFacet() {
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
     categoryFacet = buildCategoryFacet(engine, {options});
   }
 
@@ -77,7 +83,7 @@ describe('category facet', () => {
   });
 
   it('it calls #determineFacetId with the correct params', () => {
-    jest.spyOn(FacetIdDeterminor, 'determineFacetId');
+    vi.spyOn(FacetIdDeterminor, 'determineFacetId');
 
     initCategoryFacet();
 
@@ -92,12 +98,13 @@ describe('category facet', () => {
   });
 
   it('registers a category facet with the passed options and default optional parameters', () => {
-    const action = registerCategoryFacet({
+    expect(registerCategoryFacet).toHaveBeenCalledWith({
       ...defaultCategoryFacetOptions,
       ...options,
       facetId,
+      activeTab: '',
+      tabs: {},
     });
-    expect(engine.actions).toContainEqual(action);
   });
 
   it('when an option is invalid, it throws', () => {
@@ -112,13 +119,10 @@ describe('category facet', () => {
   });
 
   describe('when the search response is empty', () => {
-    it('#state.values is an empty array', () => {
+    it('#state.valuesAsTrees and #state.selectedValueAncestry are empty arrays', () => {
       expect(state.search.response.facets).toEqual([]);
-      expect(categoryFacet.state.values).toEqual([]);
-    });
-
-    it('#state.parents is an empty array', () => {
-      expect(categoryFacet.state.parents).toEqual([]);
+      expect(categoryFacet.state.valuesAsTrees).toEqual([]);
+      expect(categoryFacet.state.selectedValueAncestry).toEqual([]);
     });
   });
 
@@ -128,7 +132,7 @@ describe('category facet', () => {
     const response = buildMockCategoryFacetResponse({facetId, values});
 
     state.search.response.facets = [response];
-    expect(categoryFacet.state.values).toBe(values);
+    expect(categoryFacet.state.valuesAsTrees).toBe(values);
   });
 
   describe('when the search response has a category facet with nested values', () => {
@@ -153,16 +157,12 @@ describe('category facet', () => {
       state.search.response.facets = [response];
     });
 
-    it('#state.parents contains the outer and middle values', () => {
-      expect(categoryFacet.state.parents).toEqual([outerValue, middleValue]);
+    it('#state.valueAsTree contains the outer value', () => {
+      expect(categoryFacet.state.valuesAsTrees).toEqual([outerValue]);
     });
 
-    it('#state.values contains the innermost values', () => {
-      expect(categoryFacet.state.values).toBe(innerValues);
-    });
-
-    it('#state.parents contains the outer and middle values', () => {
-      expect(categoryFacet.state.parents).toEqual([outerValue, middleValue]);
+    it('#state.isHierarchical should be true', () => {
+      expect(categoryFacet.state.isHierarchical).toBe(true);
     });
   });
 
@@ -181,12 +181,14 @@ describe('category facet', () => {
       state.search.response.facets = [response];
     });
 
-    it('#state.parents contains the selected leaf value', () => {
-      expect(categoryFacet.state.parents).toEqual([selectedValue]);
+    it('#state.valuesAsTrees contains the selected leaf value', () => {
+      expect(categoryFacet.state.valuesAsTrees).toEqual([selectedValue]);
     });
 
-    it('#state.values is an empty array', () => {
-      expect(categoryFacet.state.values).toEqual([]);
+    it('#state.selectedValueAncestry contains the selected leaf value', () => {
+      expect(categoryFacet.state.selectedValueAncestry).toEqual([
+        selectedValue,
+      ]);
     });
   });
 
@@ -195,12 +197,11 @@ describe('category facet', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       categoryFacet.toggleSelect(selection);
 
-      const action = toggleSelectCategoryFacetValue({
+      expect(toggleSelectCategoryFacetValue).toHaveBeenCalledWith({
         facetId,
         selection,
         retrieveCount: defaultCategoryFacetOptions.numberOfValues,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('if the numberOfValues is set it dispatches #toggleCategoryFacetValue with the correct retrieveCount', () => {
@@ -209,29 +210,24 @@ describe('category facet', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       categoryFacet.toggleSelect(selection);
 
-      const action = toggleSelectCategoryFacetValue({
+      expect(toggleSelectCategoryFacetValue).toHaveBeenCalledWith({
         facetId,
         selection,
         retrieveCount: 10,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       categoryFacet.toggleSelect(selection);
 
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('executes a search', () => {
       const selection = buildMockCategoryFacetValue({value: 'A'});
       categoryFacet.toggleSelect(selection);
-
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -239,20 +235,15 @@ describe('category facet', () => {
     beforeEach(() => categoryFacet.deselectAll());
 
     it('dispatches #deselectAllCategoryFacetValues', () => {
-      expect(engine.actions).toContainEqual(
-        deselectAllCategoryFacetValues(facetId)
-      );
+      expect(deselectAllCategoryFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('executes a search', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -378,11 +369,10 @@ describe('category facet', () => {
     it('with no values, it dispatches #updateCategoryFacetNumberOfResults with the correct number of values', () => {
       categoryFacet.showMoreValues();
 
-      const action = updateCategoryFacetNumberOfValues({
+      expect(updateCategoryFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: defaultCategoryFacetOptions.numberOfValues,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('with a value, it dispatches #updateCategoryFacetNumberOfResults with the correct number of values', () => {
@@ -391,26 +381,21 @@ describe('category facet', () => {
       state.search.response.facets = [response];
 
       initCategoryFacet();
-
-      const action = updateCategoryFacetNumberOfValues({
+      categoryFacet.showMoreValues();
+      expect(updateCategoryFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: 6,
       });
-      categoryFacet.showMoreValues();
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       categoryFacet.showMoreValues();
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches #fetchFacetValues', () => {
       categoryFacet.showMoreValues();
-
-      const action = engine.findAsyncAction(fetchFacetValues.pending);
-      expect(action).toBeTruthy();
+      expect(fetchFacetValues).toHaveBeenCalled();
     });
   });
 
@@ -418,22 +403,18 @@ describe('category facet', () => {
     beforeEach(() => categoryFacet.showLessValues());
 
     it('dispatches #updateCategoryFacetNumberOfResults with the correct numberOfValues', () => {
-      const action = updateCategoryFacetNumberOfValues({
+      expect(updateCategoryFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: 5,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches #fetchFacetValues', () => {
-      const action = engine.actions.find(
-        (a) => a.type === fetchFacetValues.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(fetchFacetValues).toHaveBeenCalled();
     });
   });
 
@@ -441,25 +422,22 @@ describe('category facet', () => {
     it('dispatches #toggleCategoryFacetValue with the passed selection', () => {
       const sortCriterion: CategoryFacetSortCriterion = 'alphanumeric';
       categoryFacet.sortBy(sortCriterion);
-      const action = updateCategoryFacetSortCriterion({
+
+      expect(updateCategoryFacetSortCriterion).toHaveBeenCalledWith({
         facetId,
         criterion: sortCriterion,
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       categoryFacet.sortBy('alphanumeric');
 
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches #executeSearch', () => {
       categoryFacet.sortBy('alphanumeric');
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -469,7 +447,7 @@ describe('category facet', () => {
   });
 
   it('exposes a #facetSearch property', () => {
-    jest.spyOn(CategoryFacetSearch, 'buildCoreCategoryFacetSearch');
+    vi.spyOn(CategoryFacetSearch, 'buildCoreCategoryFacetSearch');
     initCategoryFacet();
 
     expect(categoryFacet.facetSearch).toBeTruthy();
@@ -489,7 +467,7 @@ describe('category facet', () => {
       path: ['bar', 'bazz'],
     };
 
-    engine.state.categoryFacetSearchSet[facetId].response.values = [
+    engine.state.categoryFacetSearchSet![facetId].response.values = [
       fakeResponseValue,
     ];
 

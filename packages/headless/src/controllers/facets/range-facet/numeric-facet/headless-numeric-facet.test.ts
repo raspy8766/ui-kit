@@ -1,42 +1,55 @@
-import {configuration} from '../../../../app/common-reducers';
-import {updateFacetOptions} from '../../../../features/facet-options/facet-options-actions';
-import {deselectAllFacetValues} from '../../../../features/facets/facet-set/facet-set-actions';
-import {updateRangeFacetSortCriterion} from '../../../../features/facets/range-facets/generic/range-facet-actions';
-import {NumericFacetValue} from '../../../../features/facets/range-facets/numeric-facet-set/interfaces/response';
+import {configuration} from '../../../../app/common-reducers.js';
+import {updateFacetOptions} from '../../../../features/facet-options/facet-options-actions.js';
+import {deselectAllFacetValues} from '../../../../features/facets/facet-set/facet-set-actions.js';
+import {updateRangeFacetSortCriterion} from '../../../../features/facets/range-facets/generic/range-facet-actions.js';
+import {NumericFacetValue} from '../../../../features/facets/range-facets/numeric-facet-set/interfaces/response.js';
 import {
   deselectAllNumericFacetValues,
   registerNumericFacet,
-  toggleSelectNumericFacetValue,
-} from '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions';
-import {numericFacetSetReducer as numericFacetSet} from '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-slice';
-import {executeSearch} from '../../../../features/search/search-actions';
-import {searchReducer as search} from '../../../../features/search/search-slice';
-import {SearchAppState} from '../../../../state/search-app-state';
+  validateManualNumericRanges,
+} from '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions.js';
+import {executeToggleNumericFacetSelect} from '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-controller-actions.js';
+import {numericFacetSetReducer as numericFacetSet} from '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-set-slice.js';
+import {executeSearch} from '../../../../features/search/search-actions.js';
+import {searchReducer as search} from '../../../../features/search/search-slice.js';
+import {SearchAppState} from '../../../../state/search-app-state.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-} from '../../../../test/mock-engine';
-import {buildMockNumericFacetResponse} from '../../../../test/mock-numeric-facet-response';
-import {buildMockNumericFacetSlice} from '../../../../test/mock-numeric-facet-slice';
-import {buildMockNumericFacetValue} from '../../../../test/mock-numeric-facet-value';
-import {createMockState} from '../../../../test/mock-state';
-import * as FacetIdDeterminor from '../../../core/facets/_common/facet-id-determinor';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../../../test/mock-engine-v2.js';
+import {buildMockNumericFacetResponse} from '../../../../test/mock-numeric-facet-response.js';
+import {buildMockNumericFacetSlice} from '../../../../test/mock-numeric-facet-slice.js';
+import {buildMockNumericFacetValue} from '../../../../test/mock-numeric-facet-value.js';
+import {createMockState} from '../../../../test/mock-state.js';
+import * as FacetIdDeterminor from '../../../core/facets/_common/facet-id-determinor.js';
 import {
   NumericFacet,
   buildNumericFacet,
   NumericFacetOptions,
   buildNumericRange,
-} from './headless-numeric-facet';
+} from './headless-numeric-facet.js';
+
+vi.mock('../../../../features/facet-options/facet-options-actions');
+vi.mock('../../../../features/facets/facet-set/facet-set-actions');
+vi.mock(
+  '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions'
+);
+vi.mock('../../../../features/facets/range-facets/generic/range-facet-actions');
+vi.mock('../../../../features/search/search-actions');
+
+vi.mock(
+  '../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-controller-actions'
+);
 
 describe('numeric facet', () => {
   const facetId = '1';
   let options: NumericFacetOptions;
   let state: SearchAppState;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let numericFacet: NumericFacet;
 
   function initNumericFacet() {
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
     numericFacet = buildNumericFacet(engine, {options});
   }
 
@@ -53,15 +66,21 @@ describe('numeric facet', () => {
     initNumericFacet();
   });
 
-  it('#initNumericFacet throws an error when an manual range is invalid', () => {
+  it('#initNumericFacet validate manual range', () => {
     options.currentValues = [
       buildNumericRange({
         start: 10,
         end: 0,
       }),
     ];
-    expect(() => initNumericFacet()).toThrow(
-      'The start value is greater than the end value for the numeric range 10 to 0'
+
+    initNumericFacet();
+    expect(validateManualNumericRanges).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentValues: expect.arrayContaining([
+          expect.objectContaining({start: 10, end: 0}),
+        ]),
+      })
     );
   });
 
@@ -74,7 +93,7 @@ describe('numeric facet', () => {
   });
 
   it('calls #determineFacetId with the correct params', () => {
-    jest.spyOn(FacetIdDeterminor, 'determineFacetId');
+    vi.spyOn(FacetIdDeterminor, 'determineFacetId');
 
     initNumericFacet();
 
@@ -85,12 +104,13 @@ describe('numeric facet', () => {
   });
 
   it('registers a numeric facet with the passed options', () => {
-    const action = registerNumericFacet({
+    expect(registerNumericFacet).toHaveBeenCalledWith({
       facetId,
+      activeTab: '',
+      tabs: {},
       currentValues: [],
       ...options,
     });
-    expect(engine.actions).toContainEqual(action);
   });
 
   it('when an option is invalid, it throws an error', () => {
@@ -101,22 +121,21 @@ describe('numeric facet', () => {
   });
 
   describe('#toggleSelect', () => {
-    it('dispatches a toggleSelectNumericFacetValue with the passed value', () => {
+    it('dispatches a executeToggleNumericFacetSelect with the passed value', () => {
       const value = buildMockNumericFacetValue();
       numericFacet.toggleSelect(value);
 
-      const action = toggleSelectNumericFacetValue({facetId, selection: value});
-      expect(engine.actions).toContainEqual(action);
+      expect(executeToggleNumericFacetSelect).toHaveBeenCalledWith({
+        facetId,
+        selection: value,
+      });
     });
 
     it('dispatches a search', () => {
       const value = buildMockNumericFacetValue();
       numericFacet.toggleSelect(value);
 
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -124,19 +143,15 @@ describe('numeric facet', () => {
     beforeEach(() => numericFacet.deselectAll());
 
     it('dispatches #deselectAllFacetValues with the facet id', () => {
-      expect(engine.actions).toContainEqual(deselectAllFacetValues(facetId));
+      expect(deselectAllFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches a #updateFacetOptions action with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches a search', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-
-      expect(engine.actions).toContainEqual(action);
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -144,49 +159,42 @@ describe('numeric facet', () => {
     it('dispatches #updateRangeFacetSortCriterion', () => {
       const criterion = 'descending';
       numericFacet.sortBy(criterion);
-      const action = updateRangeFacetSortCriterion({facetId, criterion});
 
-      expect(engine.actions).toContainEqual(action);
+      expect(updateRangeFacetSortCriterion).toHaveBeenCalledWith({
+        facetId,
+        criterion,
+      });
     });
 
     it('dispatches a #updateFacetOptions action with #freezeFacetOrder true', () => {
       numericFacet.sortBy('descending');
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches a search', () => {
       numericFacet.sortBy('descending');
-
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
   function testCommonToggleSingleSelect(facetValue: () => NumericFacetValue) {
     it('dispatches a #toggleSelect action with the passed facet value', () => {
       numericFacet.toggleSingleSelect(facetValue());
-
-      expect(engine.actions).toContainEqual(
-        toggleSelectNumericFacetValue({facetId, selection: facetValue()})
-      );
+      expect(executeToggleNumericFacetSelect).toHaveBeenCalledWith({
+        facetId,
+        selection: facetValue(),
+      });
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       numericFacet.toggleSingleSelect(facetValue());
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches a search', () => {
       numericFacet.toggleSingleSelect(facetValue());
 
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   }
 
@@ -198,9 +206,7 @@ describe('numeric facet', () => {
     it('dispatches a #deselectAllFacetValues action', () => {
       numericFacet.toggleSingleSelect(facetValue());
 
-      expect(engine.actions).toContainEqual(
-        deselectAllNumericFacetValues(facetId)
-      );
+      expect(deselectAllFacetValues).toHaveBeenCalled();
     });
   });
 
@@ -212,9 +218,7 @@ describe('numeric facet', () => {
     it('does not dispatch a #deselectAllFacetValues action', () => {
       numericFacet.toggleSingleSelect(facetValue());
 
-      expect(engine.actions).not.toContainEqual(
-        deselectAllNumericFacetValues(facetId)
-      );
+      expect(deselectAllNumericFacetValues).not.toHaveBeenCalled();
     });
   });
 

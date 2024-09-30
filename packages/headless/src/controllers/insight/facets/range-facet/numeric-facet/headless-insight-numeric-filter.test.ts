@@ -1,35 +1,43 @@
-import {updateFacetOptions} from '../../../../../features/facet-options/facet-options-actions';
-import {updateNumericFacetValues} from '../../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions';
-import {executeSearch} from '../../../../../features/insight-search/insight-search-actions';
-import {InsightAppState} from '../../../../../state/insight-app-state';
+import {describe, it, expect, vi, Mock, beforeEach} from 'vitest';
+import {updateFacetOptions} from '../../../../../features/facet-options/facet-options-actions.js';
+import {updateNumericFacetValues} from '../../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions.js';
+import {executeSearch} from '../../../../../features/insight-search/insight-search-actions.js';
+import {InsightAppState} from '../../../../../state/insight-app-state.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../../../test/mock-engine';
-import {buildMockInsightState} from '../../../../../test/mock-insight-state';
-import {buildMockNumericFacetSlice} from '../../../../../test/mock-numeric-facet-slice';
-import {buildMockNumericFacetValue} from '../../../../../test/mock-numeric-facet-value';
+  MockedInsightEngine,
+} from '../../../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../../../test/mock-insight-state.js';
+import {buildMockNumericFacetSlice} from '../../../../../test/mock-numeric-facet-slice.js';
+import {buildMockNumericFacetValue} from '../../../../../test/mock-numeric-facet-value.js';
 import {
   buildNumericFilter,
   NumericFilter,
   NumericFilterInitialState,
   NumericFilterOptions,
-} from './headless-insight-numeric-filter';
+} from './headless-insight-numeric-filter.js';
+
+vi.mock(
+  '../../../../../features/facets/range-facets/numeric-facet-set/numeric-facet-actions'
+);
+vi.mock('../../../../../features/facet-options/facet-options-actions');
+vi.mock('../../../../../features/insight-search/insight-search-actions');
 
 describe('insight numeric filter', () => {
   const facetId = '1';
   let options: NumericFilterOptions;
   let initialState: NumericFilterInitialState | undefined;
   let state: InsightAppState;
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let numericFacet: NumericFilter;
 
   function initNumericFilter() {
-    engine = buildMockInsightEngine({state});
+    engine = buildMockInsightEngine(state);
     numericFacet = buildNumericFilter(engine, {options, initialState});
   }
 
   beforeEach(() => {
+    (updateNumericFacetValues as unknown as Mock).mockReturnValue({});
     initialState = undefined;
 
     options = {
@@ -47,29 +55,19 @@ describe('insight numeric filter', () => {
     it('dispatches a updateNumericFacetValues with the passed value', () => {
       const value = buildMockNumericFacetValue({});
       numericFacet.setRange(value);
-
-      const action = updateNumericFacetValues({
+      expect(updateNumericFacetValues).toHaveBeenCalledWith({
         facetId,
         values: [
-          {
-            ...value,
-            state: 'selected',
-            numberOfResults: 0,
-            endInclusive: true,
-          },
+          {...value, state: 'selected', numberOfResults: 0, endInclusive: true},
         ],
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches a search', () => {
       const value = buildMockNumericFacetValue();
       numericFacet.setRange(value);
 
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -77,21 +75,18 @@ describe('insight numeric filter', () => {
     beforeEach(() => numericFacet.clear());
 
     it('dispatches #updateNumericFacetValues with the facet id and an empty array', () => {
-      expect(engine.actions).toContainEqual(
-        updateNumericFacetValues({facetId, values: []})
-      );
+      expect(updateNumericFacetValues).toHaveBeenCalledWith({
+        facetId,
+        values: [],
+      });
     });
 
     it('dispatches a #updateFacetOptions action with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
 
     it('dispatches a search', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-
-      expect(engine.actions).toContainEqual(action);
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 });

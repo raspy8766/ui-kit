@@ -1,17 +1,23 @@
+import {Relay} from '@coveo/relay';
 import {Logger} from 'pino';
-import {SearchAPIClient} from '../../../api/search/search-api-client';
-import {buildMockResult} from '../../../test';
-import {buildMockSearchRequest} from '../../../test/mock-search-request';
-import {buildMockSearchResponse} from '../../../test/mock-search-response';
-import {buildMockSearchState} from '../../../test/mock-search-state';
-import {getConfigurationInitialState} from '../../configuration/configuration-state';
-import {updateQuery} from '../../query/query-actions';
-import {logSearchboxSubmit} from '../../query/query-analytics-actions';
-import {ExecuteSearchThunkReturn} from './search-actions';
+import {Mock} from 'vitest';
+import {SearchAPIClient} from '../../../api/search/search-api-client.js';
+import {defaultNodeJSNavigatorContextProvider} from '../../../app/navigatorContextProvider.js';
+import {buildMockResult} from '../../../test/mock-result.js';
+import {buildMockSearchRequest} from '../../../test/mock-search-request.js';
+import {buildMockSearchResponse} from '../../../test/mock-search-response.js';
+import {buildMockSearchState} from '../../../test/mock-search-state.js';
+import {getConfigurationInitialState} from '../../configuration/configuration-state.js';
+import {updateQuery} from '../../query/query-actions.js';
+import {logSearchboxSubmit} from '../../query/query-analytics-actions.js';
+import {logQueryError} from '../search-analytics-actions.js';
 import {
   AsyncSearchThunkProcessor,
   AsyncThunkConfig,
-} from './search-actions-thunk-processor';
+} from './search-actions-thunk-processor.js';
+import {ExecuteSearchThunkReturn} from './search-actions.js';
+
+vi.mock('../search-analytics-actions');
 
 describe('AsyncSearchThunkProcessor', () => {
   let config: AsyncThunkConfig;
@@ -19,15 +25,17 @@ describe('AsyncSearchThunkProcessor', () => {
   beforeEach(() => {
     config = {
       analyticsAction: logSearchboxSubmit(),
-      dispatch: jest.fn(),
+      dispatch: vi.fn(),
       extra: {
-        analyticsClientMiddleware: jest.fn(),
-        apiClient: {search: jest.fn()} as unknown as SearchAPIClient,
-        logger: jest.fn() as unknown as Logger,
-        validatePayload: jest.fn(),
-        preprocessRequest: jest.fn(),
+        analyticsClientMiddleware: vi.fn(),
+        apiClient: {search: vi.fn()} as unknown as SearchAPIClient,
+        logger: vi.fn() as unknown as Logger,
+        validatePayload: vi.fn(),
+        preprocessRequest: vi.fn(),
+        relay: vi.fn() as unknown as Relay,
+        navigatorContext: defaultNodeJSNavigatorContextProvider(),
       },
-      getState: jest.fn().mockReturnValue({
+      getState: vi.fn().mockReturnValue({
         configuration: getConfigurationInitialState(),
         search: buildMockSearchState({
           results,
@@ -38,7 +46,7 @@ describe('AsyncSearchThunkProcessor', () => {
           automaticallyCorrectQuery: true,
         },
       }),
-      rejectWithValue: jest.fn(),
+      rejectWithValue: vi.fn(),
     };
   });
 
@@ -87,6 +95,7 @@ describe('AsyncSearchThunkProcessor', () => {
 
     expect(config.rejectWithValue).toHaveBeenCalledWith(theError);
     expect(config.extra.apiClient.search).not.toHaveBeenCalled();
+    expect(logQueryError).toHaveBeenCalledWith(theError);
   });
 
   it('process properly when there are no results returned and there is a did you mean correction', async () => {
@@ -108,7 +117,7 @@ describe('AsyncSearchThunkProcessor', () => {
       results: [buildMockResult()],
     });
 
-    (config.extra.apiClient.search as jest.Mock).mockReturnValue(
+    (config.extra.apiClient.search as Mock).mockReturnValue(
       Promise.resolve({success: responseAfterCorrection})
     );
 
@@ -132,12 +141,48 @@ describe('AsyncSearchThunkProcessor', () => {
       queryCorrections:
         originalResponseWithNoResultsAndCorrection.queryCorrections,
     });
+    expect(processed.automaticallyCorrected).toBe(true);
+  });
+
+  it('process properly when #queryCorrection is activated on the query˝', async () => {
+    const processor = new AsyncSearchThunkProcessor<{}>(config);
+
+    const originalResponseWithResultsAndChangedQuery = buildMockSearchResponse({
+      results: [buildMockResult()],
+      queryCorrection: {
+        correctedQuery: 'bar',
+        originalQuery: 'foo',
+        corrections: [],
+      },
+    });
+
+    const fetched = {
+      response: {
+        success: originalResponseWithResultsAndChangedQuery,
+      },
+      duration: 123,
+      queryExecuted: 'foo',
+      requestExecuted: buildMockSearchRequest(),
+    };
+
+    const processed = (await processor.process(
+      fetched
+    )) as ExecuteSearchThunkReturn;
+
+    expect(config.dispatch).toHaveBeenCalledWith(updateQuery({q: 'bar'}));
+    expect(config.extra.apiClient.search).not.toHaveBeenCalled();
+    expect(processed.response).toMatchObject(
+      originalResponseWithResultsAndChangedQuery
+    );
+    expect(processed.automaticallyCorrected).toBe(true);
+    expect(processed.originalQuery).toBe('foo');
+    expect(processed.queryExecuted).toBe('bar');
   });
 
   it('process properly when there are no results returned, there is a did you mean correction, and automatic correction is disabled', async () => {
     const processor = new AsyncSearchThunkProcessor<{}>({
       ...config,
-      getState: jest.fn().mockReturnValue({
+      getState: vi.fn().mockReturnValue({
         configuration: getConfigurationInitialState(),
         search: buildMockSearchState({
           results,
@@ -191,7 +236,7 @@ describe('AsyncSearchThunkProcessor', () => {
       results: [buildMockResult()],
     });
 
-    (config.extra.apiClient.search as jest.Mock).mockReturnValue(
+    (config.extra.apiClient.search as Mock).mockReturnValue(
       Promise.resolve({success: responseAfterModification})
     );
 

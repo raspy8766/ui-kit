@@ -1,10 +1,12 @@
-import {PaginationSection} from '../../state/state-sections';
+import {PaginationSection} from '../../state/state-sections.js';
 import {
   makeAnalyticsAction,
   LegacySearchAction,
-} from '../analytics/analytics-utils';
-import {currentPageSelector} from './pagination-selectors';
-import {getPaginationInitialState} from './pagination-state';
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {SearchAction} from '../search/search-actions.js';
+import {currentPageSelector} from './pagination-selectors.js';
+import {getPaginationInitialState} from './pagination-state.js';
 
 export const logPagerResize = (): LegacySearchAction =>
   makeAnalyticsAction('analytics/pager/resize', (client, state) =>
@@ -35,3 +37,8 @@ export const logPagePrevious = (): LegacySearchAction =>
       pagerNumber: currentPageSelector(state as PaginationSection),
     })
   );
+
+// TODO KIT-2983
+export const browseResults = (): SearchAction => ({
+  actionCause: SearchPageEvents.browseResults,
+});

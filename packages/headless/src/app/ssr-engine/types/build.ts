@@ -1,4 +1,4 @@
-import {CoreEngine} from '../../engine';
+import {CoreEngine, CoreEngineNext} from '../../engine.js';
 import {
   ControllersMap,
   ControllersPropsMap,
@@ -6,14 +6,14 @@ import {
   EngineDefinitionControllersPropsOption,
   OptionsExtender,
   OptionsTuple,
-} from './common';
+} from './common.js';
 
 export interface BuildOptions<TEngineOptions> {
   extend?: OptionsExtender<TEngineOptions>;
 }
 
 export interface Build<
-  TEngine extends CoreEngine,
+  TEngine extends CoreEngine | CoreEngineNext,
   TEngineOptions,
   TControllersMap extends ControllersMap,
   TControllersProps extends ControllersPropsMap,

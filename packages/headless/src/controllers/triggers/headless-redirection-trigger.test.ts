@@ -1,35 +1,30 @@
-import {logTriggerRedirect} from '../../features/triggers/trigger-analytics-actions';
-import {triggerReducer as triggers} from '../../features/triggers/triggers-slice';
+import {Mock} from 'vitest';
+import {logTriggerRedirect} from '../../features/triggers/trigger-analytics-actions.js';
+import {triggerReducer as triggers} from '../../features/triggers/triggers-slice.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test/mock-engine';
-import {createMockState} from '../../test/mock-state';
-import {
-  RedirectionTrigger,
-  buildRedirectionTrigger,
-} from './headless-redirection-trigger';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {RedirectionTrigger} from '../core/triggers/headless-core-redirection-trigger.js';
+import {buildRedirectionTrigger} from './headless-redirection-trigger.js';
+
+vi.mock('../../features/triggers/trigger-analytics-actions');
 
 describe('RedirectionTrigger', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let redirectionTrigger: RedirectionTrigger;
 
   function initRedirectTrigger() {
     redirectionTrigger = buildRedirectionTrigger(engine);
   }
 
-  function getLogTriggerRedirectAction() {
-    return engine.actions.find(
-      (a) => a.type === logTriggerRedirect().pending.type
-    );
-  }
-
   function registeredListeners() {
-    return (engine.subscribe as jest.Mock).mock.calls.map((args) => args[0]);
+    return (engine.subscribe as Mock).mock.calls.map((args) => args[0]);
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initRedirectTrigger();
   });
 
@@ -48,11 +43,11 @@ describe('RedirectionTrigger', () => {
   });
 
   describe('when the #engine.state.triggers.redirectTo is already initialized', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
       const state = createMockState();
       state.triggers.redirectTo = 'https://www.google.com';
-      engine = buildMockSearchAppEngine({state});
+      engine = buildMockSearchEngine(state);
       initRedirectTrigger();
       redirectionTrigger.subscribe(listener);
     });
@@ -62,12 +57,12 @@ describe('RedirectionTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerRedirect', () => {
-      expect(getLogTriggerRedirectAction()).toBeFalsy();
+      expect(logTriggerRedirect).not.toHaveBeenCalled();
     });
   });
 
   describe('when the #engine.state.triggers.redirectTo is not updated', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
       redirectionTrigger.subscribe(listener);
       const [firstListener] = registeredListeners();
@@ -79,15 +74,15 @@ describe('RedirectionTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerRedirect', () => {
-      expect(getLogTriggerRedirectAction()).toBeFalsy();
+      expect(logTriggerRedirect).not.toHaveBeenCalled();
     });
   });
 
   describe('when the #engine.state.triggers.redirectTo is updated to the empty string', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
       redirectionTrigger.subscribe(listener);
-      engine.state.triggers.redirectTo = '';
+      engine.state.triggers!.redirectTo = '';
       const [firstListener] = registeredListeners();
       firstListener();
     });
@@ -97,15 +92,15 @@ describe('RedirectionTrigger', () => {
     });
 
     it('it does not dispatch #logTriggerRedirect', () => {
-      expect(getLogTriggerRedirectAction()).toBeFalsy();
+      expect(logTriggerRedirect).not.toHaveBeenCalled();
     });
   });
 
   describe('when the #engine.state.triggers.redirectTo is updated', () => {
-    const listener = jest.fn();
+    const listener = vi.fn();
     beforeEach(() => {
       redirectionTrigger.subscribe(listener);
-      engine.state.triggers.redirectTo = 'https://www.coveo.com';
+      engine.state.triggers!.redirectTo = 'https://www.coveo.com';
       const [firstListener] = registeredListeners();
       firstListener();
     });
@@ -115,7 +110,7 @@ describe('RedirectionTrigger', () => {
     });
 
     it('it dispatches #logTriggerRedirect', () => {
-      expect(getLogTriggerRedirectAction()).toBeTruthy();
+      expect(logTriggerRedirect).toHaveBeenCalled();
     });
   });
 });

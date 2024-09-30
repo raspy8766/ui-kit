@@ -1,30 +1,51 @@
-import {configuration} from '../../../app/common-reducers';
+import {configuration} from '../../../app/common-reducers.js';
 import {
   applyDidYouMeanCorrection,
   disableAutomaticQueryCorrection,
   enableDidYouMean,
-} from '../../../features/did-you-mean/did-you-mean-actions';
-import {didYouMeanReducer as didYouMean} from '../../../features/did-you-mean/did-you-mean-slice';
+} from '../../../features/did-you-mean/did-you-mean-actions.js';
+import {didYouMeanReducer as didYouMean} from '../../../features/did-you-mean/did-you-mean-slice.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../../test/mock-engine';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {createMockState} from '../../../test/mock-state.js';
 import {
   buildCoreDidYouMean,
   DidYouMean,
   DidYouMeanProps,
-} from './headless-core-did-you-mean';
+} from './headless-core-did-you-mean.js';
+
+vi.mock('pino', async () => {
+  const actual = await vi.importActual('pino');
+  return {
+    ...actual,
+    __esModule: true,
+    default: () => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      debug: vi.fn(),
+    }),
+  };
+});
+
+vi.mock('../../../features/did-you-mean/did-you-mean-actions');
 
 describe('did you mean', () => {
   let dym: DidYouMean;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
 
-  function initDidYouMean(props: DidYouMeanProps = {}) {
+  function initDidYouMean(
+    props: DidYouMeanProps = {},
+    state = createMockState()
+  ) {
+    engine = buildMockSearchEngine(state);
     dym = buildCoreDidYouMean(engine, props);
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    vi.resetAllMocks();
     initDidYouMean();
   });
 
@@ -36,38 +57,34 @@ describe('did you mean', () => {
   });
 
   it('should enable did you mean', () => {
-    expect(engine.actions).toContainEqual(enableDidYouMean());
+    expect(enableDidYouMean).toHaveBeenCalledTimes(1);
   });
 
   it('should allow to update query correction', () => {
-    engine.state.didYouMean.queryCorrection.correctedQuery = 'bar';
-    initDidYouMean();
+    const initialState = createMockState();
+    initialState.didYouMean.queryCorrection.correctedQuery = 'bar';
+    initDidYouMean({}, initialState);
 
     dym.applyCorrection();
-    expect(engine.actions).toContainEqual(applyDidYouMeanCorrection('bar'));
+    expect(applyDidYouMeanCorrection).toHaveBeenCalledWith('bar');
   });
 
   it('should dispatch disableAutomaticQueryCorrection at initialization when specified', () => {
-    initDidYouMean({automaticallyCorrectQuery: false});
-
-    dym.applyCorrection();
-    expect(engine.actions).toContainEqual(disableAutomaticQueryCorrection());
+    initDidYouMean({options: {automaticallyCorrectQuery: false}});
+    expect(disableAutomaticQueryCorrection).toHaveBeenCalledTimes(1);
   });
 
   it('should not dispatch disableAutomaticQueryCorrection at initialization when specified', () => {
-    initDidYouMean({automaticallyCorrectQuery: true});
-
-    dym.applyCorrection();
-    expect(engine.actions).not.toContainEqual(
-      disableAutomaticQueryCorrection()
-    );
+    initDidYouMean({options: {automaticallyCorrectQuery: true}});
+    expect(disableAutomaticQueryCorrection).not.toHaveBeenCalled();
   });
 
   it('should allow to update query correction when automatic correction is disabled', () => {
-    engine.state.didYouMean.queryCorrection.correctedQuery = 'bar';
-    initDidYouMean({automaticallyCorrectQuery: false});
+    const initialState = createMockState();
+    initialState.didYouMean.queryCorrection.correctedQuery = 'bar';
+    initDidYouMean({options: {automaticallyCorrectQuery: false}}, initialState);
 
     dym.applyCorrection();
-    expect(engine.actions).toContainEqual(applyDidYouMeanCorrection('bar'));
+    expect(applyDidYouMeanCorrection).toHaveBeenCalledWith('bar');
   });
 });

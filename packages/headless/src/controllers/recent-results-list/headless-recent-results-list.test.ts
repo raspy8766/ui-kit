@@ -1,22 +1,25 @@
-import {Action} from '@reduxjs/toolkit';
 import {
   clearRecentResults,
   registerRecentResults,
-} from '../../features/recent-results/recent-results-actions';
-import {logClearRecentResults} from '../../features/recent-results/recent-results-analytics-actions';
-import {recentResultsReducer as recentResults} from '../../features/recent-results/recent-results-slice';
+} from '../../features/recent-results/recent-results-actions.js';
+import {logClearRecentResults} from '../../features/recent-results/recent-results-analytics-actions.js';
+import {recentResultsReducer as recentResults} from '../../features/recent-results/recent-results-slice.js';
 import {
-  buildMockResult,
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../test';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {createMockState} from '../../test/mock-state.js';
 import {
   buildRecentResultsList,
   RecentResultsList,
-} from './headless-recent-results-list';
+} from './headless-recent-results-list.js';
+
+vi.mock('../../features/recent-results/recent-results-analytics-actions');
+vi.mock('../../features/recent-results/recent-results-actions');
 
 describe('recent results list', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let recentResultsList: RecentResultsList;
 
   const resultStringParams = {
@@ -30,13 +33,8 @@ describe('recent results list', () => {
     flags: 'flags',
   };
 
-  const expectContainAction = (action: Action) => {
-    const found = engine.actions.find((a) => a.type === action.type);
-    expect(found).toBeDefined();
-  };
-
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
   });
 
   it('adds the correct reducers to the engine', () => {
@@ -51,12 +49,10 @@ describe('recent results list', () => {
     });
 
     it('should register with default props on init', () => {
-      expect(engine.actions).toContainEqual(
-        registerRecentResults({
-          results: [],
-          maxLength: 10,
-        })
-      );
+      expect(registerRecentResults).toHaveBeenCalledWith({
+        results: [],
+        maxLength: 10,
+      });
     });
 
     it('#state.results initial state is empty', () => {
@@ -88,21 +84,16 @@ describe('recent results list', () => {
     });
 
     it('should register with props on init', () => {
-      expect(engine.actions).toContainEqual(
-        registerRecentResults({
-          results: testProps.initialState.results,
-          maxLength: testProps.options.maxLength,
-        })
-      );
+      expect(registerRecentResults).toHaveBeenCalledWith({
+        results: testProps.initialState.results,
+        maxLength: testProps.options.maxLength,
+      });
     });
 
     it('#clear should log analytics and dispatch clear action', () => {
       recentResultsList.clear();
-
-      expectContainAction(clearRecentResults);
-      expect(
-        engine.findAsyncAction(logClearRecentResults().pending)
-      ).toBeDefined();
+      expect(clearRecentResults).toHaveBeenCalled();
+      expect(logClearRecentResults).toHaveBeenCalled();
     });
   });
 });

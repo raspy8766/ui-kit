@@ -4,11 +4,11 @@ import {
   buildRecommendationEngine,
 } from '@coveo/headless/recommendation';
 import React, {useEffect, useRef} from 'react';
-import {AtomicRecsInterface} from '../stencil-generated/index';
+import {AtomicRecsInterface} from '../stencil-generated/search/index.js';
 
 type GetRecommendations = HTMLAtomicRecsInterfaceElement['getRecommendations'];
 /**
- * The properties of the AtomicSearchInterface component
+ * The properties of the AtomicRecsInterface component
  */
 interface WrapperProps
   extends Omit<JSX.AtomicRecsInterface, 'i18n' | 'pipeline' | 'searchHub'> {
@@ -25,14 +25,6 @@ interface WrapperProps
    *
    */
   localization?: (i18n: i18n) => void;
-  /**
-   * @deprecated This option has no effect. Rather, set the pipeline through the `engine` `search` configuration.
-   */
-  pipeline?: string;
-  /**
-   * @deprecated This option has no effect. Rather, set the search hub through the `engine` `search` configuration.
-   */
-  searchHub?: string;
 }
 
 const DefaultProps: Required<Pick<WrapperProps, 'onReady' | 'localization'>> = {

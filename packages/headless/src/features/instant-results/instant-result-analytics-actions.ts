@@ -2,8 +2,8 @@ import {ItemClick} from '@coveo/relay-event-types';
 import {
   InstantResultsAnalyticsProvider,
   StateNeededByInstantResultsAnalyticsProvider,
-} from '../../api/analytics/instant-result-analytics';
-import {Result} from '../../api/search/search/result';
+} from '../../api/analytics/instant-result-analytics.js';
+import {Result} from '../../api/search/search/result.js';
 import {
   partialDocumentInformation,
   documentIdentifier,
@@ -11,7 +11,9 @@ import {
   makeAnalyticsAction,
   InstantResultsSearchAction,
   InstantResultsClickAction,
-} from '../analytics/analytics-utils';
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {SearchAction} from '../search/search-actions.js';
 
 export const logInstantResultOpen = (
   result: Result
@@ -34,8 +36,9 @@ export const logInstantResultOpen = (
       const docInfo = partialDocumentInformation(result, state);
       const docId = documentIdentifier(result);
       return {
-        searchUid: state.search?.response.searchUid ?? '',
+        searchUid: result.searchUid ?? '',
         position: docInfo.documentPosition,
+        actionCause: 'open',
         itemMetadata: {
           uniqueFieldName: docId.contentIDKey,
           uniqueFieldValue: docId.contentIDValue,
@@ -47,9 +50,14 @@ export const logInstantResultOpen = (
     },
   });
 
+//TODO: KIT-2859
 export const logInstantResultsSearch = (): InstantResultsSearchAction =>
   makeAnalyticsAction(
     'analytics/instantResult/searchboxAsYouType',
     (client) => client.makeSearchboxAsYouType(),
     (getState) => new InstantResultsAnalyticsProvider(getState)
   );
+
+export const searchboxAsYouType = (): SearchAction => ({
+  actionCause: SearchPageEvents.searchboxAsYouType,
+});

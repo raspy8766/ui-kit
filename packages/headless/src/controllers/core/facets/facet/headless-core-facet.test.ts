@@ -1,42 +1,52 @@
-import {configuration} from '../../../../app/common-reducers';
-import {updateFacetOptions} from '../../../../features/facet-options/facet-options-actions';
-import {facetOptionsReducer as facetOptions} from '../../../../features/facet-options/facet-options-slice';
-import {specificFacetSearchSetReducer as facetSearchSet} from '../../../../features/facets/facet-search-set/specific/specific-facet-search-set-slice';
+import {configuration} from '../../../../app/common-reducers.js';
+import {updateFacetOptions} from '../../../../features/facet-options/facet-options-actions.js';
+import {facetOptionsReducer as facetOptions} from '../../../../features/facet-options/facet-options-slice.js';
+import {specificFacetSearchSetReducer as facetSearchSet} from '../../../../features/facets/facet-search-set/specific/specific-facet-search-set-slice.js';
 import {
   registerFacet,
-  toggleSelectFacetValue,
-  toggleExcludeFacetValue,
   deselectAllFacetValues,
   updateFacetSortCriterion,
   updateFacetNumberOfValues,
   updateFacetIsFieldExpanded,
-} from '../../../../features/facets/facet-set/facet-set-actions';
-import {facetSetReducer as facetSet} from '../../../../features/facets/facet-set/facet-set-slice';
-import {FacetRequest} from '../../../../features/facets/facet-set/interfaces/request';
-import {FacetValue} from '../../../../features/facets/facet-set/interfaces/response';
-import {SearchAppState} from '../../../../state/search-app-state';
+} from '../../../../features/facets/facet-set/facet-set-actions.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-} from '../../../../test/mock-engine';
-import {buildMockFacetRequest} from '../../../../test/mock-facet-request';
-import {buildMockFacetResponse} from '../../../../test/mock-facet-response';
-import {buildMockFacetSearch} from '../../../../test/mock-facet-search';
-import {buildMockFacetSlice} from '../../../../test/mock-facet-slice';
-import {buildMockFacetValue} from '../../../../test/mock-facet-value';
-import {createMockState} from '../../../../test/mock-state';
-import * as FacetIdDeterminor from '../_common/facet-id-determinor';
-import {buildCoreFacet, CoreFacet, FacetOptions} from './headless-core-facet';
+  executeToggleFacetExclude,
+  executeToggleFacetSelect,
+} from '../../../../features/facets/facet-set/facet-set-controller-actions.js';
+import {facetSetReducer as facetSet} from '../../../../features/facets/facet-set/facet-set-slice.js';
+import {FacetRequest} from '../../../../features/facets/facet-set/interfaces/request.js';
+import {FacetValue} from '../../../../features/facets/facet-set/interfaces/response.js';
+import {SearchAppState} from '../../../../state/search-app-state.js';
+import {
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../../../test/mock-engine-v2.js';
+import {buildMockFacetRequest} from '../../../../test/mock-facet-request.js';
+import {buildMockFacetResponse} from '../../../../test/mock-facet-response.js';
+import {buildMockFacetSearch} from '../../../../test/mock-facet-search.js';
+import {buildMockFacetSlice} from '../../../../test/mock-facet-slice.js';
+import {buildMockFacetValue} from '../../../../test/mock-facet-value.js';
+import {createMockState} from '../../../../test/mock-state.js';
+import * as FacetIdDeterminor from '../_common/facet-id-determinor.js';
+import {
+  buildCoreFacet,
+  CoreFacet,
+  FacetOptions,
+} from './headless-core-facet.js';
+
+vi.mock('../../../../features/facets/facet-set/facet-set-actions');
+vi.mock('../../../../features/facet-options/facet-options-actions');
+vi.mock('../../../../features/facets/facet-set/facet-set-controller-actions');
 
 describe('facet', () => {
   const facetId = '1';
   let options: FacetOptions;
   let state: SearchAppState;
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let facet: CoreFacet;
 
   function initFacet() {
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
     facet = buildCoreFacet(engine, {options});
   }
 
@@ -79,7 +89,7 @@ describe('facet', () => {
   });
 
   it('it calls #determineFacetId with the correct params', () => {
-    jest.spyOn(FacetIdDeterminor, 'determineFacetId');
+    vi.spyOn(FacetIdDeterminor, 'determineFacetId');
 
     initFacet();
 
@@ -90,8 +100,10 @@ describe('facet', () => {
   });
 
   it('registers a facet with the passed options and the default values of unspecified options', () => {
-    const action = registerFacet({
+    expect(registerFacet).toHaveBeenCalledWith({
       field: 'author',
+      activeTab: '',
+      tabs: {},
       sortCriteria: 'score',
       resultsMustMatch: 'atLeastOneValue',
       facetId,
@@ -99,8 +111,6 @@ describe('facet', () => {
       injectionDepth: 1000,
       numberOfValues: 8,
     });
-
-    expect(engine.actions).toContainEqual(action);
   });
 
   it('registering a facet with #numberOfValues less than 1 throws', () => {
@@ -137,17 +147,9 @@ describe('facet', () => {
     it('dispatches a #toggleSelect action with the passed facet value', () => {
       const facetValue = buildMockFacetValue({value: 'TED'});
       facet.toggleSelect(facetValue);
-
-      expect(engine.actions).toContainEqual(
-        toggleSelectFacetValue({facetId, selection: facetValue})
+      expect(executeToggleFacetSelect).toHaveBeenCalledWith(
+        expect.objectContaining({facetId, selection: facetValue})
       );
-    });
-
-    it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      const facetValue = buildMockFacetValue({value: 'TED'});
-      facet.toggleSelect(facetValue);
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
     });
   });
 
@@ -155,51 +157,19 @@ describe('facet', () => {
     it('dispatches a #toggleExclude action with the passed facet value', () => {
       const facetValue = buildMockFacetValue({value: 'TED'});
       facet.toggleExclude(facetValue);
-
-      expect(engine.actions).toContainEqual(
-        toggleExcludeFacetValue({facetId, selection: facetValue})
-      );
-    });
-
-    it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      const facetValue = buildMockFacetValue({value: 'TED'});
-      facet.toggleExclude(facetValue);
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
-    });
-  });
-
-  describe('#toggleExclude', () => {
-    it('dispatches a #toggleExclude action with the passed facet value', () => {
-      const facetValue = buildMockFacetValue({value: 'TED'});
-      facet.toggleExclude(facetValue);
-
-      expect(engine.actions).toContainEqual(
-        toggleExcludeFacetValue({facetId, selection: facetValue})
-      );
-    });
-
-    it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      const facetValue = buildMockFacetValue({value: 'TED'});
-      facet.toggleExclude(facetValue);
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(executeToggleFacetExclude).toHaveBeenCalledWith({
+        facetId,
+        selection: facetValue,
+      });
     });
   });
 
   function testCommonToggleSingleSelect(facetValue: () => FacetValue) {
     it('dispatches a #toggleSelect action with the passed facet value', () => {
       facet.toggleSingleSelect(facetValue());
-
-      expect(engine.actions).toContainEqual(
-        toggleSelectFacetValue({facetId, selection: facetValue()})
+      expect(executeToggleFacetSelect).toHaveBeenCalledWith(
+        expect.objectContaining({facetId})
       );
-    });
-
-    it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
-      facet.toggleSingleSelect(facetValue());
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
     });
   }
 
@@ -210,8 +180,7 @@ describe('facet', () => {
 
     it('dispatches a #deselectAllFacetValues action', () => {
       facet.toggleSingleSelect(facetValue());
-
-      expect(engine.actions).toContainEqual(deselectAllFacetValues(facetId));
+      expect(deselectAllFacetValues).toHaveBeenCalledWith(facetId);
     });
   });
 
@@ -223,9 +192,8 @@ describe('facet', () => {
 
     it('does not dispatch a #deselectAllFacetValues action', () => {
       facet.toggleSingleSelect(facetValue());
-
-      expect(engine.actions).not.toContainEqual(
-        deselectAllFacetValues(facetId)
+      expect(deselectAllFacetValues).not.toHaveBeenCalledWith(
+        expect.objectContaining({facetId})
       );
     });
   });
@@ -243,13 +211,12 @@ describe('facet', () => {
   describe('#deselectAll', () => {
     it('dispatches #deselectAllFacetValues with the facet id', () => {
       facet.deselectAll();
-      expect(engine.actions).toContainEqual(deselectAllFacetValues(facetId));
+      expect(deselectAllFacetValues).toHaveBeenCalledWith(facetId);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       facet.deselectAll();
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
   });
 
@@ -276,18 +243,15 @@ describe('facet', () => {
       const criterion = 'score';
       facet.sortBy(criterion);
 
-      const action = updateFacetSortCriterion({
+      expect(updateFacetSortCriterion).toHaveBeenCalledWith({
         facetId,
         criterion,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       facet.sortBy('score');
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
   });
 
@@ -316,12 +280,11 @@ describe('facet', () => {
       facet.showMoreValues();
 
       const expectedNumber = numberOfValuesInState + configuredNumberOfValues;
-      const action = updateFacetNumberOfValues({
+
+      expect(updateFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: expectedNumber,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it(`when the numberOfValues on the request is not a multiple of the configured number,
@@ -335,29 +298,24 @@ describe('facet', () => {
 
       facet.showMoreValues();
 
-      const action = updateFacetNumberOfValues({
+      expect(updateFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: 10,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('updates isFieldExpanded to true', () => {
       facet.showMoreValues();
 
-      const action = updateFacetIsFieldExpanded({
+      expect(updateFacetIsFieldExpanded).toHaveBeenCalledWith({
         facetId,
         isFieldExpanded: true,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       facet.showMoreValues();
-
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
   });
 
@@ -397,12 +355,10 @@ describe('facet', () => {
 
       facet.showLessValues();
 
-      const action = updateFacetNumberOfValues({
+      expect(updateFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: originalNumberOfValues,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it(`when the number of non-idle values is greater than the original number,
@@ -416,29 +372,25 @@ describe('facet', () => {
 
       facet.showLessValues();
 
-      const action = updateFacetNumberOfValues({
+      expect(updateFacetNumberOfValues).toHaveBeenCalledWith({
         facetId,
         numberOfValues: currentValues.length,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('updates isFieldExpanded to false', () => {
       facet.showLessValues();
 
-      const action = updateFacetIsFieldExpanded({
+      expect(updateFacetIsFieldExpanded).toHaveBeenCalledWith({
         facetId,
         isFieldExpanded: false,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches #updateFacetOptions with #freezeFacetOrder true', () => {
       facet.showLessValues();
 
-      expect(engine.actions).toContainEqual(updateFacetOptions());
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
   });
 

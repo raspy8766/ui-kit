@@ -1,10 +1,11 @@
-import {CommerceFacetRequest} from '../features/commerce/facets/facet-set/interfaces/request';
+import {AnyFacetRequest} from '../features/commerce/facets/facet-set/interfaces/request.js';
 
 export function buildMockCommerceFacetRequest(
-  config: Partial<CommerceFacetRequest> = {}
-): CommerceFacetRequest {
+  config: Partial<AnyFacetRequest> = {}
+): AnyFacetRequest {
   return {
     facetId: '',
+    displayName: '',
     field: '',
     type: 'regular',
     numberOfValues: 8,
@@ -12,6 +13,7 @@ export function buildMockCommerceFacetRequest(
     isFieldExpanded: false,
     preventAutoSelect: false,
     initialNumberOfValues: 0,
+    freezeCurrentValues: false,
     ...config,
   };
 }

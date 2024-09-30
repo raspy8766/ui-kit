@@ -1,18 +1,26 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../app/ssr-engine/types/common.js';
 import {
   SmartSnippet,
   SmartSnippetProps,
   buildSmartSnippet,
-} from './headless-smart-snippet';
+} from './headless-smart-snippet.js';
 
-export * from './headless-smart-snippet';
+export * from './headless-smart-snippet.js';
+
+export interface SmartSnippetDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, SmartSnippet> {}
 
 /**
- * @internal
- */
-export const defineSmartSnippet = (
+ * Defines a `SmartSnippet` controller instance.
+ *
+ * @param props - The configurable `SmartSnippet` properties.
+ * @returns The `SmartSnippet` controller definition.
+ * */
+export function defineSmartSnippet(
   props?: SmartSnippetProps
-): ControllerDefinitionWithoutProps<SearchEngine, SmartSnippet> => ({
-  build: (engine) => buildSmartSnippet(engine, props),
-});
+): SmartSnippetDefinition {
+  return {
+    build: (engine) => buildSmartSnippet(engine, props),
+  };
+}

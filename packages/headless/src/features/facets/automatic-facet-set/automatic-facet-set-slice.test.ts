@@ -1,25 +1,31 @@
-import {AutomaticFacetGeneratorOptions} from '../../../controllers/facets/automatic-facet-generator/headless-automatic-facet-generator-options';
-import {buildMockAutomaticFacetResponse} from '../../../test/mock-automatic-facet-response';
-import {buildMockAutomaticFacetSlice} from '../../../test/mock-automatic-facet-slice';
-import {buildMockFacetValue} from '../../../test/mock-facet-value';
-import {buildMockSearch} from '../../../test/mock-search';
-import {logSearchEvent} from '../../analytics/analytics-actions';
-import {deselectAllBreadcrumbs} from '../../breadcrumb/breadcrumb-actions';
-import {restoreSearchParameters} from '../../search-parameters/search-parameter-actions';
-import {executeSearch} from '../../search/search-actions';
-import {FacetValueState} from '../facet-api/value';
+import {AutomaticFacetGeneratorOptions} from '../../../controllers/facets/automatic-facet-generator/headless-automatic-facet-generator-options.js';
+import {buildMockAutomaticFacetResponse} from '../../../test/mock-automatic-facet-response.js';
+import {buildMockAutomaticFacetSlice} from '../../../test/mock-automatic-facet-slice.js';
+import {buildMockFacetValue} from '../../../test/mock-facet-value.js';
+import {buildMockSearch} from '../../../test/mock-search.js';
+import {logSearchEvent} from '../../analytics/analytics-actions.js';
+import {deselectAllBreadcrumbs} from '../../breadcrumb/breadcrumb-actions.js';
+import {restoreSearchParameters} from '../../search-parameters/search-parameter-actions.js';
+import {executeSearch} from '../../search/search-actions.js';
+import {FacetValueState} from '../facet-api/value.js';
 import {
   deselectAllAutomaticFacetValues,
   setOptions,
   toggleSelectAutomaticFacetValue,
-} from './automatic-facet-set-actions';
-import {automaticFacetSetReducer} from './automatic-facet-set-slice';
+} from './automatic-facet-set-actions.js';
+import {
+  DESIRED_COUNT_MAXIMUM,
+  DESIRED_COUNT_MINIMUM,
+  NUMBER_OF_VALUE_MINIMUM,
+} from './automatic-facet-set-constants.js';
+//import {DESIRED_COUNT_MINIMUM} from './automatic-facet-set-constants';
+import {automaticFacetSetReducer} from './automatic-facet-set-slice.js';
 import {
   AutomaticFacetSetState,
   AutomaticFacetSlice,
   getAutomaticFacetSetInitialState,
-} from './automatic-facet-set-state';
-import {AutomaticFacetResponse} from './interfaces/response';
+} from './automatic-facet-set-state.js';
+import {AutomaticFacetResponse} from './interfaces/response.js';
 
 describe('automatic-facet-set slice', () => {
   let state: AutomaticFacetSetState;
@@ -59,6 +65,20 @@ describe('automatic-facet-set slice', () => {
       const finalState = automaticFacetSetReducer(state, action);
 
       expect(finalState.set).toEqual(facetsRecord);
+    });
+  });
+
+  describe('#setOptions does validation', () => {
+    it(`should return an error if desiredCount is lower than ${DESIRED_COUNT_MINIMUM}`, () => {
+      expect(setOptions({desiredCount: 0})).toHaveProperty('error');
+    });
+
+    it(`should not dispatch #setOptions if desiredCount is higher than ${DESIRED_COUNT_MAXIMUM}`, () => {
+      expect(setOptions({desiredCount: 21})).toHaveProperty('error');
+    });
+
+    it(`should not dispatch #setOptions if numberOfValue is lower than ${NUMBER_OF_VALUE_MINIMUM}`, () => {
+      expect(setOptions({numberOfValues: 0})).toHaveProperty('error');
     });
   });
 
@@ -194,14 +214,28 @@ describe('automatic-facet-set slice', () => {
   describe('#restoreSearchParameters', () => {
     it('sets #values to the selected values in the payload when a facet is found in the #af payload', () => {
       const field = 'field';
-      const value = 'a';
+      const initialValue = buildMockFacetValue({value: 'a', state: 'idle'});
+      state.set[field] = {
+        response: {
+          field,
+          values: [initialValue],
+          moreValuesAvailable: true,
+          indexScore: 0.42,
+          label: 'potato',
+        },
+      };
+
+      const value = 'b';
       const af = {[field]: [value]};
       const action = restoreSearchParameters({af});
 
       const finalState = automaticFacetSetReducer(state, action);
       const selectedValue = buildMockFacetValue({value, state: 'selected'});
 
-      expect(finalState.set[field].response.values).toEqual([selectedValue]);
+      expect(finalState.set[field].response.values).toEqual([
+        initialValue,
+        selectedValue,
+      ]);
     });
   });
 

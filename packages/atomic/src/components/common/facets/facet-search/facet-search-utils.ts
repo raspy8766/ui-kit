@@ -1,6 +1,11 @@
 import escape from 'escape-html';
 import {regexEncode} from '../../../../utils/string-utils';
-import {FacetSearchState} from '../../types';
+
+interface FacetSearchState {
+  query: string;
+  values: unknown[];
+  isLoading: boolean;
+}
 
 /**
  * Meant to be used inside the `componentShouldUpdate` lifecycle method.
@@ -47,7 +52,7 @@ export function highlightSearchResult(resultValue: string, searchQuery = '') {
     return sanitizedResult;
   }
 
-  const regex = new RegExp(`(${regexEncode(searchQuery)})`, 'i');
+  const regex = new RegExp(`(${regexEncode(escape(searchQuery))})`, 'i');
   return escape(resultValue).replace(
     regex,
     '<span part="search-highlight" class="font-bold">$1</span>'

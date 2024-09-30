@@ -1,17 +1,21 @@
-import {executeSearch} from '../../features/search/search-actions';
+import {executeSearch} from '../../features/search/search-actions.js';
 import {
   buildDateSortCriterion,
   SortOrder,
-} from '../../features/sort-criteria/criteria';
-import {updateSortCriterion} from '../../features/sort-criteria/sort-criteria-actions';
+} from '../../features/sort-criteria/criteria.js';
+import {updateSortCriterion} from '../../features/sort-criteria/sort-criteria-actions.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-} from '../../test/mock-engine';
-import {Sort, SortProps, buildSort} from './headless-sort';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {Sort, SortProps, buildSort} from './headless-sort.js';
+
+vi.mock('../../features/sort-criteria/sort-criteria-actions');
+vi.mock('../../features/search/search-actions');
 
 describe('Sort', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let props: SortProps;
   let sort: Sort;
 
@@ -20,7 +24,8 @@ describe('Sort', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    vi.resetAllMocks();
+    engine = buildMockSearchEngine(createMockState());
     props = {
       initialState: {},
     };
@@ -36,15 +41,11 @@ describe('Sort', () => {
     });
 
     it('dispatches an updateSortCriterion action with the passed criterion', () => {
-      const action = updateSortCriterion(criterion);
-      expect(engine.actions).toContainEqual(action);
+      expect(updateSortCriterion).toHaveBeenCalledWith(criterion);
     });
 
     it('dispatches an executeSearch', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 });

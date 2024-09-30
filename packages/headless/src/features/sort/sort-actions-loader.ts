@@ -1,15 +1,15 @@
 import {PayloadAction} from '@reduxjs/toolkit';
-import {CoreEngine} from '../../app/engine';
-import {sortReducer as sort} from '../../features/sort/sort-slice';
-import {SortCriterion} from './sort';
-import {registerSortCriterion, updateSortCriterion} from './sort-actions';
+import {CoreEngine} from '../../app/engine.js';
+import {sortReducer as sort} from '../../features/sort/sort-slice.js';
+import {registerSortCriterion, updateSortCriterion} from './sort-actions.js';
+import {SortCriterion} from './sort.js';
 
 /**
  * The sort action creators.
  */
 export interface SortActionCreators {
   /**
-   * Initializes the sort query parameter. For more information, refer to [the documentation on query parameters](https://docs.coveo.com/en/1461/cloud-v2-developers/query-parameters#RestQueryParameters-sortCriteria).
+   * Initializes the sort query parameter. For more information, refer to [the documentation on query parameters](https://docs.coveo.com/en/13#operation/searchUsingPost-sortCriteria).
    *
    * @param criterion - The initial sort.
    * @returns A dispatchable action.
@@ -17,7 +17,7 @@ export interface SortActionCreators {
   registerSortCriterion(criterion: SortCriterion): PayloadAction<SortCriterion>;
 
   /**
-   * Updates the sort query parameter. For more information, refer to [the documentation on query parameters](https://docs.coveo.com/en/1461/cloud-v2-developers/query-parameters#RestQueryParameters-sortCriteria).
+   * Updates the sort query parameter. For more information, refer to [the documentation on query parameters](https://docs.coveo.com/en/13#operation/searchUsingPost-sortCriteria).
    *
    * @param criterion - The sort to set.
    * @returns A dispatchable action.

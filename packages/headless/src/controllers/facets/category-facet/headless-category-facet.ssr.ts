@@ -1,18 +1,26 @@
-import {SearchEngine} from '../../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../../app/ssr-engine/types/common.js';
 import {
   CategoryFacet,
   CategoryFacetProps,
   buildCategoryFacet,
-} from './headless-category-facet';
+} from './headless-category-facet.js';
 
-export * from './headless-category-facet';
+export * from './headless-category-facet.js';
+
+export interface CategoryFacetDefinition
+  extends ControllerDefinitionWithoutProps<SearchEngine, CategoryFacet> {}
 
 /**
- * @internal
- */
-export const defineCategoryFacet = (
+ * Defines a `CategoryFacet` controller instance.
+ *
+ * @param props - The configurable `CategoryFacet` properties.
+ * @returns The `CategoryFacet` controller definition.
+ * */
+export function defineCategoryFacet(
   props: CategoryFacetProps
-): ControllerDefinitionWithoutProps<SearchEngine, CategoryFacet> => ({
-  build: (engine) => buildCategoryFacet(engine, props),
-});
+): CategoryFacetDefinition {
+  return {
+    build: (engine) => buildCategoryFacet(engine, props),
+  };
+}

@@ -1,57 +1,24 @@
-import {SchemaValidationError, isNullOrUndefined} from '@coveo/bueno';
+import {CurrencyCodeISO4217} from '@coveo/relay-event-types';
 import {createAction} from '@reduxjs/toolkit';
-import {
-  UserParams,
-  ViewParams,
-} from '../../../api/commerce/commerce-api-params';
-import {
-  serializeSchemaValidationError,
-  validatePayload,
-} from '../../../utils/validate-payload';
-import {
-  contextDefinition,
-  userDefinition,
-  viewDefinition,
-} from './context-validation';
+import {ViewParams} from '../../../api/commerce/commerce-api-params.js';
+import {validatePayload} from '../../../utils/validate-payload.js';
+import {contextDefinition, viewDefinition} from './context-validation.js';
 
 export interface SetContextPayload {
-  trackingId: string;
   language: string;
   country: string;
-  currency: string;
-  clientId: string;
-  user?: UserParams;
-  view: ViewParams;
+  currency: CurrencyCodeISO4217;
+  view: SetViewPayload;
 }
 
 export const setContext = createAction(
-  'commerce/setContext',
+  'commerce/context/set',
   (payload: SetContextPayload) => validatePayload(payload, contextDefinition)
 );
 
-export type SetUserPayload = UserParams;
-
-export const setUser = createAction(
-  'commerce/setUser',
-  (payload: SetUserPayload) => {
-    if (isNullOrUndefined(payload.userId) && isNullOrUndefined(payload.email)) {
-      return {
-        payload,
-        error: serializeSchemaValidationError(
-          new SchemaValidationError(
-            'Either userId or email is required'
-          ) as Error
-        ),
-      };
-    }
-
-    return validatePayload(payload, userDefinition);
-  }
-);
-
-export type SetViewPayload = ViewParams;
+export type SetViewPayload = Pick<ViewParams, 'url'>;
 
 export const setView = createAction(
-  'commerce/setView',
+  'commerce/context/setView',
   (payload: SetViewPayload) => validatePayload(payload, viewDefinition)
 );

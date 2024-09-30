@@ -1,18 +1,17 @@
 import {createAction} from '@reduxjs/toolkit';
-import {SearchAnalyticsProvider} from '../../api/analytics/search-analytics';
-import {validatePayload} from '../../utils/validate-payload';
+import {validatePayload} from '../../utils/validate-payload.js';
 import {
   makeAnalyticsAction,
   LegacySearchAction,
-} from '../analytics/analytics-utils';
-import {SearchPageEvents} from '../analytics/search-action-cause';
-import {SearchAction} from '../search/search-actions';
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {SearchAction} from '../search/search-actions.js';
 import {
   staticFilterIdSchema,
   staticFilterValueSchema,
   staticFilterValuesSchema,
-} from './static-filter-set-schema';
-import {StaticFilterValue} from './static-filter-set-state';
+} from './static-filter-set-schema.js';
+import {StaticFilterValue} from './static-filter-set-state.js';
 
 export interface RegisterStaticFilterActionCreatorPayload {
   /**
@@ -137,40 +136,14 @@ export const logStaticFilterClearAll = (
   );
 
 // --------------------- KIT-2859 : Everything above this will get deleted ! :) ---------------------
-export const staticFilterSelect = (
-  id: string,
-  value: StaticFilterValueMetadata
-): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.staticFilterSelect,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getStaticFilterToggleMetadata(
-        id,
-        value
-      ),
-  };
-};
+export const staticFilterSelect = (): SearchAction => ({
+  actionCause: SearchPageEvents.staticFilterSelect,
+});
 
-export const staticFilterDeselect = (
-  id: string,
-  value: StaticFilterValueMetadata
-): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.staticFilterDeselect,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getStaticFilterToggleMetadata(
-        id,
-        value
-      ),
-  };
-};
+export const staticFilterDeselect = (): SearchAction => ({
+  actionCause: SearchPageEvents.staticFilterDeselect,
+});
 
-export const staticFilterClearAll = (id: string): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.staticFilterClearAll,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getStaticFilterClearAllMetadata(
-        id
-      ),
-  };
-};
+export const staticFilterClearAll = (): SearchAction => ({
+  actionCause: SearchPageEvents.staticFilterClearAll,
+});

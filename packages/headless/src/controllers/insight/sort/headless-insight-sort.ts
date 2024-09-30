@@ -1,14 +1,15 @@
-import {InsightEngine} from '../../../app/insight-engine/insight-engine';
-import {executeSearch} from '../../../features/insight-search/insight-search-actions';
-import {SortCriterion} from '../../../features/sort-criteria/criteria';
-import {logResultsSort} from '../../../features/sort-criteria/sort-criteria-insight-analytics-actions';
+import {InsightEngine} from '../../../app/insight-engine/insight-engine.js';
+import {executeSearch} from '../../../features/insight-search/insight-search-actions.js';
+import {SortCriterion} from '../../../features/sort-criteria/criteria.js';
+import {resultsSort} from '../../../features/sort-criteria/sort-criteria-analytics-actions.js';
+import {logResultsSort} from '../../../features/sort-criteria/sort-criteria-insight-analytics-actions.js';
 import {
   buildCoreSort,
   Sort,
   SortProps,
   SortState,
   SortInitialState,
-} from '../../core/sort/headless-core-sort';
+} from '../../core/sort/headless-core-sort.js';
 
 export type {Sort, SortProps, SortState, SortInitialState};
 
@@ -22,7 +23,8 @@ export type {Sort, SortProps, SortState, SortInitialState};
 export function buildSort(engine: InsightEngine, props: SortProps = {}): Sort {
   const {dispatch} = engine;
   const sort = buildCoreSort(engine, props);
-  const search = () => dispatch(executeSearch(logResultsSort()));
+  const search = () =>
+    dispatch(executeSearch({legacy: logResultsSort(), next: resultsSort()}));
 
   return {
     ...sort,

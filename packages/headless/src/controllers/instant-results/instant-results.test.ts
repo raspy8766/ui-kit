@@ -1,21 +1,23 @@
-import {buildInstantResults} from '..';
-import {SearchAppState} from '../..';
-import {registerInstantResults} from '../../features/instant-results/instant-results-actions';
-import {instantResultsReducer as instantResults} from '../../features/instant-results/instant-results-slice';
+import {registerInstantResults} from '../../features/instant-results/instant-results-actions.js';
+import {instantResultsReducer as instantResults} from '../../features/instant-results/instant-results-slice.js';
+import {SearchAppState} from '../../state/search-app-state.js';
 import {
-  buildMockSearchAppEngine,
-  createMockState,
-  MockSearchEngine,
-} from '../../test';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {buildInstantResults} from './instant-results.js';
+
+vi.mock('../../features/instant-results/instant-results-actions');
 
 describe('instant results', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let state: SearchAppState;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     state = createMockState();
-    engine = buildMockSearchAppEngine({state});
+    engine = buildMockSearchEngine(state);
   });
 
   it('it adds the correct reducers to engine', () => {
@@ -32,9 +34,6 @@ describe('instant results', () => {
     buildInstantResults(engine, {
       options: {searchBoxId, maxResultsPerQuery: 2},
     });
-
-    expect(engine.actions.pop()).toEqual(
-      registerInstantResults({id: searchBoxId})
-    );
+    expect(registerInstantResults).toHaveBeenCalledWith({id: searchBoxId});
   });
 });

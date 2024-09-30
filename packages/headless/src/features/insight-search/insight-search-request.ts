@@ -1,29 +1,46 @@
-import {InsightQueryRequest} from '../../api/service/insight/query/query-request';
-import {InsightAppState} from '../../state/insight-app-state';
+import {EventDescription} from 'coveo.analytics';
+import {getOrganizationEndpoint} from '../../api/platform-client.js';
+import {InsightQueryRequest} from '../../api/service/insight/query/query-request.js';
+import {InsightAppState} from '../../state/insight-app-state.js';
 import {
   ConfigurationSection,
   InsightConfigurationSection,
-} from '../../state/state-sections';
-import {getFacetRequests} from '../facets/generic/interfaces/generic-facet-request';
-import {CollectionId} from '../folding/folding-state';
-import {maximumNumberOfResultsFromIndex} from '../pagination/pagination-constants';
-import {MappedSearchRequest, mapSearchRequest} from '../search/search-mappings';
+} from '../../state/state-sections.js';
+import {fromAnalyticsStateToAnalyticsParams} from '../configuration/legacy-analytics-params.js';
+import {getFacetRequests} from '../facets/generic/interfaces/generic-facet-request.js';
+import {CollectionId} from '../folding/folding-state.js';
+import {maximumNumberOfResultsFromIndex} from '../pagination/pagination-constants.js';
+import {
+  MappedSearchRequest,
+  mapSearchRequest,
+} from '../search/search-mappings.js';
 
 type StateNeededBySearchRequest = ConfigurationSection &
   InsightConfigurationSection &
   Partial<InsightAppState>;
 
-export const buildInsightBaseRequest = (
-  state: StateNeededBySearchRequest
-): MappedSearchRequest<InsightQueryRequest> => {
+export const buildInsightBaseRequest = async (
+  state: StateNeededBySearchRequest,
+  eventDescription?: EventDescription
+): Promise<MappedSearchRequest<InsightQueryRequest>> => {
   const cq = buildConstantQuery(state);
   const facets = getAllFacets(state);
-
   return mapSearchRequest<InsightQueryRequest>({
     accessToken: state.configuration.accessToken,
     organizationId: state.configuration.organizationId,
-    url: state.configuration.platformUrl,
+    url:
+      state.configuration.search.apiBaseUrl ??
+      getOrganizationEndpoint(
+        state.configuration.organizationId,
+        state.configuration.environment
+      ),
+    locale: state.configuration.search.locale,
     insightId: state.insightConfiguration.insightId,
+    ...(state.configuration.analytics.enabled &&
+      (await fromAnalyticsStateToAnalyticsParams(
+        state.configuration.analytics,
+        eventDescription
+      ))),
     q: state.query?.q,
     ...(facets.length && {facets}),
     caseContext: state.insightCaseContext?.caseContext,
@@ -45,12 +62,23 @@ export const buildInsightBaseRequest = (
       parentField: state.folding.fields.child,
       filterFieldRange: state.folding.filterFieldRange,
     }),
+    ...(state.context && {context: state.context.contextValues}),
+    ...(state.generatedAnswer && {
+      pipelineRuleParameters: {
+        mlGenerativeQuestionAnswering: {
+          responseFormat: state.generatedAnswer.responseFormat,
+          citationsFieldToInclude:
+            state.generatedAnswer.fieldsToIncludeInCitations,
+        },
+      },
+    }),
   });
 };
 
-export const buildInsightSearchRequest = (
-  state: StateNeededBySearchRequest
-): MappedSearchRequest<InsightQueryRequest> => {
+export const buildInsightSearchRequest = async (
+  state: StateNeededBySearchRequest,
+  eventDescription?: EventDescription
+): Promise<MappedSearchRequest<InsightQueryRequest>> => {
   const getNumberOfResultsWithinIndexLimit = () => {
     if (!state.pagination) {
       return undefined;
@@ -66,7 +94,7 @@ export const buildInsightSearchRequest = (
     return state.pagination.numberOfResults;
   };
 
-  const baseRequest = buildInsightBaseRequest(state);
+  const baseRequest = await buildInsightBaseRequest(state, eventDescription);
   return {
     ...baseRequest,
     request: {
@@ -79,11 +107,11 @@ export const buildInsightSearchRequest = (
   };
 };
 
-export const buildInsightLoadCollectionRequest = (
+export const buildInsightLoadCollectionRequest = async (
   state: StateNeededBySearchRequest,
   collectionId: CollectionId
-): MappedSearchRequest<InsightQueryRequest> => {
-  const baseRequest = buildInsightBaseRequest(state);
+): Promise<MappedSearchRequest<InsightQueryRequest>> => {
+  const baseRequest = await buildInsightBaseRequest(state);
   return {
     ...baseRequest,
     request: {
@@ -95,9 +123,13 @@ export const buildInsightLoadCollectionRequest = (
 };
 
 export const buildInsightFetchMoreResultsRequest = async (
-  state: StateNeededBySearchRequest
+  state: StateNeededBySearchRequest,
+  eventDescription?: EventDescription
 ): Promise<MappedSearchRequest<InsightQueryRequest>> => {
-  const mappedRequest = await buildInsightSearchRequest(state);
+  const mappedRequest = await buildInsightSearchRequest(
+    state,
+    eventDescription
+  );
   mappedRequest.request = {
     ...mappedRequest.request,
     firstResult:
@@ -108,9 +140,13 @@ export const buildInsightFetchMoreResultsRequest = async (
 };
 
 export const buildInsightFetchFacetValuesRequest = async (
-  state: StateNeededBySearchRequest
+  state: StateNeededBySearchRequest,
+  eventDescription?: EventDescription
 ): Promise<MappedSearchRequest<InsightQueryRequest>> => {
-  const mappedRequest = await buildInsightSearchRequest(state);
+  const mappedRequest = await buildInsightSearchRequest(
+    state,
+    eventDescription
+  );
   mappedRequest.request = {
     ...mappedRequest.request,
     numberOfResults: 0,

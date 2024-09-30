@@ -1,14 +1,16 @@
 import {PayloadAction} from '@reduxjs/toolkit';
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {didYouMeanReducer as didYouMean} from '../../features/did-you-mean/did-you-mean-slice';
-import {queryReducer as query} from '../../features/query/query-slice';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {didYouMeanReducer as didYouMean} from '../../features/did-you-mean/did-you-mean-slice.js';
+import {queryReducer as query} from '../../features/query/query-slice.js';
 import {
   applyDidYouMeanCorrection,
   disableAutomaticQueryCorrection,
   disableDidYouMean,
   enableAutomaticQueryCorrection,
   enableDidYouMean,
-} from './did-you-mean-actions';
+  setCorrectionMode,
+} from './did-you-mean-actions.js';
+import {CorrectionMode} from './did-you-mean-state.js';
 
 /**
  * The DidYouMean action creators.
@@ -49,6 +51,15 @@ export interface DidYouMeanActionCreators {
    * @returns A dispatchable action.
    */
   enableDidYouMean(): PayloadAction;
+
+  /**
+   * Sets the query correction mode.
+   *
+   * @param mode - The query correction mode to use. Must be either `"legacy"` (index based) or `"next"` (query suggestions based).
+   * @returns A dispatchable action.
+   *
+   */
+  setCorrectionMode(mode: CorrectionMode): PayloadAction<CorrectionMode>;
 }
 
 /**
@@ -68,5 +79,6 @@ export function loadDidYouMeanActions(
     enableDidYouMean,
     enableAutomaticQueryCorrection,
     disableAutomaticQueryCorrection,
+    setCorrectionMode,
   };
 }

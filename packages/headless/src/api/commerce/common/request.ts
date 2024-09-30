@@ -1,29 +1,37 @@
-import {PlatformClientCallOptions} from '../../platform-client';
-import {BaseParam} from '../../platform-service-params';
+import {PlatformClientCallOptions} from '../../platform-client.js';
+import {BaseParam} from '../../platform-service-params.js';
 import {
+  TrackingIdParam,
+  LanguageParam,
+  CountryParam,
+  CurrencyParam,
   ClientIdParam,
   ContextParam,
-  CurrencyParam,
-  LanguageParam,
   FacetsParam,
   PageParam,
   SortParam,
-  TrackingIdParam,
-  CountryParam,
-} from '../commerce-api-params';
+  PerPageParam,
+} from '../commerce-api-params.js';
+import {CommerceApiMethod} from '../commerce-metadata.js';
 
-export type CommerceAPIRequest = BaseParam &
+export type BaseCommerceAPIRequest = BaseParam &
   TrackingIdParam &
   LanguageParam &
   CountryParam &
   CurrencyParam &
   ClientIdParam &
   ContextParam &
-  FacetsParam &
   PageParam &
+  PerPageParam;
+
+export type CommerceAPIRequest = BaseCommerceAPIRequest &
+  FacetsParam &
   SortParam;
 
-export const buildRequest = (req: CommerceAPIRequest, path: string) => {
+export const buildRequest = (
+  req: CommerceAPIRequest,
+  path: CommerceApiMethod
+) => {
   return {
     ...baseRequest(req, path),
     requestParams: prepareRequestParams(req),
@@ -39,6 +47,7 @@ const prepareRequestParams = (req: CommerceAPIRequest) => {
     country,
     currency,
     page,
+    perPage,
     facets,
     sort,
   } = req;
@@ -50,20 +59,26 @@ const prepareRequestParams = (req: CommerceAPIRequest) => {
     country,
     currency,
     page,
+    perPage,
     facets,
     sort,
   };
 };
 
 export const baseRequest = (
-  req: BaseParam & TrackingIdParam,
-  path: string
+  req: BaseParam,
+  path: CommerceApiMethod
 ): Pick<
   PlatformClientCallOptions,
-  'accessToken' | 'method' | 'contentType' | 'url' | 'origin'
+  | 'accessToken'
+  | 'method'
+  | 'contentType'
+  | 'url'
+  | 'origin'
+  | 'requestMetadata'
 > => {
-  const {url, organizationId, accessToken} = req;
-  const baseUrl = `${url}/rest/organizations/${organizationId}/commerce/v2/${path}`;
+  const {url, accessToken} = req;
+  const baseUrl = `${url}/${path}`;
 
   return {
     accessToken,
@@ -71,5 +86,6 @@ export const baseRequest = (
     contentType: 'application/json',
     url: baseUrl,
     origin: 'commerceApiFetch',
+    requestMetadata: {method: path},
   };
 };

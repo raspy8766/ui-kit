@@ -1,8 +1,9 @@
-import {executeSearch} from '../../../features/insight-search/insight-search-actions';
-import {SearchParameters} from '../../../features/search-parameters/search-parameter-actions';
-import {logParametersChange} from '../../../features/search-parameters/search-parameter-insight-analytics-actions';
-import {InsightEngine} from '../../../insight.index';
-import {deepEqualAnyOrder} from '../../../utils/compare-utils';
+import {InsightEngine} from '../../../app/insight-engine/insight-engine.js';
+import {executeSearch} from '../../../features/insight-search/insight-search-actions.js';
+import {SearchParameters} from '../../../features/search-parameters/search-parameter-actions.js';
+import {parametersChange} from '../../../features/search-parameters/search-parameter-analytics-actions.js';
+import {logParametersChange} from '../../../features/search-parameters/search-parameter-insight-analytics-actions.js';
+import {deepEqualAnyOrder} from '../../../utils/compare-utils.js';
 import {
   buildCoreSearchParameterManager,
   enrichParameters,
@@ -11,7 +12,7 @@ import {
   SearchParameterManagerInitialState,
   SearchParameterManagerProps,
   SearchParameterManagerState,
-} from '../../core/search-parameter-manager/headless-core-search-parameter-manager';
+} from '../../core/search-parameter-manager/headless-core-search-parameter-manager.js';
 
 export type {
   SearchParameters,
@@ -47,7 +48,12 @@ export function buildSearchParameterManager(
         return;
       }
       controller.synchronize(parameters);
-      dispatch(executeSearch(logParametersChange(oldParams, newParams)));
+      dispatch(
+        executeSearch({
+          legacy: logParametersChange(oldParams, newParams),
+          next: parametersChange(oldParams, newParams),
+        })
+      );
     },
 
     get state() {

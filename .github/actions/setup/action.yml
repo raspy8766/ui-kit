@@ -8,36 +8,41 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4
+    - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # v4
       with:
+        registry-url: 'https://registry.npmjs.org'
         node-version-file: '.nvmrc'
     - name: Ensure Nx cache can be shared between different CI environments # Source: https://nx.dev/recipes/troubleshooting/unknown-local-cache
       run: echo "NX_REJECT_UNKNOWN_LOCAL_CACHE=0" >> $GITHUB_ENV
       shell: bash
     - name: Install npm
-      run: npm i -g npm@9
+      run: npm i -g npm@10
       shell: bash
-    - uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3
+    - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
       id: npm-cache
       with:
         path: |
           **/node_modules/
-          !node_modules/.cache/nx/
-        key: npm-${{ hashFiles('package-lock.json') }}-${{ hashFiles('utils/atomic-storybook/package-lock.json') }}
-    - uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3
+          !.nx/cache/
+        key: npm-${{ hashFiles('package-lock.json', 'patches/*') }}}}
+    - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
+      with:
+        path: packages/quantic/force-app/main/default/staticresources
+        key: quantic-${{ hashFiles('package-lock.json') }}}}
+    - uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
       with:
         path: ~/.cache/Cypress
-        key: cy-${{ hashFiles('package-lock.json') }}-${{ hashFiles('utils/atomic-storybook/package-lock.json') }}
+        key: cy-${{ hashFiles('package-lock.json') }}}}
     - if: inputs.load-cache == 'true'
-      uses: actions/cache/restore@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3
+      uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4
       id: nx-cache
       with:
-        path: node_modules/.cache/nx
+        path: .nx/cache
         key: nx-${{ github.sha }}
-        fail-on-cache-miss: true
     - if: steps.npm-cache.outputs.cache-hit != 'true'
       run: npm ci
       shell: bash
-    - if: steps.nx-cache.outputs.cache-hit != 'true'
-      run: npm run build
+    # TODO KIT-3483: Move to artifact
+    # - if: steps.nx-cache.outputs.cache-hit != 'true'
+    - run: npm run build
       shell: bash

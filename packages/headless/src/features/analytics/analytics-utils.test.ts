@@ -1,22 +1,24 @@
 import {createRelay} from '@coveo/relay';
+import {MockInstance} from 'vitest';
+import {ThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
+import {buildMockAnalyticsState} from '../../test/mock-analytics-state.js';
 import {
-  MockSearchEngine,
-  buildMockSearchAppEngine,
-  createMockState,
-} from '../../test';
-import {buildMockResult} from '../../test';
-import {buildMockAnalyticsState} from '../../test/mock-analytics-state';
-import {createMockRecommendationState} from '../../test/mock-recommendation-state';
-import {buildMockResultWithFolding} from '../../test/mock-result-with-folding';
-import {getConfigurationInitialState} from '../configuration/configuration-state';
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockRecommendationState} from '../../test/mock-recommendation-state.js';
+import {buildMockResultWithFolding} from '../../test/mock-result-with-folding.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {createMockState} from '../../test/mock-state.js';
+import {getConfigurationInitialState} from '../configuration/configuration-state.js';
 import {
   documentIdentifier,
   makeAnalyticsAction,
   partialDocumentInformation,
   partialRecommendationInformation,
-} from './analytics-utils';
+} from './analytics-utils.js';
 
-jest.mock('@coveo/relay');
+vi.mock('@coveo/relay');
 
 /* cSpell:ignore CAJS */
 
@@ -171,9 +173,7 @@ describe('analytics-utils', () => {
     });
 
     it('should log an error permanentid is not available on a result', () => {
-      const spyConsole = jest
-        .spyOn(console, 'warn')
-        .mockImplementation(() => {});
+      const spyConsole = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const result = buildMockResult();
       delete result.raw.permanentid;
@@ -186,11 +186,11 @@ describe('analytics-utils', () => {
   });
 
   describe('#makeAnalytics', () => {
-    let engine: MockSearchEngine;
+    let engine: MockedSearchEngine;
     let analyticsMode: 'legacy' | 'next';
-    let relayEmitSpy: jest.SpyInstance;
-    const fakeCAJSLog = jest.fn();
-    const createRelayMocked = jest.mocked(createRelay);
+    let relayEmitSpy: MockInstance;
+    const fakeCAJSLog = vi.fn();
+    const createRelayMocked = vi.mocked(createRelay);
     const baseMakeAnalyticParams = {
       prefix: 'analytics/noop',
       __legacy__getBuilder: () =>
@@ -204,29 +204,28 @@ describe('analytics-utils', () => {
       analyticsType: '🥖',
     };
     function buildMockRelay() {
-      relayEmitSpy = jest.fn();
+      relayEmitSpy = vi.fn();
       createRelayMocked.mockReturnValue({
         emit: relayEmitSpy as unknown as ReturnType<typeof createRelay>['emit'],
-        on: jest.fn(),
-        off: jest.fn(),
-        clearStorage: jest.fn(),
-        getMeta: jest.fn(),
-        updateConfig: jest.fn(),
+        on: vi.fn(),
+        off: vi.fn(),
+        getMeta: vi.fn(),
+        updateConfig: vi.fn(),
         version: 'test',
       });
     }
 
     beforeEach(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
       buildMockRelay();
-      engine = buildMockSearchAppEngine({
-        state: createMockState({
+      engine = buildMockSearchEngine(
+        createMockState({
           configuration: {
             ...getConfigurationInitialState(),
             analytics: buildMockAnalyticsState({analyticsMode}),
           },
-        }),
-      });
+        })
+      );
     });
 
     describe('when analyticsMode=next', () => {
@@ -241,7 +240,11 @@ describe('analytics-utils', () => {
             ...additionalMakeAnalyticParamsForRelay,
           });
 
-          await engine.dispatch(action);
+          await action()(
+            engine.dispatch,
+            () => engine.state,
+            {} as ThunkExtraArguments
+          );
 
           expect(fakeCAJSLog).not.toHaveBeenCalled();
           expect(relayEmitSpy).toHaveBeenCalled();
@@ -278,7 +281,11 @@ describe('analytics-utils', () => {
           ...additionalMakeAnalyticParamsForRelay,
         });
 
-        await engine.dispatch(action);
+        await action()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
 
         expect(fakeCAJSLog).toHaveBeenCalled();
         expect(relayEmitSpy).not.toHaveBeenCalled();

@@ -7,42 +7,42 @@
     "build": "nx build",
     "build:bundles": "ng build",
     "build:assets": "ncp ../atomic/dist/atomic/assets projects/atomic-angular/dist/assets && ncp ../atomic/dist/atomic/lang projects/atomic-angular/dist/lang",
-    "release:phase1": "node ./scripts/bump.mjs",
-    "release:phase2": "npm run publish:npm",
-    "release:phase5": "npm run publish:npm",
-    "publish:npm": "node ./scripts/publish-npm.mjs"
+    "publish:npm": "node ./scripts/publish-npm.mjs",
+    "publish:bump": "node ./scripts/bump.mjs"
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "16.2.12",
-    "@angular/common": "16.2.12",
-    "@angular/compiler": "16.2.12",
-    "@angular/core": "16.2.12",
-    "@angular/forms": "16.2.12",
-    "@angular/platform-browser": "16.2.12",
-    "@angular/platform-browser-dynamic": "16.2.12",
-    "@angular/router": "16.2.12",
-    "@coveo/atomic": "2.52.1",
+    "@angular/animations": "17.3.12",
+    "@angular/common": "17.3.12",
+    "@angular/compiler": "17.3.12",
+    "@angular/core": "17.3.12",
+    "@angular/forms": "17.3.12",
+    "@angular/platform-browser": "17.3.12",
+    "@angular/platform-browser-dynamic": "17.3.12",
+    "@angular/router": "17.3.12",
+    "@coveo/atomic": "3.2.3",
     "rxjs": "7.8.1"
   },
   "peerDependencies": {
-    "@coveo/headless": "2.44.0"
+    "@coveo/headless": "3.1.3"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "16.2.10",
-    "@angular/cli": "16.2.10",
-    "@angular/compiler-cli": "16.2.12",
-    "@coveo/headless": "2.44.0",
-    "@types/jasmine": "5.1.4",
-    "@types/node": "20.10.4",
-    "jasmine-core": "5.1.1",
-    "karma": "6.4.2",
+    "@angular-devkit/build-angular": "17.3.9",
+    "@angular/cli": "17.3.9",
+    "@angular/compiler-cli": "17.3.12",
+    "@coveo/headless": "3.1.3",
+    "@types/node": "20.14.12",
+    "jasmine-core": "5.2.0",
+    "karma": "6.4.3",
     "karma-chrome-launcher": "3.2.0",
     "karma-coverage": "2.2.1",
     "karma-jasmine": "5.1.0",
     "karma-jasmine-html-reporter": "2.1.0",
     "ncp": "2.0.0",
-    "ng-packagr": "16.2.3",
-    "typescript": "5.3.3"
+    "ng-packagr": "17.3.0",
+    "typescript": "5.4.5"
+  },
+  "engines": {
+    "node": "^20.9.0"
   }
 }

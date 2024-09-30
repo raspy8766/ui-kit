@@ -7,46 +7,44 @@
 
     <script type="module" src="/build/atomic.esm.js"></script>
     <script nomodule src="/build/atomic.js"></script>
+    <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/themes/coveo.css" />
-    <script>
-      (async () => {
-        await customElements.whenDefined('atomic-search-interface');
-        const searchInterface = document.querySelector('atomic-search-interface');
+    <script type="module">
+      await customElements.whenDefined('atomic-search-interface');
+      const searchInterface = document.querySelector('atomic-search-interface');
 
-        // Initialization
-        await searchInterface.initialize({
-          accessToken: 'xx564559b1-0045-48e1-953c-3addd1ee4457',
-          organizationId: 'searchuisamples',
-          organizationEndpoints: await searchInterface.getOrganizationEndpoints('searchuisamples'),
-        });
+      // Initialization
+      await searchInterface.initialize({
+        accessToken: 'xx564559b1-0045-48e1-953c-3addd1ee4457',
+        organizationId: 'searchuisamples',
+      });
 
-        // Trigger a first search
-        searchInterface.executeFirstSearch();
+      // Trigger a first search
+      searchInterface.executeFirstSearch();
 
-        // Add/modify a translation
-        // searchInterface.i18n.addResourceBundle('en', 'translation', {
-        //   search: 'Make me feel lucky!'
-        // });
+      // Add/modify a translation
+      // searchInterface.i18n.addResourceBundle('en', 'translation', {
+      //   search: 'Make me feel lucky!'
+      // });
 
-        // Change the language of the interface dynamically
-        // searchInterface.language = 'fr';
+      // Change the language of the interface dynamically
+      // searchInterface.language = 'fr';
 
-        // Interact with the engine
-        // searchInterface.engine.dispatch(...);
+      // Interact with the engine
+      // searchInterface.engine.dispatch(...);
 
-        // Get all translated strings for a language/namespace
-        // const allStrings = searchInterface.i18n.getResourceBundle('en', 'translation');
+      // Get all translated strings for a language/namespace
+      // const allStrings = searchInterface.i18n.getResourceBundle('en', 'translation');
 
-        // Add field value captions, using caption-[field]
-        // searchInterface.i18n.addResourceBundle('en', 'caption-author', {
-        //   'BBC News': 'The BBC',
-        //   amoreau: 'Alexandre Moreau',
-        // });
+      // Add field value captions, using caption-[field]
+      // searchInterface.i18n.addResourceBundle('en', 'caption-author', {
+      //   'BBC News': 'The BBC',
+      //   amoreau: 'Alexandre Moreau',
+      // });
 
-        searchInterface.i18n.addResourceBundle('en', 'caption-filetype', {
-          '.html': 'html',
-        });
-      })();
+      searchInterface.i18n.addResourceBundle('en', 'caption-filetype', {
+        '.html': 'html',
+      });
     </script>
     <style>
       /* Example on how to customize CSS variables */
@@ -86,7 +84,7 @@
       }
 
       atomic-color-facet::part(value-YouTubeVideo) {
-        background-image: url('build/assets/video.svg');
+        background-image: url('/build/assets/video.svg');
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;
@@ -94,7 +92,7 @@
       }
 
       atomic-color-facet::part(value-lithiummessage) {
-        background-image: url('build/assets/knowledge.svg');
+        background-image: url('/build/assets/knowledge.svg');
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;
@@ -102,7 +100,7 @@
       }
 
       atomic-color-facet::part(value-lithiumthread) {
-        background-image: url('build/assets/post.svg');
+        background-image: url('/build/assets/post.svg');
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;
@@ -110,7 +108,7 @@
       }
 
       atomic-color-facet::part(value-html) {
-        background-image: url('build/assets/html.svg');
+        background-image: url('/build/assets/html.svg');
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;
@@ -137,7 +135,7 @@
       <atomic-search-layout>
         <div class="header-bg"></div>
         <atomic-layout-section section="search">
-          <atomic-search-box textarea></atomic-search-box>
+          <atomic-search-box></atomic-search-box>
         </atomic-layout-section>
         <atomic-layout-section section="facets">
           <atomic-facet-manager>
@@ -210,9 +208,8 @@
             <atomic-refine-toggle></atomic-refine-toggle>
             <atomic-sort-dropdown>
               <atomic-sort-expression label="relevance" expression="relevancy"></atomic-sort-expression>
-              <atomic-sort-expression label="most-recent" expression="date descending"></atomic-sort-expression>
             </atomic-sort-dropdown>
-            <atomic-did-you-mean></atomic-did-you-mean>
+            <atomic-did-you-mean query-correction-mode="next"></atomic-did-you-mean>
             <atomic-notifications></atomic-notifications>
           </atomic-layout-section>
           <atomic-layout-section section="results">
@@ -233,6 +230,7 @@
               </atomic-result-template>
 
               <atomic-result-template>
+                <template slot="link"> </template>
                 <template>
                   <style>
                     .field {

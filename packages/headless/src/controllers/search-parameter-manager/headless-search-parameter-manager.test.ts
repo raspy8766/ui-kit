@@ -1,34 +1,41 @@
-import {restoreSearchParameters} from '../../features/search-parameters/search-parameter-actions';
-import {initialSearchParameterSelector} from '../../features/search-parameters/search-parameter-selectors';
-import {executeSearch} from '../../features/search/search-actions';
-import {buildMockSearchAppEngine, MockSearchEngine} from '../../test';
-import {buildMockAutomaticFacetResponse} from '../../test/mock-automatic-facet-response';
-import {buildMockAutomaticFacetSlice} from '../../test/mock-automatic-facet-slice';
-import {buildMockCategoryFacetRequest} from '../../test/mock-category-facet-request';
-import {buildMockCategoryFacetSlice} from '../../test/mock-category-facet-slice';
-import {buildMockCategoryFacetValueRequest} from '../../test/mock-category-facet-value-request';
-import {buildMockDateFacetRequest} from '../../test/mock-date-facet-request';
-import {buildMockDateFacetSlice} from '../../test/mock-date-facet-slice';
-import {buildMockDateFacetValue} from '../../test/mock-date-facet-value';
-import {buildMockFacetRequest} from '../../test/mock-facet-request';
-import {buildMockFacetSlice} from '../../test/mock-facet-slice';
-import {buildMockFacetValue} from '../../test/mock-facet-value';
-import {buildMockFacetValueRequest} from '../../test/mock-facet-value-request';
-import {buildMockNumericFacetRequest} from '../../test/mock-numeric-facet-request';
-import {buildMockNumericFacetSlice} from '../../test/mock-numeric-facet-slice';
-import {buildMockNumericFacetValue} from '../../test/mock-numeric-facet-value';
-import {buildMockSearchParameters} from '../../test/mock-search-parameters';
-import {buildMockStaticFilterSlice} from '../../test/mock-static-filter-slice';
-import {buildMockStaticFilterValue} from '../../test/mock-static-filter-value';
-import {buildMockTabSlice} from '../../test/mock-tab-state';
+import {restoreSearchParameters} from '../../features/search-parameters/search-parameter-actions.js';
+import {initialSearchParameterSelector} from '../../features/search-parameters/search-parameter-selectors.js';
+import {executeSearch} from '../../features/search/search-actions.js';
+import {buildMockAutomaticFacetResponse} from '../../test/mock-automatic-facet-response.js';
+import {buildMockAutomaticFacetSlice} from '../../test/mock-automatic-facet-slice.js';
+import {buildMockCategoryFacetRequest} from '../../test/mock-category-facet-request.js';
+import {buildMockCategoryFacetSlice} from '../../test/mock-category-facet-slice.js';
+import {buildMockCategoryFacetValueRequest} from '../../test/mock-category-facet-value-request.js';
+import {buildMockDateFacetRequest} from '../../test/mock-date-facet-request.js';
+import {buildMockDateFacetSlice} from '../../test/mock-date-facet-slice.js';
+import {buildMockDateFacetValue} from '../../test/mock-date-facet-value.js';
+import {
+  MockedSearchEngine,
+  buildMockSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {buildMockFacetRequest} from '../../test/mock-facet-request.js';
+import {buildMockFacetSlice} from '../../test/mock-facet-slice.js';
+import {buildMockFacetValueRequest} from '../../test/mock-facet-value-request.js';
+import {buildMockFacetValue} from '../../test/mock-facet-value.js';
+import {buildMockNumericFacetRequest} from '../../test/mock-numeric-facet-request.js';
+import {buildMockNumericFacetSlice} from '../../test/mock-numeric-facet-slice.js';
+import {buildMockNumericFacetValue} from '../../test/mock-numeric-facet-value.js';
+import {buildMockSearchParameters} from '../../test/mock-search-parameters.js';
+import {createMockState} from '../../test/mock-state.js';
+import {buildMockStaticFilterSlice} from '../../test/mock-static-filter-slice.js';
+import {buildMockStaticFilterValue} from '../../test/mock-static-filter-value.js';
+import {buildMockTabSlice} from '../../test/mock-tab-state.js';
 import {
   buildSearchParameterManager,
   SearchParameterManager,
   SearchParameterManagerProps,
-} from './headless-search-parameter-manager';
+} from './headless-search-parameter-manager.js';
+
+vi.mock('../../features/search-parameters/search-parameter-actions');
+vi.mock('../../features/search/search-actions');
 
 describe('search parameter manager', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let props: SearchParameterManagerProps;
   let manager: SearchParameterManager;
 
@@ -37,7 +44,8 @@ describe('search parameter manager', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    vi.resetAllMocks();
+    engine = buildMockSearchEngine(createMockState());
     props = {
       initialState: {
         parameters: {},
@@ -49,7 +57,7 @@ describe('search parameter manager', () => {
 
   describe('#state.parameters.enableQuerySyntax', () => {
     it('when the parameter does not equal the default value, it is included', () => {
-      engine.state.query.enableQuerySyntax = true;
+      engine.state.query!.enableQuerySyntax = true;
       expect(manager.state.parameters.enableQuerySyntax).toBe(true);
     });
 
@@ -58,56 +66,56 @@ describe('search parameter manager', () => {
     });
 
     it('when the parameter is undefined, it is not included', () => {
-      engine.state.query.enableQuerySyntax = undefined as unknown as boolean;
+      engine.state.query!.enableQuerySyntax = undefined as unknown as boolean;
       expect('enableQuerySyntax' in manager.state.parameters).toBe(false);
     });
   });
 
   describe('#state.parameters.aq', () => {
     it('when the parameter is not the default, it is included', () => {
-      engine.state.advancedSearchQueries.aq = 'abc';
-      engine.state.advancedSearchQueries.defaultFilters.aq = 'def';
+      engine.state.advancedSearchQueries!.aq = 'abc';
+      engine.state.advancedSearchQueries!.defaultFilters.aq = 'def';
       expect(manager.state.parameters.aq).toBe('abc');
     });
 
     it('when the parameter is the default, it is not included', () => {
-      engine.state.advancedSearchQueries.aq = 'abc';
-      engine.state.advancedSearchQueries.defaultFilters.aq = 'abc';
+      engine.state.advancedSearchQueries!.aq = 'abc';
+      engine.state.advancedSearchQueries!.defaultFilters.aq = 'abc';
       expect('aq' in manager.state.parameters).toBe(false);
     });
   });
 
   describe('#state.parameters.cq', () => {
     it('when the parameter is not the default, it is included', () => {
-      engine.state.advancedSearchQueries.cq = 'abc';
-      engine.state.advancedSearchQueries.defaultFilters.cq = 'def';
+      engine.state.advancedSearchQueries!.cq = 'abc';
+      engine.state.advancedSearchQueries!.defaultFilters.cq = 'def';
       expect(manager.state.parameters.cq).toBe('abc');
     });
 
     it('when the parameter is the default, it is not included', () => {
-      engine.state.advancedSearchQueries.cq = 'abc';
-      engine.state.advancedSearchQueries.defaultFilters.cq = 'abc';
+      engine.state.advancedSearchQueries!.cq = 'abc';
+      engine.state.advancedSearchQueries!.defaultFilters.cq = 'abc';
       expect('cq' in manager.state.parameters).toBe(false);
     });
   });
 
   describe('#state.parameters.lq', () => {
     it('when the parameter is not the default, it is not included', () => {
-      engine.state.advancedSearchQueries.lq = 'abc';
-      engine.state.advancedSearchQueries.defaultFilters.lq = 'def';
+      engine.state.advancedSearchQueries!.lq = 'abc';
+      engine.state.advancedSearchQueries!.defaultFilters.lq = 'def';
       expect('lq' in manager.state.parameters).toBe(false);
     });
 
     it('when the parameter is the default, it is not included', () => {
-      engine.state.advancedSearchQueries.lq = 'abc';
-      engine.state.advancedSearchQueries.defaultFilters.lq = 'abc';
+      engine.state.advancedSearchQueries!.lq = 'abc';
+      engine.state.advancedSearchQueries!.defaultFilters.lq = 'abc';
       expect('lq' in manager.state.parameters).toBe(false);
     });
   });
 
   describe('#state.parameters.firstResult', () => {
     it('when the parameter does not equal the default value, it is included', () => {
-      engine.state.pagination.firstResult = 1;
+      engine.state.pagination!.firstResult = 1;
       expect(manager.state.parameters.firstResult).toBe(1);
     });
 
@@ -118,7 +126,7 @@ describe('search parameter manager', () => {
 
   describe('#state.parameters.numberOfResults', () => {
     it('when the parameter does not equal the default value, it is included', () => {
-      engine.state.pagination.numberOfResults = 1;
+      engine.state.pagination!.numberOfResults = 1;
       expect(manager.state.parameters.numberOfResults).toBe(1);
     });
 
@@ -209,7 +217,7 @@ describe('search parameter manager', () => {
     engine.state.tabSet = {a: tab};
 
     const automaticFacetValues = [buildMockFacetValue({state: 'selected'})];
-    engine.state.automaticFacetSet.set = {
+    engine.state.automaticFacetSet!.set = {
       a: buildMockAutomaticFacetSlice({
         response: buildMockAutomaticFacetResponse({
           values: automaticFacetValues,
@@ -217,16 +225,16 @@ describe('search parameter manager', () => {
       }),
     };
 
-    engine.state.query.q = 'a';
-    engine.state.query.enableQuerySyntax = true;
-    engine.state.advancedSearchQueries.aq = 'someAq';
-    engine.state.advancedSearchQueries.defaultFilters.aq = 'anotherAq';
-    engine.state.advancedSearchQueries.cq = 'someCq';
-    engine.state.advancedSearchQueries.defaultFilters.cq = 'anotherCq';
-    engine.state.advancedSearchQueries.lq = 'someLq';
-    engine.state.advancedSearchQueries.defaultFilters.lq = 'anotherLq';
-    engine.state.pagination.firstResult = 1;
-    engine.state.pagination.numberOfResults = 1;
+    engine.state.query!.q = 'a';
+    engine.state.query!.enableQuerySyntax = true;
+    engine.state.advancedSearchQueries!.aq = 'someAq';
+    engine.state.advancedSearchQueries!.defaultFilters.aq = 'anotherAq';
+    engine.state.advancedSearchQueries!.cq = 'someCq';
+    engine.state.advancedSearchQueries!.defaultFilters.cq = 'anotherCq';
+    engine.state.advancedSearchQueries!.lq = 'someLq';
+    engine.state.advancedSearchQueries!.defaultFilters.lq = 'anotherLq';
+    engine.state.pagination!.firstResult = 1;
+    engine.state.pagination!.numberOfResults = 1;
     engine.state.sortCriteria = 'qre';
     engine.state.debug = true;
 
@@ -243,17 +251,15 @@ describe('search parameter manager', () => {
       manager.synchronize(params);
 
       const initialParameters = initialSearchParameterSelector(engine.state);
-      const action = restoreSearchParameters({
+      expect(restoreSearchParameters).toHaveBeenCalledWith({
         ...initialParameters,
         ...params,
       });
-
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('given valid search parameters, executes a search', () => {
       manager.synchronize({q: 'a'});
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('given invalid search parameters, should not execute a search', () => {
@@ -262,7 +268,7 @@ describe('search parameter manager', () => {
       };
       manager.synchronize({tab: 'notMyTab!'});
 
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeFalsy();
+      expect(executeSearch).not.toHaveBeenCalled();
     });
 
     it(`when only the order of facet values changes,
@@ -289,7 +295,7 @@ describe('search parameter manager', () => {
 
       manager.synchronize({f: {author: [value2, value1]}});
 
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeFalsy();
+      expect(executeSearch).not.toHaveBeenCalled();
     });
   });
 });

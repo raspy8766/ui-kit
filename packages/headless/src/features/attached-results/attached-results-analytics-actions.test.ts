@@ -1,17 +1,27 @@
-import {buildMockRaw, buildMockResult} from '../../test';
-import {buildMockInsightEngine} from '../../test/mock-engine';
-import {buildMockInsightState} from '../../test/mock-insight-state';
-import {buildMockSearchState} from '../../test/mock-search-state';
+import {createRelay} from '@coveo/relay';
+import {InsightEngine} from '../../app/insight-engine/insight-engine.js';
+import {ThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
+import {buildMockInsightEngine} from '../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../test/mock-insight-state.js';
+import {buildMockRaw} from '../../test/mock-raw.js';
+import {buildMockResult} from '../../test/mock-result.js';
+import {buildMockSearchResponse} from '../../test/mock-search-response.js';
+import {buildMockSearchState} from '../../test/mock-search-state.js';
+import {clearMicrotaskQueue} from '../../test/unit-test-utils.js';
+import {getConfigurationInitialState} from '../configuration/configuration-state.js';
 import {
   logCaseAttach,
   logCaseDetach,
-} from './attached-results-analytics-actions';
+} from './attached-results-analytics-actions.js';
 
-const mockLogCaseAttach = jest.fn();
-const mockLogCaseDetach = jest.fn();
+const mockLogCaseAttach = vi.fn();
+const mockLogCaseDetach = vi.fn();
+const emit = vi.fn();
 
-jest.mock('coveo.analytics', () => {
-  const mockCoveoInsightClient = jest.fn(() => ({
+vi.mock('@coveo/relay');
+
+vi.mock('coveo.analytics', () => {
+  const mockCoveoInsightClient = vi.fn(() => ({
     disable: () => {},
     logCaseAttach: mockLogCaseAttach,
     logCaseDetach: mockLogCaseDetach,
@@ -19,8 +29,17 @@ jest.mock('coveo.analytics', () => {
 
   return {
     CoveoInsightClient: mockCoveoInsightClient,
-    history: {HistoryStore: jest.fn()},
+    history: {HistoryStore: vi.fn()},
   };
+});
+
+vi.mocked(createRelay).mockReturnValue({
+  emit,
+  getMeta: vi.fn(),
+  on: vi.fn(),
+  off: vi.fn(),
+  updateConfig: vi.fn(),
+  version: 'foo',
 });
 
 const exampleSubject = 'example subject';
@@ -47,7 +66,7 @@ const expectedDocumentInfo = {
   documentTitle: 'example documentTitle',
   documentUrl: 'example documentUrl',
   rankingModifier: 'example rankingModifier',
-  documentAuthor: 'unknown',
+  documentAuthor: 'example author',
 };
 
 const expectedDocumentIdentifier = {
@@ -70,61 +89,134 @@ const resultParams = {
     source: 'example sourceName',
     collection: 'example collectionName',
     permanentid: 'example contentIDValue',
+    author: 'example author',
   }),
 };
 
 const testResult = buildMockResult(resultParams);
 
-describe('logCaseAttach', () => {
-  it('should log #logCaseAttach with the right payload', async () => {
-    const engine = buildMockInsightEngine({
-      state: buildMockInsightState({
-        search: buildMockSearchState({
-          results: [testResult],
-        }),
-        insightCaseContext: {
-          caseContext: {
-            Case_Subject: exampleSubject,
-            Case_Description: exampleDescription,
-          },
-          caseId: exampleCaseId,
-          caseNumber: exampleCaseNumber,
-        },
-      }),
-    });
-    await engine.dispatch(logCaseAttach(testResult));
-
-    expect(mockLogCaseAttach).toBeCalledTimes(1);
-    expect(mockLogCaseAttach.mock.calls[0][0]).toStrictEqual(
-      expectedDocumentInfo
-    );
-    expect(mockLogCaseAttach.mock.calls[0][1]).toStrictEqual(
-      expectedDocumentIdentifier
-    );
-    expect(mockLogCaseAttach.mock.calls[0][2]).toStrictEqual(expectedMetadata);
+describe('attached results analytics actions', () => {
+  let engine: InsightEngine;
+  const searchState = buildMockSearchState({
+    results: [testResult],
+    response: buildMockSearchResponse({
+      searchUid: 'example searchUid',
+    }),
   });
-});
+  const caseContextState = {
+    caseContext: {
+      Case_Subject: exampleSubject,
+      Case_Description: exampleDescription,
+    },
+    caseId: exampleCaseId,
+    caseNumber: exampleCaseNumber,
+  };
 
-describe('logCaseDetach', () => {
-  it('should log #logCaseDetach with the right payload', async () => {
-    const engine = buildMockInsightEngine({
-      state: buildMockInsightState({
-        insightCaseContext: {
-          caseContext: {
-            Case_Subject: exampleSubject,
-            Case_Description: exampleDescription,
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('when analyticsMode is `legacy`', () => {
+    beforeEach(() => {
+      engine = buildMockInsightEngine(
+        buildMockInsightState({
+          search: searchState,
+          configuration: {
+            ...getConfigurationInitialState(),
+            analytics: {
+              ...getConfigurationInitialState().analytics,
+              analyticsMode: 'legacy',
+            },
           },
-          caseId: exampleCaseId,
-          caseNumber: exampleCaseNumber,
-        },
-      }),
+          insightCaseContext: caseContextState,
+        })
+      );
     });
-    await engine.dispatch(logCaseDetach(testResult.raw.urihash));
 
-    expect(mockLogCaseDetach).toBeCalledTimes(1);
-    expect(mockLogCaseDetach.mock.calls[0][0]).toStrictEqual(
-      testResult.raw.urihash
-    );
-    expect(mockLogCaseDetach.mock.calls[0][1]).toStrictEqual(expectedMetadata);
+    describe('logCaseAttach', () => {
+      it('should call coveo.analytics.logCaseAttach properly', async () => {
+        await logCaseAttach(testResult)()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
+
+        expect(mockLogCaseAttach).toHaveBeenCalledTimes(1);
+        expect(mockLogCaseAttach.mock.calls[0][0]).toStrictEqual(
+          expectedDocumentInfo
+        );
+        expect(mockLogCaseAttach.mock.calls[0][1]).toStrictEqual(
+          expectedDocumentIdentifier
+        );
+        expect(mockLogCaseAttach.mock.calls[0][2]).toStrictEqual(
+          expectedMetadata
+        );
+      });
+    });
+
+    describe('logCaseDetach', () => {
+      it('should call coveo.analytics.logCaseDetach properly', async () => {
+        await logCaseDetach(testResult)()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
+
+        expect(mockLogCaseDetach).toHaveBeenCalledTimes(1);
+        expect(mockLogCaseDetach.mock.calls[0][0]).toStrictEqual(
+          testResult.raw.urihash
+        );
+        expect(mockLogCaseDetach.mock.calls[0][1]).toStrictEqual(
+          expectedMetadata
+        );
+      });
+    });
+  });
+
+  describe('when analyticsMode is `next`', () => {
+    beforeEach(() => {
+      engine = buildMockInsightEngine(
+        buildMockInsightState({
+          search: searchState,
+          configuration: {
+            ...getConfigurationInitialState(),
+            analytics: {
+              ...getConfigurationInitialState().analytics,
+              analyticsMode: 'next',
+            },
+          },
+          insightCaseContext: caseContextState,
+        })
+      );
+    });
+
+    describe('logCaseAttach', () => {
+      it('should call relay.emit properly', async () => {
+        await logCaseAttach(testResult)()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
+        await clearMicrotaskQueue();
+
+        expect(emit).toHaveBeenCalledTimes(1);
+        expect(emit.mock.calls[0]).toMatchSnapshot();
+      });
+    });
+
+    describe('logCaseDetach', () => {
+      it('should call relay.emit properly', async () => {
+        await logCaseDetach(testResult)()(
+          engine.dispatch,
+          () => engine.state,
+          {} as ThunkExtraArguments
+        );
+
+        await clearMicrotaskQueue();
+
+        expect(emit).toHaveBeenCalledTimes(1);
+        expect(emit.mock.calls[0]).toMatchSnapshot();
+      });
+    });
   });
 });

@@ -1,43 +1,54 @@
-import {configuration} from '../../../app/common-reducers';
-import {updateQuery} from '../../../commerce.index';
-import {deselectAllBreadcrumbs} from '../../../features/breadcrumb/breadcrumb-actions';
-import {selectPage} from '../../../features/commerce/pagination/pagination-actions';
-import {fetchQuerySuggestions} from '../../../features/commerce/query-suggest/query-suggest-actions';
-import {queryReducer as commerceQuery} from '../../../features/commerce/query/query-slice';
-import {executeSearch} from '../../../features/commerce/search/search-actions';
-import {commerceSearchReducer as commerceSearch} from '../../../features/commerce/search/search-slice';
-import {updateFacetAutoSelection} from '../../../features/facets/generic/facet-actions';
+import {configuration} from '../../../app/common-reducers.js';
+import {clearAllCoreFacets} from '../../../features/commerce/facets/core-facet/core-facet-actions.js';
 import {
   registerQuerySetQuery,
   updateQuerySetQuery,
-} from '../../../features/query-set/query-set-actions';
-import {querySetReducer as querySet} from '../../../features/query-set/query-set-slice';
+} from '../../../features/commerce/query-set/query-set-actions.js';
 import {
-  registerQuerySuggest,
   clearQuerySuggest,
+  fetchQuerySuggestions,
+  registerQuerySuggest,
   selectQuerySuggestion,
-} from '../../../features/query-suggest/query-suggest-actions';
-import {querySuggestReducer as querySuggest} from '../../../features/query-suggest/query-suggest-slice';
-import {CommerceAppState} from '../../../state/commerce-app-state';
-import {buildMockCommerceEngine, MockCommerceEngine} from '../../../test';
-import {buildMockCommerceState} from '../../../test/mock-commerce-state';
-import {buildMockQuerySuggest} from '../../../test/mock-query-suggest';
+} from '../../../features/commerce/query-suggest/query-suggest-actions.js';
+import {queryReducer as commerceQuery} from '../../../features/commerce/query/query-slice.js';
+import {
+  executeSearch,
+  prepareForSearchWithQuery,
+} from '../../../features/commerce/search/search-actions.js';
+import {commerceSearchReducer as commerceSearch} from '../../../features/commerce/search/search-slice.js';
+import {querySetReducer as querySet} from '../../../features/query-set/query-set-slice.js';
+import {querySuggestReducer as querySuggest} from '../../../features/query-suggest/query-suggest-slice.js';
+import {CommerceAppState} from '../../../state/commerce-app-state.js';
+import {buildMockCommerceState} from '../../../test/mock-commerce-state.js';
+import {
+  MockedCommerceEngine,
+  buildMockCommerceEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockQuerySuggest} from '../../../test/mock-query-suggest.js';
 import {
   SearchBox,
   SearchBoxProps,
   SearchBoxOptions,
   buildSearchBox,
-} from './headless-search-box';
+} from './headless-search-box.js';
+
+vi.mock('../../../features/commerce/query-suggest/query-suggest-actions');
+vi.mock('../../../features/commerce/search/search-actions');
+vi.mock('../../../features/commerce/query-set/query-set-actions');
+vi.mock('../../../features/commerce/facets/core-facet/core-facet-actions');
+vi.mock('../../../features/commerce/pagination/pagination-actions');
+vi.mock('../../../features/commerce/query/query-actions');
 
 describe('headless search box', () => {
   const id = 'search-box-123';
   let state: CommerceAppState;
 
-  let engine: MockCommerceEngine;
+  let engine: MockedCommerceEngine;
   let searchBox: SearchBox;
   let props: SearchBoxProps;
 
   beforeEach(() => {
+    vi.resetAllMocks();
     const options: SearchBoxOptions = {
       id,
       highlightOptions: {
@@ -61,7 +72,7 @@ describe('headless search box', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function initState() {
@@ -81,7 +92,7 @@ describe('headless search box', () => {
   }
 
   function initController() {
-    engine = buildMockCommerceEngine({state});
+    engine = buildMockCommerceEngine(state);
     searchBox = buildSearchBox(engine, props);
   }
 
@@ -127,6 +138,7 @@ describe('headless search box', () => {
   describe('#state', () => {
     it('is as expected', () => {
       expect(searchBox.state).toEqual({
+        searchBoxId: id,
         value: state.querySet[id],
         suggestions: state.querySuggest[id]!.completions.map((completion) => ({
           highlightedValue: '<a>hi</a>light<i>ed</i>',
@@ -146,17 +158,15 @@ describe('headless search box', () => {
 
   describe('upon initialization', () => {
     it('dispatches #registerQuerySetQuery', () => {
-      expect(engine.actions).toContainEqual(
-        registerQuerySetQuery({id, query: state.commerceQuery.query!})
+      expect(registerQuerySetQuery).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id,
+        })
       );
     });
 
     it('dispatches #registerQuerySuggest', () => {
-      expect(engine.actions).toContainEqual(
-        registerQuerySuggest({
-          id,
-        })
-      );
+      expect(registerQuerySuggest).toHaveBeenCalledWith({id});
     });
   });
 
@@ -165,12 +175,11 @@ describe('headless search box', () => {
       const text = 'query';
       searchBox.updateText(text);
 
-      const action = updateQuerySetQuery({id, query: text});
-      expect(engine.actions).toContainEqual(action);
+      expect(updateQuerySetQuery).toHaveBeenCalledWith({id, query: text});
     });
 
     it('calls #showSuggestions', () => {
-      jest.spyOn(searchBox, 'showSuggestions');
+      vi.spyOn(searchBox, 'showSuggestions');
       searchBox.updateText('how can i fix');
 
       expect(searchBox.showSuggestions).toHaveBeenCalled();
@@ -183,26 +192,18 @@ describe('headless search box', () => {
     });
 
     it('dispatches #updateQuerySetQuery', () => {
-      expect(engine.actions).toContainEqual(
-        updateQuerySetQuery({id: id, query: ''})
-      );
+      expect(updateQuerySetQuery).toHaveBeenCalledWith({id, query: ''});
     });
 
     it('dispatches #clearQuerySuggest', () => {
-      expect(engine.actions).toContainEqual(clearQuerySuggest({id}));
+      expect(clearQuerySuggest).toHaveBeenCalledWith({id});
     });
   });
 
   describe('#showSuggestions', () => {
     it('dispatches #fetchQuerySuggestions', async () => {
       searchBox.showSuggestions();
-
-      const action = engine.actions.find(
-        (a) => a.type === fetchQuerySuggestions.pending.type
-      );
-      expect(action).toEqual(
-        fetchQuerySuggestions.pending(action!.meta.requestId, {id})
-      );
+      expect(fetchQuerySuggestions).toHaveBeenCalledWith({id});
     });
   });
 
@@ -210,17 +211,16 @@ describe('headless search box', () => {
     it('dispatches #selectQuerySuggestion', () => {
       const value = 'i like this expression';
       searchBox.selectSuggestion(value);
-
-      expect(engine.actions).toContainEqual(
-        selectQuerySuggestion({id, expression: value})
-      );
+      expect(selectQuerySuggestion).toHaveBeenCalledWith({
+        id,
+        expression: value,
+      });
     });
 
     it('dispatches #executeSearch', () => {
       const suggestion = 'a';
       searchBox.selectSuggestion(suggestion);
-
-      expect(engine.findAsyncAction(executeSearch.pending)).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -229,61 +229,28 @@ describe('headless search box', () => {
       searchBox.submit();
     });
 
-    it('deselects all facets when clearFilters is true', () => {
-      expect(engine.actions).toContainEqual(deselectAllBreadcrumbs());
+    it('dispatches #prepareForSearchWithQuery', () => {
+      expect(prepareForSearchWithQuery).toHaveBeenCalled();
     });
 
-    it('does not deselect facets when clearFilters is false', () => {
-      engine = buildMockCommerceEngine({state});
+    it('when clearFilters option is false, does not dispatch #clearAllCoreFacets', () => {
+      vi.resetAllMocks();
+      engine = buildMockCommerceEngine(state);
       searchBox = buildSearchBox(engine, {
         ...props,
         options: {clearFilters: false},
       });
       searchBox.submit();
-
-      expect(engine.actions).not.toContainEqual(deselectAllBreadcrumbs());
-    });
-
-    it('dispatches #updateFacetAutoSelection with proper payload', () => {
-      expect(engine.actions).toContainEqual(
-        updateFacetAutoSelection({allow: true})
-      );
-    });
-
-    it('allows autoSelection after deselecting facets', () => {
-      const deselectAllBreadcrumbsIndex = engine.actions.findIndex(
-        (action) => action.type === deselectAllBreadcrumbs.type
-      );
-      const updateFacetAutoSelectionIndex = engine.actions.findIndex(
-        (action) => action.type === updateFacetAutoSelection.type
-      );
-      expect(deselectAllBreadcrumbsIndex).toBeLessThanOrEqual(
-        updateFacetAutoSelectionIndex
-      );
-    });
-
-    it('dispatches #updateQuery', () => {
-      const expectedQuery = state.querySet[id];
-
-      const action = updateQuery({
-        query: expectedQuery,
-      });
-
-      expect(engine.actions).toContainEqual(action);
-    });
-
-    it('updates the page to the first one', () => {
-      expect(engine.actions).toContainEqual(selectPage(1));
+      expect(clearAllCoreFacets).not.toHaveBeenCalled();
     });
 
     it('dispatches #executeSearch', () => {
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
 
     it('dispatches #clearQuerySuggest', () => {
       searchBox.submit();
-      expect(engine.actions).toContainEqual(clearQuerySuggest({id}));
+      expect(clearQuerySuggest).toHaveBeenCalledWith({id});
     });
   });
 });

@@ -1,21 +1,21 @@
-import {InsightEngine} from '../../../app/insight-engine/insight-engine';
+import {InsightEngine} from '../../../app/insight-engine/insight-engine.js';
 import {
   logOpenSmartSnippetInlineLink,
   logOpenSmartSnippetSuggestionInlineLink,
-} from '../../../features/question-answering/question-answering-insight-analytics-actions';
-import {questionAnsweringReducer as questionAnswering} from '../../../features/question-answering/question-answering-slice';
-import {searchReducer as search} from '../../../features/search/search-slice';
+} from '../../../features/question-answering/question-answering-insight-analytics-actions.js';
+import {questionAnsweringReducer as questionAnswering} from '../../../features/question-answering/question-answering-slice.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
 import {
   QuestionAnsweringSection,
   SearchSection,
-} from '../../../state/state-sections';
-import {loadReducerError} from '../../../utils/errors';
-import {getObjectHash} from '../../../utils/utils';
+} from '../../../state/state-sections.js';
+import {loadReducerError} from '../../../utils/errors.js';
+import {getObjectHash} from '../../../utils/utils.js';
 import {
   buildInteractiveResultCore,
   InteractiveResultCore,
-} from '../../core/interactive-result/headless-core-interactive-result';
-import {InlineLink} from '../../smart-snippet/headless-smart-snippet-interactive-inline-links';
+} from '../../core/interactive-result/headless-core-interactive-result.js';
+import {InlineLink} from '../../smart-snippet/headless-smart-snippet-interactive-inline-links.js';
 
 export interface SmartSnippetInteractiveInlineLinksOptions {
   /**
@@ -38,6 +38,7 @@ export interface SmartSnippetInteractiveInlineLinks {
    * Selects the result, logging a UA event to the Coveo Platform if the result wasn't selected before.
    *
    * In a DOM context, it's recommended to call this method on all of the following events:
+   *
    * * `contextmenu`
    * * `click`
    * * `mouseup`

@@ -1,31 +1,35 @@
-import {buildMockInsightEngine} from '../../test/mock-engine';
-import {buildMockInsightState} from '../../test/mock-insight-state';
-import {logResultsSort} from './sort-criteria-insight-analytics-actions';
+import {ThunkExtraArguments} from '../../app/thunk-extra-arguments.js';
+import {buildMockInsightEngine} from '../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../test/mock-insight-state.js';
+import {getConfigurationInitialState} from '../configuration/configuration-state.js';
+import {logResultsSort} from './sort-criteria-insight-analytics-actions.js';
 
-const mockLogResultsSort = jest.fn();
+const mockLogResultsSort = vi.fn();
 
-jest.mock('coveo.analytics', () => {
-  const mockCoveoInsightClient = jest.fn(() => ({
+vi.mock('coveo.analytics', () => {
+  const mockCoveoInsightClient = vi.fn(() => ({
     disable: () => {},
     logResultsSort: mockLogResultsSort,
   }));
 
   return {
     CoveoInsightClient: mockCoveoInsightClient,
-    history: {HistoryStore: jest.fn()},
+    history: {HistoryStore: vi.fn()},
   };
 });
 
-const exampleSubject = 'example subject';
-const exampleDescription = 'example description';
-const exampleCaseId = '1234';
-const exampleCaseNumber = '5678';
-const exampleSortCriteria = 'exampleSortCriteria';
+describe('sort criteria insight analytics actions', () => {
+  const exampleSubject = 'example subject';
+  const exampleDescription = 'example description';
+  const exampleCaseId = '1234';
+  const exampleCaseNumber = '5678';
+  const exampleSortCriteria = 'exampleSortCriteria';
 
-describe('logResultsSort', () => {
   it('should log #logResultsSort with the right payload', async () => {
-    const engine = buildMockInsightEngine({
-      state: buildMockInsightState({
+    const configuration = getConfigurationInitialState();
+    configuration.analytics.analyticsMode = 'legacy';
+    const engine = buildMockInsightEngine(
+      buildMockInsightState({
         sortCriteria: exampleSortCriteria,
         insightCaseContext: {
           caseContext: {
@@ -35,10 +39,14 @@ describe('logResultsSort', () => {
           caseId: exampleCaseId,
           caseNumber: exampleCaseNumber,
         },
-      }),
-    });
-
-    await engine.dispatch(logResultsSort());
+        configuration,
+      })
+    );
+    await logResultsSort()()(
+      engine.dispatch,
+      () => engine.state,
+      {} as ThunkExtraArguments
+    );
 
     const expectedPayload = {
       caseContext: {
@@ -50,7 +58,7 @@ describe('logResultsSort', () => {
       resultsSortBy: exampleSortCriteria,
     };
 
-    expect(mockLogResultsSort).toBeCalledTimes(1);
+    expect(mockLogResultsSort).toHaveBeenCalledTimes(1);
     expect(mockLogResultsSort.mock.calls[0][0]).toStrictEqual(expectedPayload);
   });
 });

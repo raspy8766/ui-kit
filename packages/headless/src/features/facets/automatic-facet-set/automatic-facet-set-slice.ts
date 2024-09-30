@@ -1,16 +1,16 @@
 import {createReducer} from '@reduxjs/toolkit';
-import {deselectAllBreadcrumbs} from '../../breadcrumb/breadcrumb-actions';
-import {change} from '../../history/history-actions';
-import {restoreSearchParameters} from '../../search-parameters/search-parameter-actions';
-import {executeSearch} from '../../search/search-actions';
-import {FacetValue} from '../facet-set/interfaces/response';
+import {deselectAllBreadcrumbs} from '../../breadcrumb/breadcrumb-actions.js';
+import {change} from '../../history/history-actions.js';
+import {restoreSearchParameters} from '../../search-parameters/search-parameter-actions.js';
+import {executeSearch} from '../../search/search-actions.js';
+import {FacetValue} from '../facet-set/interfaces/response.js';
 import {
   deselectAllAutomaticFacetValues,
   setOptions,
   toggleSelectAutomaticFacetValue,
-} from './automatic-facet-set-actions';
-import {getAutomaticFacetSetInitialState} from './automatic-facet-set-state';
-import {AutomaticFacetResponse} from './interfaces/response';
+} from './automatic-facet-set-actions.js';
+import {getAutomaticFacetSetInitialState} from './automatic-facet-set-state.js';
+import {AutomaticFacetResponse} from './interfaces/response.js';
 
 export const automaticFacetSetReducer = createReducer(
   getAutomaticFacetSetInitialState(),
@@ -89,13 +89,19 @@ export const automaticFacetSetReducer = createReducer(
         for (const field in af) {
           const facet = state.set[field]?.response;
           if (facet) {
-            const values = facet.values;
-            for (const value of values) {
-              if (!af[field].includes(value.value)) {
-                value.state = 'idle';
-              } else if (value.state === 'idle') {
+            const stateFacetValues = facet.values;
+            const urlFacetValues = new Set<string>(af[field]);
+            for (const value of stateFacetValues) {
+              if (urlFacetValues.has(value.value)) {
                 value.state = 'selected';
+                urlFacetValues.delete(value.value);
+              } else {
+                value.state = 'idle';
               }
+            }
+
+            for (const value of urlFacetValues) {
+              facet.values.push(buildTemporarySelectedFacetValue(value));
             }
           }
         }

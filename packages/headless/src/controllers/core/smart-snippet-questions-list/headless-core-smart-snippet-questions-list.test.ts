@@ -1,23 +1,29 @@
 import {
   collapseSmartSnippetRelatedQuestion,
   expandSmartSnippetRelatedQuestion,
-} from '../../../features/question-answering/question-answering-actions';
-import {smartSnippetAnalyticsClient} from '../../../features/question-answering/question-answering-analytics-actions';
-import {questionAnsweringReducer as questionAnswering} from '../../../features/question-answering/question-answering-slice';
-import {getQuestionAnsweringInitialState} from '../../../features/question-answering/question-answering-state';
-import {searchReducer as search} from '../../../features/search/search-slice';
-import {emptyQuestionAnswer} from '../../../features/search/search-state';
+} from '../../../features/question-answering/question-answering-actions.js';
+import {smartSnippetAnalyticsClient} from '../../../features/question-answering/question-answering-analytics-actions.js';
+import {questionAnsweringReducer as questionAnswering} from '../../../features/question-answering/question-answering-slice.js';
+import {getQuestionAnsweringInitialState} from '../../../features/question-answering/question-answering-state.js';
+import {searchReducer as search} from '../../../features/search/search-slice.js';
+import {emptyQuestionAnswer} from '../../../features/search/search-state.js';
 import {
-  buildMockSearchAppEngine,
-  MockSearchEngine,
-} from '../../../test/mock-engine';
-import {buildMockRaw} from '../../../test/mock-raw';
-import {buildMockResult} from '../../../test/mock-result';
-import {buildMockSearchState} from '../../../test/mock-search-state';
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockRaw} from '../../../test/mock-raw.js';
+import {buildMockResult} from '../../../test/mock-result.js';
+import {buildMockSearchState} from '../../../test/mock-search-state.js';
+import {createMockState} from '../../../test/mock-state.js';
 import {
   CoreSmartSnippetQuestionsList,
   buildCoreSmartSnippetQuestionsList,
-} from './headless-core-smart-snippet-questions-list';
+} from './headless-core-smart-snippet-questions-list.js';
+
+vi.mock('../../../features/question-answering/question-answering-actions');
+vi.mock(
+  '../../../features/question-answering/question-answering-analytics-actions'
+);
 
 const examplePermanentIdOne = 'example permanentid one';
 const examplePermanentIdTwo = 'example permanentid two';
@@ -68,7 +74,7 @@ const exampleRelatedQuestionStateTwo = {
 };
 
 describe('SmartSnippetQuestionsList', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let smartSnippetQuestionsList: CoreSmartSnippetQuestionsList;
 
   function initSmartSnippetQuestionsList() {
@@ -79,7 +85,7 @@ describe('SmartSnippetQuestionsList', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    engine = buildMockSearchEngine(createMockState());
     initSmartSnippetQuestionsList();
   });
 
@@ -101,17 +107,17 @@ describe('SmartSnippetQuestionsList', () => {
   it('#expand dispatches #expandSmartSnippetRelatedQuestion with the correct payload', () => {
     const exampleId = 'example id';
     smartSnippetQuestionsList.expand(exampleId);
-    expect(engine.actions).toContainEqual(
-      expandSmartSnippetRelatedQuestion({questionAnswerId: exampleId})
-    );
+    expect(expandSmartSnippetRelatedQuestion).toHaveBeenCalledWith({
+      questionAnswerId: exampleId,
+    });
   });
 
   it('#collapse dispatches #collapseSmartSnippetRelatedQuestion with the correct payload', () => {
     const exampleId = 'example id';
     smartSnippetQuestionsList.collapse(exampleId);
-    expect(engine.actions).toContainEqual(
-      collapseSmartSnippetRelatedQuestion({questionAnswerId: exampleId})
-    );
+    expect(collapseSmartSnippetRelatedQuestion).toHaveBeenCalledWith({
+      questionAnswerId: exampleId,
+    });
   });
 
   it('should properly build the state', () => {
@@ -157,6 +163,6 @@ describe('SmartSnippetQuestionsList', () => {
   });
 
   it('should not dispatch any action at initialization', () => {
-    expect(engine.actions.length).toEqual(0);
+    expect(engine.dispatch).not.toHaveBeenCalled();
   });
 });

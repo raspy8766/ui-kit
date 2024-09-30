@@ -1,12 +1,16 @@
+import React from 'react';
 import {BrowserRouter, NavLink, Routes, Route} from 'react-router-dom';
 import {AboutPage} from './pages/AboutPage';
 import {AnalyticsHook} from './pages/AnalyticsHook';
 import {DependentFacetPage} from './pages/DependentFacetPage';
-import {ProductRecommendationsPage} from './pages/ProductRecommendationsPage';
 import {RecommendationPage} from './pages/RecommendationPage';
 import {SamlPage} from './pages/SamlPage';
 import {SearchPage, SearchPageProps} from './pages/SearchPage';
 import {StandaloneSearchBoxPage} from './pages/StandaloneSearchBoxPage';
+import {CommerceApp} from './pages/commerce/CommerceApp';
+import {ProductListingPage} from './pages/commerce/ProductListingPage';
+import {RecommendationsPage} from './pages/commerce/RecommendationsPage';
+import {SearchPage as CommerceSearchPage} from './pages/commerce/SearchPage';
 
 function App(props: SearchPageProps) {
   const activeNavLink: React.CSSProperties = {color: 'red'};
@@ -74,10 +78,10 @@ function App(props: SearchPageProps) {
           </button>
           <button>
             <NavLink
-              to="/product-recommendations"
+              to="/commerce"
               style={({isActive}) => (isActive ? activeNavLink : {})}
             >
-              Product Recommendations
+              Commerce
             </NavLink>
           </button>
         </nav>
@@ -91,10 +95,11 @@ function App(props: SearchPageProps) {
           <Route path="/saml" element={<SamlPage />} />
           <Route path="/dependent-facet" element={<DependentFacetPage />} />
           <Route path="/analyticshooks" element={<AnalyticsHook />} />
-          <Route
-            path="/product-recommendations"
-            element={<ProductRecommendationsPage />}
-          />
+          <Route path="/commerce" element={<CommerceApp />}>
+            <Route path="search" element={<CommerceSearchPage />} />
+            <Route path="product-listing" element={<ProductListingPage />} />
+            <Route path="recommendations" element={<RecommendationsPage />} />
+          </Route>
           <Route path="/search-page" element={<SearchPage {...props} />} />
           <Route path="/" element={<SearchPage {...props} />} />
         </Routes>

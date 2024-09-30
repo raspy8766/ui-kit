@@ -1,17 +1,18 @@
-import {validatePayload} from '../../../../utils/validate-payload';
+import {validatePayload} from '../../../../utils/validate-payload.js';
 import {
   InsightAction,
-  makeInsightAnalyticsAction,
-} from '../../../analytics/analytics-utils';
-import {getCaseContextAnalyticsMetadata} from '../../../case-context/case-context-state';
-import {getRangeFacetMetadata} from '../generic/range-facet-analytics-actions';
-import {rangeFacetSelectionPayloadDefinition} from '../generic/range-facet-validate-payload';
-import {LogDateFacetBreadcrumbActionCreatorPayload} from './date-facet-analytics-actions';
+  makeInsightAnalyticsActionFactory,
+} from '../../../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../../../analytics/search-action-cause.js';
+import {getCaseContextAnalyticsMetadata} from '../../../case-context/case-context-state.js';
+import {getRangeFacetMetadata} from '../generic/range-facet-analytics-actions.js';
+import {rangeFacetSelectionPayloadDefinition} from '../generic/range-facet-validate-payload.js';
+import {LogDateFacetBreadcrumbActionCreatorPayload} from './date-facet-analytics-actions.js';
 
 export const logDateFacetBreadcrumb = (
   payload: LogDateFacetBreadcrumbActionCreatorPayload
 ): InsightAction =>
-  makeInsightAnalyticsAction(
+  makeInsightAnalyticsActionFactory(SearchPageEvents.breadcrumbFacet)(
     'analytics/dateFacet/breadcrumb',
     (client, state) => {
       validatePayload(

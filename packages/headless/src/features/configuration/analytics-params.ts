@@ -1,29 +1,32 @@
 import {EventDescription} from 'coveo.analytics';
-import {getVisitorID} from '../../api/analytics/coveo-analytics-utils';
-import {getPageID} from '../../api/analytics/search-analytics';
-import {AnalyticsParam} from '../../api/search/search-api-params';
-import {AnalyticsState} from './configuration-state';
+import {getAnalyticsSource} from '../../api/analytics/analytics-selectors.js';
+import {AnalyticsParam} from '../../api/search/search-api-params.js';
+import {NavigatorContext} from '../../app/navigatorContextProvider.js';
+import {AnalyticsState} from './configuration-state.js';
 
-export const fromAnalyticsStateToAnalyticsParams = async (
+export const fromAnalyticsStateToAnalyticsParams = (
   s: AnalyticsState,
+  navigatorContext: NavigatorContext,
   eventDescription?: EventDescription
-): Promise<AnalyticsParam> => {
+): AnalyticsParam => {
   return {
     analytics: {
-      clientId: await getVisitorID(s),
+      clientId: navigatorContext.clientId,
       clientTimestamp: new Date().toISOString(),
-      documentReferrer: s.originLevel3,
+      documentReferrer: navigatorContext.referrer,
+      documentLocation: navigatorContext.location,
       originContext: s.originContext,
       ...(eventDescription && {
         actionCause: eventDescription.actionCause,
+      }),
+      ...(eventDescription && {
         customData: eventDescription.customData,
       }),
       ...(s.userDisplayName && {userDisplayName: s.userDisplayName}),
-      ...(s.documentLocation && {documentLocation: s.documentLocation}),
       ...(s.deviceId && {deviceId: s.deviceId}),
-      ...(getPageID() && {pageId: getPageID()}),
-      ...(s.analyticsMode && s.trackingId && {trackingId: s.trackingId}),
-      ...{capture: s.analyticsMode === 'next' ?? false},
+      ...(s.trackingId && {trackingId: s.trackingId}),
+      ...{capture: true},
+      ...{source: getAnalyticsSource(s)},
     },
   };
 };

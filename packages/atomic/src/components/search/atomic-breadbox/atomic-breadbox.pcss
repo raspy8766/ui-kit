@@ -1,5 +1,5 @@
 @import '../../../global/global.pcss';
-@import '../atomic-rating/atomic-rating.pcss';
+@import '../../common/atomic-rating/atomic-rating.pcss';
 
 .max-w-snippet {
   max-width: 30ch;
@@ -9,9 +9,4 @@
 [part='breadcrumb-value'].excluded {
   text-decoration: line-through;
   color: var(--atomic-error);
-}
-
-/* When excluded, strikethrough line must be continuous, so we must prepend empty character instead of margin */
-[part='breadcrumb-value']::before {
-  content: '\00a0';
 }

@@ -1,18 +1,29 @@
-import {SearchEngine} from '../../../app/search-engine/search-engine';
-import {ControllerDefinitionWithoutProps} from '../../../app/ssr-engine/types/common';
+import {SearchEngine} from '../../../app/search-engine/search-engine.js';
+import {ControllerDefinitionWithoutProps} from '../../../app/ssr-engine/types/common.js';
 import {
   AutomaticFacetGenerator,
   AutomaticFacetGeneratorProps,
   buildAutomaticFacetGenerator,
-} from './headless-automatic-facet-generator';
+} from './headless-automatic-facet-generator.js';
 
-export * from './headless-automatic-facet-generator';
+export * from './headless-automatic-facet-generator.js';
+
+export interface AutomaticFacetGeneratorDefinition
+  extends ControllerDefinitionWithoutProps<
+    SearchEngine,
+    AutomaticFacetGenerator
+  > {}
 
 /**
- * @internal
- */
-export const defineAutomaticFacetGenerator = (
+ * Defines an `AutomaticFacetGenerator` controller instance.
+ *
+ * @param props - The configurable `AutomaticFacetGenerator` properties.
+ * @returns The `AutomaticFacetGenerator` controller definition.
+ * */
+export function defineAutomaticFacetGenerator(
   props: AutomaticFacetGeneratorProps
-): ControllerDefinitionWithoutProps<SearchEngine, AutomaticFacetGenerator> => ({
-  build: (engine) => buildAutomaticFacetGenerator(engine, props),
-});
+): AutomaticFacetGeneratorDefinition {
+  return {
+    build: (engine) => buildAutomaticFacetGenerator(engine, props),
+  };
+}

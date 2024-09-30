@@ -10,9 +10,15 @@ import {
   DateFilterState,
   DateRangeRequest,
   deserializeRelativeDate,
+  RangeFacetSortCriterion,
   loadDateFacetSetActions,
   SearchStatus,
   SearchStatusState,
+  FacetValueRequest,
+  CategoryFacetValueRequest,
+  buildTabManager,
+  TabManager,
+  TabManagerState,
 } from '@coveo/headless';
 import {Component, Element, h, Listen, Prop, State} from '@stencil/core';
 import {FocusTargetController} from '../../../../utils/accessibility-utils';
@@ -21,8 +27,8 @@ import {
   InitializableComponent,
   InitializeBindings,
 } from '../../../../utils/initialization-utils';
-import {MapProp} from '../../../../utils/props-utils';
-import {BaseFacet, parseDependsOn} from '../../../common/facets/facet-common';
+import {ArrayProp, MapProp} from '../../../../utils/props-utils';
+import {parseDependsOn} from '../../../common/facets/depends-on';
 import {FacetPlaceholder} from '../../../common/facets/facet-placeholder/facet-placeholder';
 import {TimeframeFacetCommon} from '../../../common/facets/timeframe-facet-common';
 import {Bindings} from '../../atomic-search-interface/atomic-search-interface';
@@ -30,6 +36,8 @@ import {Bindings} from '../../atomic-search-interface/atomic-search-interface';
 /**
  * A facet is a list of values for a certain field occurring in the results.
  * An `atomic-timeframe-facet` displays a facet of the results for the current query as date intervals.
+ *
+ * @slot default - The `atomic-timeframe` components defining the timeframes to display.
  *
  * @part facet - The wrapper for the entire facet.
  * @part placeholder - The placeholder shown before the first search is executed.
@@ -55,9 +63,7 @@ import {Bindings} from '../../atomic-search-interface/atomic-search-interface';
   styleUrl: './atomic-timeframe-facet.pcss',
   shadow: true,
 })
-export class AtomicTimeframeFacet
-  implements InitializableComponent, BaseFacet<DateFacet>
-{
+export class AtomicTimeframeFacet implements InitializableComponent {
   @InitializeBindings() public bindings!: Bindings;
   public facetForDateRange?: DateFacet;
   public facetForDatePicker?: DateFacet;
@@ -65,6 +71,7 @@ export class AtomicTimeframeFacet
   private timeframeFacetCommon?: TimeframeFacetCommon;
   public filter?: DateFilter;
   public searchStatus!: SearchStatus;
+  public tabManager!: TabManager;
   @Element() private host!: HTMLElement;
 
   @BindStateToController('facetForDateRange')
@@ -79,6 +86,9 @@ export class AtomicTimeframeFacet
   @BindStateToController('searchStatus')
   @State()
   public searchStatusState!: SearchStatusState;
+  @BindStateToController('tabManager')
+  @State()
+  public tabManagerState!: TabManagerState;
   @State() public error!: Error;
 
   /**
@@ -94,6 +104,32 @@ export class AtomicTimeframeFacet
    * The field whose values you want to display in the facet.
    */
   @Prop({reflect: true}) public field = 'date';
+  /**
+   * The tabs on which the facet can be displayed. This property should not be used at the same time as `tabs-excluded`.
+   *
+   * Set this property as a stringified JSON array, e.g.,
+   * ```html
+   *  <atomic-timeframe-facet tabs-included='["tabIDA", "tabIDB"]'></atomic-timeframe-facet>
+   * ```
+   * If you don't set this property, the facet can be displayed on any tab. Otherwise, the facet can only be displayed on the specified tabs.
+   */
+  @ArrayProp()
+  @Prop({reflect: true, mutable: true})
+  public tabsIncluded: string[] | string = '[]';
+
+  /**
+   * The tabs on which this facet must not be displayed. This property should not be used at the same time as `tabs-included`.
+   *
+   * Set this property as a stringified JSON array, e.g.,
+   * ```html
+   *  <atomic-timeframe-facet tabs-excluded='["tabIDA", "tabIDB"]'></atomic-timeframe-facet>
+   * ```
+   * If you don't set this property, the facet can be displayed on any tab. Otherwise, the facet won't be displayed on any of the specified tabs.
+   */
+  @ArrayProp()
+  @Prop({reflect: true, mutable: true})
+  public tabsExcluded: string[] | string = '[]';
+
   /**
    * Whether this facet should contain an datepicker allowing users to set custom ranges.
    */
@@ -161,6 +197,13 @@ export class AtomicTimeframeFacet
    */
   @Prop({reflect: true}) public max?: string;
 
+  /**
+   * The sort criterion to apply to the returned facet values.
+   * Possible values are 'ascending' and 'descending'.
+   */
+  @Prop({reflect: true}) public sortCriteria: RangeFacetSortCriterion =
+    'descending';
+
   private headerFocus?: FocusTargetController;
 
   private get focusTarget(): FocusTargetController {
@@ -171,6 +214,14 @@ export class AtomicTimeframeFacet
   }
 
   public initialize() {
+    if (
+      [...this.tabsIncluded].length > 0 &&
+      [...this.tabsExcluded].length > 0
+    ) {
+      console.warn(
+        'Values for both "tabs-included" and "tabs-excluded" have been provided. This is could lead to unexpected behaviors.'
+      );
+    }
     this.timeframeFacetCommon = new TimeframeFacetCommon({
       facetId: this.facetId,
       host: this.host,
@@ -178,14 +229,16 @@ export class AtomicTimeframeFacet
       label: this.label,
       field: this.field,
       headingLevel: this.headingLevel,
-      dependsOn: this.dependsOn,
+      dependsOn: parseDependsOn(this.dependsOn) && this.dependsOn,
       withDatePicker: this.withDatePicker,
       setFacetId: (id: string) => (this.facetId = id),
       buildDependenciesManager: () =>
         buildFacetConditionsManager(this.bindings.engine, {
           facetId:
             this.facetForDateRange?.state.facetId ?? this.filter!.state.facetId,
-          conditions: parseDependsOn(this.dependsOn),
+          conditions: parseDependsOn<
+            FacetValueRequest | CategoryFacetValueRequest
+          >(this.dependsOn),
         }),
       buildDateRange,
       getSearchStatusState: () => this.searchStatusState,
@@ -196,8 +249,10 @@ export class AtomicTimeframeFacet
       initializeFilter: () => this.initializeFilter(),
       min: this.min,
       max: this.max,
+      sortCriteria: this.sortCriteria,
     });
     this.searchStatus = buildSearchStatus(this.bindings.engine);
+    this.tabManager = buildTabManager(this.bindings.engine);
   }
 
   public disconnectedCallback() {
@@ -213,6 +268,10 @@ export class AtomicTimeframeFacet
         field: this.field,
         filterFacetCount: this.filterFacetCount,
         injectionDepth: this.injectionDepth,
+        tabs: {
+          included: [...this.tabsIncluded],
+          excluded: [...this.tabsExcluded],
+        },
       },
     });
     return this.facetForDatePicker;
@@ -225,9 +284,13 @@ export class AtomicTimeframeFacet
         field: this.field,
         currentValues: values,
         generateAutomaticRanges: false,
-        sortCriteria: 'descending',
+        sortCriteria: this.sortCriteria,
         filterFacetCount: this.filterFacetCount,
         injectionDepth: this.injectionDepth,
+        tabs: {
+          included: [...this.tabsIncluded],
+          excluded: [...this.tabsExcluded],
+        },
       },
     });
     return this.facetForDateRange;

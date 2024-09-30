@@ -1,32 +1,33 @@
-import {QuerySetActionCreators, Suggestion} from '@coveo/headless';
-import {Component, h, Prop, State} from '@stencil/core';
+import {loadInsightSearchActions} from '@coveo/headless/insight';
+import {Component, Element, h, Prop, State} from '@stencil/core';
 import {
   buildInsightSearchBox,
   InsightSearchBox,
   InsightSearchBoxState,
-  loadInsightQuerySetActions,
+  InsightSuggestion,
 } from '..';
-import SearchIcon from '../../../images/search.svg';
+import SearchSlimIcon from '../../../images/search-slim.svg';
 import {AriaLiveRegion} from '../../../utils/accessibility-utils';
-import {isMacOS} from '../../../utils/device-utils';
+import {hasKeyboard, isMacOS} from '../../../utils/device-utils';
 import {
   BindStateToController,
   InitializeBindings,
 } from '../../../utils/initialization-utils';
-import {encodeForDomAttribute} from '../../../utils/string-utils';
-import {randomID} from '../../../utils/utils';
-import {SearchBoxCommon} from '../../common/search-box/search-box-common';
+import {isFocusingOut, randomID} from '../../../utils/utils';
 import {SearchBoxWrapper} from '../../common/search-box/search-box-wrapper';
-import {SearchInput} from '../../common/search-box/search-input';
+import {SearchTextArea} from '../../common/search-box/search-text-area';
 import {
-  ButtonSearchSuggestion,
-  queryDataAttribute,
-} from '../../search/atomic-search-box/search-suggestion';
+  getPartialSearchBoxSuggestionElement,
+  QuerySuggestionContainer,
+  QuerySuggestionIcon,
+  QuerySuggestionText,
+} from '../../common/suggestions/query-suggestions';
+import {SuggestionManager} from '../../common/suggestions/suggestion-manager';
 import {
-  elementHasNoQuery,
   elementHasQuery,
   SearchBoxSuggestionElement,
-} from '../../search/search-box-suggestions/suggestions-common';
+} from '../../common/suggestions/suggestions-common';
+import {ButtonSearchSuggestion} from '../../search/atomic-search-box/search-suggestion';
 import {InsightBindings} from '../atomic-insight-interface/atomic-insight-interface';
 
 /**
@@ -42,19 +43,16 @@ export class AtomicInsightSearchBox {
 
   private searchBox!: InsightSearchBox;
   private id!: string;
-  private inputRef!: HTMLInputElement;
-  private panelRef: HTMLElement | undefined;
-  private querySetActions!: QuerySetActionCreators;
-  private searchBoxCommon!: SearchBoxCommon;
+  private textAreaRef!: HTMLTextAreaElement;
+  private suggestionManager!: SuggestionManager<InsightSearchBox>;
+
+  @Element() private host!: HTMLElement;
 
   @BindStateToController('searchBox')
   @State()
   private searchBoxState!: InsightSearchBoxState;
   @State() public error!: Error;
-  @State() private suggestedQuery = '';
   @State() private isExpanded = false;
-  @State() private suggestionElements: SearchBoxSuggestionElement[] = [];
-  @State() private activeDescendant = '';
 
   /**
    * Whether to prevent the user from triggering a search from the component.
@@ -74,11 +72,10 @@ export class AtomicInsightSearchBox {
 
   public initialize() {
     this.id = randomID('atomic-search-box-');
-    this.querySetActions = loadInsightQuerySetActions(this.bindings.engine);
 
     const searchBoxOptions = {
       id: this.id,
-      numberOfSuggestions: this.numberOfSuggestions,
+      numberOfSuggestions: 0,
       highlightOptions: {
         notMatchDelimiters: {
           open: '<span class="font-bold">',
@@ -91,105 +88,48 @@ export class AtomicInsightSearchBox {
       },
     };
 
+    const {fetchQuerySuggestions, registerQuerySuggest} =
+      loadInsightSearchActions(this.bindings.engine);
+
     this.searchBox = buildInsightSearchBox(this.bindings.engine, {
       options: searchBoxOptions,
     });
 
-    this.searchBoxCommon = new SearchBoxCommon({
-      id: this.id,
-      bindings: this.bindings,
-      querySetActions: this.querySetActions,
-      focusValue: this.focusValue.bind(this),
-      clearSuggestions: this.clearSuggestions.bind(this),
-      getIsSearchDisabled: () => this.disableSearch,
-      getIsExpanded: () => this.isExpanded,
-      getPanelInFocus: () => this.panelRef,
-      getActiveDescendant: () => this.activeDescendant,
-      getActiveDescendantElement: () => this.activeDescendantElement,
-      getAllSuggestionElements: () => this.suggestionElements,
+    this.bindings.engine.dispatch(
+      registerQuerySuggest({id: this.id, count: this.numberOfSuggestions})
+    );
+
+    this.suggestionManager = new SuggestionManager({
+      getNumberOfSuggestionsToDisplay: () => this.numberOfSuggestions,
+      updateQuery: (query) => this.searchBox.updateText(query),
+      getSearchBoxValue: () => this.searchBoxState.value,
+      getSuggestionTimeout: () => 500,
+      getSuggestionDelay: () => 0,
+      getHost: () => this.host,
+      getLogger: () => this.bindings.engine.logger,
+    });
+
+    this.suggestionManager.registerSuggestions({
+      position: 0,
+      renderItems: () =>
+        this.searchBox.state.suggestions.map((suggestion) =>
+          this.renderSuggestionItem(suggestion)
+        ),
+      onInput: () => {
+        this.bindings.engine.dispatch(fetchQuerySuggestions({id: this.id}));
+      },
+      panel: 'left',
     });
   }
 
-  private get suggestions() {
-    return this.searchBoxState?.suggestions ?? [];
-  }
-
-  private get activeDescendantElement(): HTMLElement | null {
-    if (!this.searchBoxCommon.hasActiveDescendant) {
-      return null;
-    }
-
-    return this.panelRef?.querySelector(`#${this.activeDescendant}`) || null;
-  }
-
-  private updateActiveDescendant(activeDescendant = '') {
-    this.activeDescendant = activeDescendant;
-  }
-
-  private clearSuggestionElements() {
-    this.suggestionElements = [];
-    this.searchBoxAriaMessage = '';
-  }
-
-  private clearSuggestions() {
-    this.isExpanded = false;
-    this.updateActiveDescendant();
-    this.clearSuggestionElements();
-  }
-
   private onSubmit() {
-    if (this.activeDescendantElement) {
-      this.activeDescendantElement.click();
-      this.updateActiveDescendant();
+    if (this.suggestionManager.activeDescendantElement) {
+      this.suggestionManager.clickOnActiveElement();
       return;
     }
 
     this.searchBox.submit();
-    this.updateActiveDescendant();
-    this.clearSuggestions();
-  }
-
-  private onSuggestionMouseOver(item: SearchBoxSuggestionElement, id: string) {
-    this.updateActiveDescendant(id);
-    if (item.query) {
-      this.updateSuggestedQuery(item.query);
-    }
-  }
-
-  private updateQueryFromSuggestion() {
-    const suggestedQuery =
-      this.activeDescendantElement?.getAttribute(queryDataAttribute);
-    if (suggestedQuery && this.searchBoxState.value !== suggestedQuery) {
-      this.searchBoxCommon.updateQuery(suggestedQuery);
-      this.updateSuggestedQuery(suggestedQuery);
-    }
-  }
-
-  private updateAriaLiveActiveDescendant(value: HTMLElement) {
-    if (isMacOS()) {
-      this.suggestionsAriaMessage = value.ariaLabel!;
-    }
-  }
-
-  private focusValue(value: HTMLElement) {
-    this.updateActiveDescendant(value.id);
-    this.searchBoxCommon.scrollActiveDescendantIntoView();
-    this.updateQueryFromSuggestion();
-    this.updateAriaLiveActiveDescendant(value);
-  }
-
-  private updateSuggestionElements() {
-    this.suggestionElements = this.getSuggestionElements(this.suggestions);
-  }
-
-  private getSuggestionElements(suggestions: Suggestion[]) {
-    const elements = suggestions.map((suggestion) =>
-      this.renderSuggestionItem(suggestion)
-    );
-    const max =
-      this.numberOfSuggestions + elements.filter(elementHasNoQuery).length;
-
-    return elements.slice(0, max);
+    this.suggestionManager.clearSuggestions();
   }
 
   private onKeyDown(e: KeyboardEvent) {
@@ -202,55 +142,27 @@ export class AtomicInsightSearchBox {
         this.onSubmit();
         break;
       case 'Escape':
-        this.clearSuggestions();
+        this.suggestionManager.clearSuggestions();
         break;
       case 'ArrowDown':
         e.preventDefault();
-        this.searchBoxCommon.focusNextValue();
+        this.suggestionManager.focusNextValue();
+        this.announceNewActiveSuggestionToScreenReader();
         break;
       case 'ArrowUp':
         e.preventDefault();
-        if (this.searchBoxCommon.firstValue === this.activeDescendantElement) {
-          this.updateActiveDescendant();
-        } else {
-          this.searchBoxCommon.focusPreviousValue();
-        }
+        this.suggestionManager.focusPreviousValue();
+        this.announceNewActiveSuggestionToScreenReader();
         break;
       case 'Tab':
-        this.clearSuggestions();
+        this.suggestionManager.clearSuggestions();
         break;
     }
   }
 
-  private updateAriaMessage() {
-    const elsLength = this.suggestionElements.filter(elementHasQuery).length;
-    this.searchBoxAriaMessage = elsLength
-      ? this.bindings.i18n.t('query-suggestions-available', {
-          count: elsLength,
-        })
-      : this.bindings.i18n.t('query-suggestions-unavailable');
-  }
-
-  private async triggerSuggestions() {
-    this.updateSuggestedQuery('');
-    this.updateAriaMessage();
-  }
-
-  private onInput(value: string) {
-    this.isExpanded = true;
-    this.searchBox.updateText(value);
-    this.triggerSuggestions();
-  }
-
-  private onFocus() {
-    this.isExpanded = true;
-    this.updateActiveDescendant();
-    this.searchBox.showSuggestions();
-    this.triggerSuggestions();
-  }
-
-  private async updateSuggestedQuery(suggestedQuery: string) {
-    this.suggestedQuery = suggestedQuery;
+  private triggerTextAreaChange(value: string) {
+    this.textAreaRef.value = value;
+    this.textAreaRef.dispatchEvent(new window.Event('change'));
   }
 
   private renderSuggestion(
@@ -261,7 +173,8 @@ export class AtomicInsightSearchBox {
     const id = `${this.id}-suggestion-${item.key}`;
 
     const isSelected =
-      id === this.activeDescendant || this.suggestedQuery === item.query;
+      id === this.suggestionManager.activeDescendant ||
+      this.suggestionManager.suggestedQuery === item.query;
 
     if (index === lastIndex && item.hideIfLast) {
       return null;
@@ -278,47 +191,36 @@ export class AtomicInsightSearchBox {
         lastIndex={lastIndex}
         isDoubleList={false}
         onClick={(e: Event) => {
-          this.searchBoxCommon.onSuggestionClick(item, e);
+          this.suggestionManager.onSuggestionClick(item, e);
         }}
         onMouseOver={() => {
-          this.onSuggestionMouseOver(item, id);
+          this.suggestionManager.onSuggestionMouseOver(item, 'left', id);
         }}
       ></ButtonSearchSuggestion>
     );
   }
 
   private renderSuggestionItem(
-    suggestion: Suggestion
+    suggestion: InsightSuggestion
   ): SearchBoxSuggestionElement {
     const hasQuery = this.searchBox.state.value !== '';
+    const partialItem = getPartialSearchBoxSuggestionElement(
+      suggestion,
+      this.bindings.i18n
+    );
+
     return {
-      part: 'query-suggestion-item',
+      ...partialItem,
       content: (
-        <div part="query-suggestion-content" class="flex items-center">
-          <atomic-icon
-            part="query-suggestion-icon"
-            icon={SearchIcon}
-            class="w-4 h-4 mr-2 shrink-0"
-          ></atomic-icon>
-          {hasQuery ? (
-            <span
-              part="query-suggestion-text"
-              class="break-all line-clamp-2"
-              innerHTML={suggestion.highlightedValue}
-            ></span>
-          ) : (
-            <span part="query-suggestion-text" class="break-all line-clamp-2">
-              {suggestion.rawValue}
-            </span>
-          )}
-        </div>
+        <QuerySuggestionContainer>
+          <QuerySuggestionIcon
+            icon={SearchSlimIcon}
+            hasSuggestion={this.searchBoxState.suggestions.length > 1}
+          />
+
+          <QuerySuggestionText suggestion={suggestion} hasQuery={hasQuery} />
+        </QuerySuggestionContainer>
       ),
-      key: `qs-${encodeForDomAttribute(suggestion.rawValue)}`,
-      query: suggestion.rawValue,
-      ariaLabel: this.bindings.i18n.t('query-suggestion-label', {
-        query: suggestion.rawValue,
-        interpolation: {escapeValue: false},
-      }),
       onSelect: () => {
         this.searchBox.selectSuggestion(suggestion.rawValue);
       },
@@ -353,63 +255,114 @@ export class AtomicInsightSearchBox {
   }
 
   private renderSuggestions() {
-    if (!this.searchBoxCommon.hasSuggestions) {
-      this.updateSuggestedQuery('');
-      this.updateActiveDescendant();
+    if (!this.suggestionManager.hasSuggestions) {
+      this.suggestionManager.updateActiveDescendant();
       return null;
     }
 
     return (
       <div
-        id={this.searchBoxCommon.popupId}
+        id={`${this.id}-popup`}
         part="suggestions-wrapper"
-        class={`flex w-full z-10 absolute left-0 top-full rounded-md bg-background border border-neutral ${
-          this.searchBoxCommon.showSuggestions ? '' : 'hidden'
+        class={`bg-background border-neutral absolute left-0 top-full z-10 flex w-full rounded-md border ${
+          this.suggestionManager.hasSuggestions && this.isExpanded
+            ? ''
+            : 'hidden'
         }`}
         role="application"
         aria-label={this.bindings.i18n.t('search-suggestions-single-list')}
-        aria-activedescendant={this.activeDescendant}
+        {...(this.suggestionManager.activeDescendant && {
+          'aria-activedescendant': this.suggestionManager.activeDescendant,
+        })}
       >
         {this.renderPanel(
-          this.suggestionElements,
-          (el) => (this.panelRef = el),
-          () => this.panelRef
+          this.suggestionManager.allSuggestionElements,
+          (el) => (this.suggestionManager.leftPanel = el),
+          () => this.suggestionManager.leftPanel
         )}
       </div>
     );
   }
 
-  componentWillRender() {
-    this.updateSuggestionElements();
+  private getSearchInputLabel() {
+    if (isMacOS()) {
+      return this.bindings.i18n.t('search-box-with-suggestions-macos');
+    }
+    if (!hasKeyboard()) {
+      return this.bindings.i18n.t('search-box-with-suggestions-keyboardless');
+    }
+    return this.bindings.i18n.t('search-box-with-suggestions');
+  }
+
+  private async onFocus() {
+    if (this.isExpanded) {
+      return;
+    }
+    this.isExpanded = true;
+    await this.suggestionManager.triggerSuggestions();
+    this.announceNewSuggestionsToScreenReader();
+  }
+
+  private async onInput(value: string) {
+    this.searchBox.updateText(value);
+    this.isExpanded = true;
+    await this.suggestionManager.triggerSuggestions();
+    this.announceNewSuggestionsToScreenReader();
+  }
+
+  private announceNewActiveSuggestionToScreenReader() {
+    const ariaLabel = this.suggestionManager.activeDescendantElement?.ariaLabel;
+    if (isMacOS() && ariaLabel) {
+      this.suggestionsAriaMessage = ariaLabel;
+    }
+  }
+
+  private announceNewSuggestionsToScreenReader() {
+    const numberOfSuggestionsToAnnounce =
+      this.suggestionManager.allSuggestionElements.filter(
+        elementHasQuery
+      ).length;
+    this.searchBoxAriaMessage = numberOfSuggestionsToAnnounce
+      ? this.bindings.i18n.t('query-suggestions-available', {
+          count: numberOfSuggestionsToAnnounce,
+        })
+      : this.bindings.i18n.t('query-suggestions-unavailable');
   }
 
   public render() {
     return (
-      <SearchBoxWrapper disabled={this.disableSearch}>
-        <atomic-focus-detector
-          style={{display: 'contents'}}
-          onFocusExit={() => this.clearSuggestions()}
-        >
-          <atomic-icon
-            part="submit-icon"
-            icon={SearchIcon}
-            class="w-4 h-full my-auto mr-0 ml-4"
-          />
-          <SearchInput
-            inputRef={this.inputRef}
-            loading={this.searchBoxState.isLoading}
-            ref={(el) => (this.inputRef = el as HTMLInputElement)}
-            bindings={this.bindings}
-            value={this.searchBoxState.value}
-            ariaLabel={this.searchBoxCommon.getSearchInputLabel()}
-            placeholder={this.bindings.i18n.t('search-ellipsis')}
-            onFocus={() => this.onFocus()}
-            onKeyDown={(e) => this.onKeyDown(e)}
-            onClear={() => this.searchBox.clear()}
-            onInput={(e) => this.onInput((e.target as HTMLInputElement).value)}
-          />
-          {this.renderSuggestions()}
-        </atomic-focus-detector>
+      <SearchBoxWrapper
+        disabled={this.disableSearch}
+        onFocusout={(event) => {
+          if (!isFocusingOut(event)) {
+            return;
+          }
+          this.suggestionManager.clearSuggestions();
+          this.isExpanded = false;
+        }}
+      >
+        <atomic-icon
+          part="submit-icon"
+          icon={SearchSlimIcon}
+          class="my-auto ml-4 mr-0 h-4 w-4"
+        />
+        <SearchTextArea
+          textAreaRef={this.textAreaRef}
+          loading={this.searchBoxState.isLoading}
+          ref={(el) => el && (this.textAreaRef = el)}
+          bindings={this.bindings}
+          value={this.searchBoxState.value}
+          ariaLabel={this.getSearchInputLabel()}
+          placeholder={this.bindings.i18n.t('search-ellipsis')}
+          onFocus={() => this.onFocus()}
+          onKeyDown={(e) => this.onKeyDown(e)}
+          onClear={() => {
+            this.searchBox.clear();
+            this.triggerTextAreaChange('');
+          }}
+          onInput={(e) => this.onInput((e.target as HTMLInputElement).value)}
+        />
+        {this.renderSuggestions()}
       </SearchBoxWrapper>
     );
   }

@@ -1,4 +1,6 @@
-@import '../../common/result/result.pcss';
+@import '../../common/template-system/template-system.pcss';
+
+@mixin atomic-template-system map(post-css-map-for-sections, insight);
 
 :host {
   @apply relative;
@@ -25,10 +27,5 @@
     atomic-insight-result-action-bar {
       @apply top-0;
     }
-  }
-
-  atomic-load-more-children-results::part(button) {
-    margin-bottom: 0;
-    padding: 0.2rem 0.5rem;
   }
 }

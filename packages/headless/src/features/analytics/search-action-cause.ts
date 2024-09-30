@@ -10,11 +10,11 @@ export enum SearchPageEvents {
   /**
    * Identifies the search event that gets logged when `enableAutoCorrection: true` and the query is automatically corrected.
    */
-  didyoumeanAutomatic = 'didyoumeanAutomatic',
+  didYouMeanAutomatic = 'didYouMeanAutomatic',
   /**
    * Identifies the search event that gets logged when the query suggestion with the corrected term is selected and successfully updates the query.
    */
-  didyoumeanClick = 'didyoumeanClick',
+  didYouMeanClick = 'didYouMeanClick',
   /**
    * Identifies the search event that gets logged when a sorting method is selected.
    */
@@ -80,25 +80,9 @@ export enum SearchPageEvents {
    */
   triggerRedirect = 'redirect',
   /**
-   * Identifies the custom event that gets logged when the Results per page component is selected.
+   * Identifies the search cause that gets logged for pagination and other user navigation that do not express a new search intent.
    */
-  pagerResize = 'pagerResize',
-  /**
-   * Identifies the custom event that gets logged when a page number is selected and more items are loaded.
-   */
-  pagerNumber = 'pagerNumber',
-  /**
-   * Identifies the custom event that gets logged when the Next Page link is selected and more items are loaded.
-   */
-  pagerNext = 'pagerNext',
-  /**
-   * Identifies the custom event that gets logged when the Previous Page link is selected and more items are loaded.
-   */
-  pagerPrevious = 'pagerPrevious',
-  /**
-   * Identifies the custom event that gets logged when the user scrolls to the bottom of the item page and more results are loaded.
-   */
-  pagerScrolling = 'pagerScrolling',
+  browseResults = 'browseResults',
   /**
    * Identifies the search event that gets logged when the clearing all selected values of a static filter.
    */
@@ -217,18 +201,6 @@ export enum SearchPageEvents {
    */
   collapseSmartSnippetSuggestion = 'collapseSmartSnippetSuggestion',
   /**
-   * Identifies the custom event that gets logged when the user presses "show more" on a snippet suggestion for a related question.
-   *
-   * @deprecated
-   */
-  showMoreSmartSnippetSuggestion = 'showMoreSmartSnippetSuggestion',
-  /**
-   * Identifies the custom event that gets logged when the user presses "show less" on a snippet suggestion for a related question.
-   *
-   * @deprecated
-   */
-  showLessSmartSnippetSuggestion = 'showLessSmartSnippetSuggestion',
-  /**
    * Identifies the custom event that gets logged when a user clicks on the source of an answer in a smart snippet.
    */
   openSmartSnippetSource = 'openSmartSnippetSource',
@@ -316,4 +288,44 @@ export enum SearchPageEvents {
   historyForward = 'historyForward',
 
   historyBackward = 'historyBackward',
+  /**
+   * Identifies the search event that gets logged when the query context is updated as a result of updating one of the case context fields.
+   */
+  contextChanged = 'contextChanged',
+  /**
+   * Identifies the custom event that gets logged when a user hovers over a generated answer citation.
+   */
+  generatedAnswerSourceHover = 'generatedAnswerSourceHover',
+  /**
+   * Identifies the custom event that gets logged when a user submits feedback on a generated answer.
+   */
+  generatedAnswerFeedbackSubmit = 'generatedAnswerFeedbackSubmit',
+  /**
+   * Identifies the custom event that gets logged when a user deactivates the RGA feature.
+   */
+  generatedAnswerHideAnswers = 'generatedAnswerHideAnswers',
+  /**
+   * Identifies the custom event that gets logged when a user activates the RGA feature.
+   */
+  generatedAnswerShowAnswers = 'generatedAnswerShowAnswers',
+  /**
+   * Identifies the custom event that gets logged when a user expands a generated answer.
+   */
+  generatedAnswerExpand = 'generatedAnswerExpand',
+  /**
+   * Identifies the custom event that gets logged when a user collapses a generated answer.
+   */
+  generatedAnswerCollapse = 'generatedAnswerCollapse',
+  /**
+   * Identifies the custom event that gets logged when a user clicks the copy to clipboard button of a generated answer.
+   */
+  generatedAnswerCopyToClipboard = 'generatedAnswerCopyToClipboard',
+  /**
+   * Identifies the custom event that gets logged when the user opens the full search page from the insight panel.
+   */
+  expandToFullUI = 'expandToFullUI',
+  /**
+   * Identifies the custom event that gets logged when the user clicks the create article button.
+   */
+  createArticle = 'createArticle',
 }

@@ -1,13 +1,25 @@
-import {buildMockSearch} from '../../test/mock-search';
-import {change} from '../history/history-actions';
-import {getHistoryInitialState} from '../history/history-state';
-import {selectQuerySuggestion} from '../query-suggest/query-suggest-actions';
-import {logSearchboxSubmit} from '../query/query-analytics-actions';
-import {restoreSearchParameters} from '../search-parameters/search-parameter-actions';
-import {executeSearch} from '../search/search-actions';
-import {registerQuerySetQuery, updateQuerySetQuery} from './query-set-actions';
-import {querySetReducer} from './query-set-slice';
-import {getQuerySetInitialState, QuerySetState} from './query-set-state';
+import {SearchCommerceSuccessResponse} from '../../api/commerce/search/response.js';
+import {buildMockSearch} from '../../test/mock-search.js';
+import {selectQuerySuggestion as selectCommerceQuerySuggestion} from '../commerce/query-suggest/query-suggest-actions.js';
+import {restoreSearchParameters as commerceRestoreSearchParameters} from '../commerce/search-parameters/search-parameters-actions.js';
+import {
+  QuerySearchCommerceAPIThunkReturn,
+  executeSearch as commerceExecuteSearch,
+} from '../commerce/search/search-actions.js';
+import {change} from '../history/history-actions.js';
+import {getHistoryInitialState} from '../history/history-state.js';
+import {selectQuerySuggestion} from '../query-suggest/query-suggest-actions.js';
+import {restoreSearchParameters} from '../search-parameters/search-parameter-actions.js';
+import {
+  ExecuteSearchThunkReturn,
+  executeSearch,
+} from '../search/search-actions.js';
+import {
+  registerQuerySetQuery,
+  updateQuerySetQuery,
+} from './query-set-actions.js';
+import {querySetReducer} from './query-set-slice.js';
+import {getQuerySetInitialState, QuerySetState} from './query-set-state.js';
 
 describe('querySet slice', () => {
   let state: QuerySetState;
@@ -67,54 +79,111 @@ describe('querySet slice', () => {
     expect(finalState[id]).toBe(query);
   });
 
-  it(`when a query suggestion is selected,
-  it updates the query if the id exists`, () => {
-    const id = '1';
-    const query = 'query';
+  const describeSelectSuggestion = (
+    selectSuggestion:
+      | typeof selectQuerySuggestion
+      | typeof selectCommerceQuerySuggestion
+  ) => {
+    it('updates the query if the id exists', () => {
+      const id = '1';
+      const query = 'query';
 
-    registerQueryWithId(id);
-    const action = selectQuerySuggestion({id, expression: query});
-    const finalState = querySetReducer(state, action);
+      registerQueryWithId(id);
+      const action = selectSuggestion({id, expression: query});
+      const finalState = querySetReducer(state, action);
 
-    expect(finalState[id]).toBe(query);
+      expect(finalState[id]).toBe(query);
+    });
+
+    it('does not update the query if the id does not exist', () => {
+      const id = '1';
+
+      const action = selectSuggestion({id, expression: 'query'});
+      const finalState = querySetReducer(state, action);
+
+      expect(finalState[id]).toBe(undefined);
+    });
+  };
+
+  describe('#selectQuerySuggestion', () => {
+    describeSelectSuggestion(selectQuerySuggestion);
   });
 
-  it(`when a query suggestion is selected,
-  it does not update the query if the id does not exist`, () => {
-    const id = '1';
-
-    const action = selectQuerySuggestion({id, expression: 'query'});
-    const finalState = querySetReducer(state, action);
-
-    expect(finalState[id]).toBe(undefined);
+  describe('#selectCommerceQuerySuggestion', () => {
+    describeSelectSuggestion(selectCommerceQuerySuggestion);
   });
 
-  it('sets all queries to queryExecuted on executeSearch.fulfilled', () => {
+  it.each([{action: executeSearch}, {action: commerceExecuteSearch}])(
+    'sets all queries to queryExecuted on executeSearch.fulfilled',
+    ({action}) => {
+      registerQueryWithId('foo');
+      registerQueryWithId('bar');
+
+      const expectedQuerySet = {foo: 'world', bar: 'world'};
+      const searchState = buildMockSearch({queryExecuted: 'world'});
+      const nextState = querySetReducer(
+        state,
+        action.fulfilled(
+          searchState as unknown as ExecuteSearchThunkReturn &
+            QuerySearchCommerceAPIThunkReturn,
+          ''
+        )
+      );
+      expect(nextState).toEqual(expectedQuerySet);
+    }
+  );
+
+  it('sets all queries to queryExecuted on commerce executeSearch.fulfilled', () => {
     registerQueryWithId('foo');
     registerQueryWithId('bar');
 
     const expectedQuerySet = {foo: 'world', bar: 'world'};
-    const searchState = buildMockSearch({queryExecuted: 'world'});
     const nextState = querySetReducer(
       state,
-      executeSearch.fulfilled(searchState, '', {legacy: logSearchboxSubmit()})
+      commerceExecuteSearch.fulfilled(
+        {
+          queryExecuted: 'world',
+          response: {
+            responseId: 'someid',
+          } as unknown as SearchCommerceSuccessResponse,
+        } as QuerySearchCommerceAPIThunkReturn,
+        ''
+      )
     );
     expect(nextState).toEqual(expectedQuerySet);
   });
 
-  it('sets all queries to q on #restoreSearchParameters, when "q" defined', () => {
+  it.each([
+    {action: restoreSearchParameters},
+    {action: commerceRestoreSearchParameters},
+  ])('sets all queries to q on #$action, when "q" defined', ({action}) => {
     registerQueryWithId('foo');
     registerQueryWithId('bar');
 
     const expectedQuerySet = {foo: 'world', bar: 'world'};
-    const nextState = querySetReducer(
-      state,
-      restoreSearchParameters({q: 'world'})
-    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nextState = querySetReducer(state, (action as any)({q: 'world'}));
     expect(nextState).toEqual(expectedQuerySet);
   });
 
-  it('does not modify query on #restoreSearchParameters, when "q" not defined', () => {
+  it.each([
+    {
+      action: restoreSearchParameters,
+    },
+    {
+      action: commerceRestoreSearchParameters,
+    },
+  ])('does not modify query on #$action, when "q" not defined', ({action}) => {
+    registerQueryWithId('foo', 'foo');
+    registerQueryWithId('bar', 'bar');
+
+    const expectedQuerySet = {foo: 'foo', bar: 'bar'};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nextState = querySetReducer(state, (action as any)({}));
+    expect(nextState).toEqual(expectedQuerySet);
+  });
+
+  it('does not modify query on #$action, when "q" not defined', () => {
     registerQueryWithId('foo', 'foo');
     registerQueryWithId('bar', 'bar');
 

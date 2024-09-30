@@ -2,29 +2,47 @@ import {AuthorFacet} from '@/common/components/react/facets';
 import ResultList from '@/common/components/react/result-list';
 import SearchBox from '@/common/components/react/search-box';
 import {SearchPageProvider} from '@/common/components/react/search-page';
-import UrlManager from '@/common/components/react/url-manager';
-import {fetchStaticState} from '@/common/lib/react/engine';
-import {buildSearchParameterSerializer} from '@coveo/headless';
+import SearchParameterManager from '@/common/components/react/search-parameter-manager';
+import TabManager from '@/common/components/react/tab-manager';
+import {
+  fetchStaticState,
+  setNavigatorContextProvider,
+} from '@/common/lib/react/engine';
+import {buildSSRSearchParameterSerializer} from '@coveo/headless-react/ssr';
+import {headers} from 'next/headers';
+import {NextJsAppRouterNavigatorContext} from '../../navigatorContextProvider';
 
 /**
  * This file defines a Search component that uses the Coveo Headless library to manage its state.
  *
  * The Search function is the entry point for server-side rendering (SSR). It uses the `buildSearchParameterSerializer` util from the Coveo Headless
- * library to serialize the url search parameters into a string, which is then used by the [UrlManager](https://docs.coveo.com/en/headless/latest/reference/search/controllers/url-manager) controller.
+ * library to serialize the url search parameters into a string, which is then used by the [SearchParameterManager](https://docs.coveo.com/en/headless/latest/reference/search/controllers/search-parameter-manager) controller.
  *
- * To synchronize search parameters with the URL with more control on the serialization, you can use the [SearchParameterManager](https://docs.coveo.com/en/headless/latest/reference/search/controllers/search-parameter-manager/) controller. For sake of brevity, this sample uses the UrlManager controller.
+ * To synchronize search parameters with the URL with more control on the serialization, you can use the [SearchParameterManager](https://docs.coveo.com/en/headless/latest/reference/search/controllers/search-parameter-manager/) controller. For sake of brevity, this sample uses the SearchParameterManager controller.
  *
  * The context values are hard-coded to represent a specific user segment (age group 30-45 with a main interest in sports) as the initial context.
  * These values will be added to the payload of the search request when the search page is rendered.
  */
+
 export default async function Search(url: {
   searchParams: {[key: string]: string | string[] | undefined};
 }) {
-  const fragment = buildSearchParameterSerializer().serialize(url.searchParams);
+  // Convert URL search parameters into a format that Coveo's search engine can understand.
+  const {toSearchParameters} = buildSSRSearchParameterSerializer();
+  const searchParameters = toSearchParameters(url.searchParams);
+
+  // Defines hard-coded context values to simulate user-specific information.
   const contextValues = {
     ageGroup: '30-45',
     mainInterest: 'sports',
   };
+
+  // Sets the navigator context provider to use the newly created `navigatorContext` before fetching the app static state
+  const navigatorContext = new NextJsAppRouterNavigatorContext(headers());
+
+  setNavigatorContextProvider(() => navigatorContext);
+
+  // Fetches the static state of the app with initial state (when applicable)
   const staticState = await fetchStaticState({
     controllers: {
       context: {
@@ -32,16 +50,20 @@ export default async function Search(url: {
           values: contextValues,
         },
       },
-      urlManager: {
-        initialState: {fragment},
+      searchParameterManager: {
+        initialState: {parameters: searchParameters},
       },
     },
   });
 
   return (
-    <SearchPageProvider staticState={staticState}>
-      <UrlManager />
+    <SearchPageProvider
+      staticState={staticState}
+      navigatorContext={navigatorContext.marshal}
+    >
+      <SearchParameterManager />
       <SearchBox />
+      <TabManager />
       <ResultList />
       <AuthorFacet />
     </SearchPageProvider>

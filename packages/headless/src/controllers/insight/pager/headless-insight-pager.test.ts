@@ -1,35 +1,37 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import {fetchPage} from '../../../features/insight-search/insight-search-actions';
+import {fetchPage} from '../../../features/insight-search/insight-search-actions.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../test/mock-engine';
+  MockedInsightEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../test/mock-insight-state.js';
 import {
   Pager,
   PagerOptions,
   PagerInitialState,
   buildPager,
-} from './headless-insight-pager';
+} from './headless-insight-pager.js';
+
+vi.mock('../../../features/insight-search/insight-search-actions');
 
 describe('Pager', () => {
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let options: PagerOptions;
   let initialState: PagerInitialState;
   let pager: Pager;
-
-  function setMaxPage(page: number) {
-    const {numberOfResults} = engine.state.pagination;
-    engine.state.pagination.totalCountFiltered = page * numberOfResults;
-  }
 
   function initPager() {
     pager = buildPager(engine, {options, initialState});
   }
 
+  function setMaxPage(page: number) {
+    const {numberOfResults} = engine.state.pagination!;
+    engine.state.pagination!.totalCountFiltered = page * numberOfResults;
+  }
+
   beforeEach(() => {
     options = {};
     initialState = {};
-    engine = buildMockInsightEngine();
+    engine = buildMockInsightEngine(buildMockInsightState());
     initPager();
   });
 
@@ -44,19 +46,16 @@ describe('Pager', () => {
 
   it('#selectPage dispatches #fetchPage', () => {
     pager.selectPage(2);
-    const action = engine.findAsyncAction(fetchPage.pending);
-    expect(action).toBeTruthy();
+    expect(fetchPage).toHaveBeenCalled();
   });
 
   it('#nextPage dispatches #fetchPage', () => {
     pager.nextPage();
-    const action = engine.findAsyncAction(fetchPage.pending);
-    expect(action).toBeTruthy();
+    expect(fetchPage).toHaveBeenCalled();
   });
 
   it('#previousPage dispatches #fetchPage', () => {
     pager.previousPage();
-    const action = engine.findAsyncAction(fetchPage.pending);
-    expect(engine.actions).toContainEqual(action);
+    expect(fetchPage).toHaveBeenCalled();
   });
 });

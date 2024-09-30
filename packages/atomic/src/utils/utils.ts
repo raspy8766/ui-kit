@@ -145,6 +145,9 @@ export function closest(
   return closest(element.parentElement, selector);
 }
 
+export const sortByDocumentPosition = (a: Node, b: Node): 1 | -1 =>
+  a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+
 export function sanitizeStyle(style: string) {
   const purifiedOuterHTML = sanitize(`<style>${style}</style>`, {
     ALLOWED_TAGS: ['style'],
@@ -165,6 +168,15 @@ export function getFocusedElement(
     return getFocusedElement(activeElement.shadowRoot) ?? activeElement;
   }
   return activeElement;
+}
+
+export function isFocusingOut(event: FocusEvent) {
+  return (
+    document.hasFocus() &&
+    (!(event.relatedTarget instanceof Node) ||
+      (event.currentTarget instanceof Node &&
+        !event.currentTarget.contains(event.relatedTarget)))
+  );
 }
 
 export async function defer() {
@@ -237,4 +249,24 @@ export function aggregate<V, K extends PropertyKey>(
     },
     <Record<K, V[] | undefined>>{}
   );
+}
+
+/**
+ * Similar as a classic spread, but preserve all characteristics of properties (e.g. getter/setter).
+ * See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign#description
+ * for an explanation why (spread & assign work similarly).
+ * @param objects the objects to "spread" together
+ * @returns the spread result
+ */
+export function spreadProperties<Output extends object = {}>(
+  ...objects: object[]
+) {
+  const returnObject = {};
+  for (const obj of objects) {
+    Object.defineProperties(
+      returnObject,
+      Object.getOwnPropertyDescriptors(obj)
+    );
+  }
+  return returnObject as Output;
 }

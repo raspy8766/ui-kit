@@ -14,13 +14,14 @@ import {
   getFacetsInChildren,
   getAutomaticFacetGenerator,
   sortFacetVisibility,
-  sortFacetsUsingManager,
   collapseFacetsAfter,
+  BaseFacetElement,
 } from '../../common/facets/facet-common';
 import {Bindings} from '../atomic-search-interface/atomic-search-interface';
 
 /**
- * The `atomic-facet-manager` helps reorder facets and their values to match the most recent search response with the most relevant results. A facet component is slotted within an `atomic-facet-manager` to leverage this functionality.
+ * The `atomic-facet-manager` helps reorder facets and their values to match the most recent search response with the most relevant results.
+ * @slot default - Facet components are slotted within to leverage this functionality.
  */
 @Component({
   tag: 'atomic-facet-manager',
@@ -59,7 +60,7 @@ export class AtomicFacetManager implements InitializableComponent {
   private sortFacets = () => {
     const facets = getFacetsInChildren(this.host);
 
-    const sortedFacets = sortFacetsUsingManager(facets, this.facetManager);
+    const sortedFacets = this.sortFacetsUsingManager(facets, this.facetManager);
 
     const {visibleFacets, invisibleFacets} = sortFacetVisibility(
       sortedFacets,
@@ -90,6 +91,17 @@ export class AtomicFacetManager implements InitializableComponent {
     }).validate({
       collapseFacetAfter: this.collapseFacetsAfter,
     });
+  }
+
+  private sortFacetsUsingManager(
+    facets: BaseFacetElement[],
+    facetManager: FacetManager
+  ): BaseFacetElement[] {
+    const payload = facets.map((f) => ({
+      facetId: f.facetId,
+      payload: f,
+    }));
+    return facetManager.sort(payload).map((f) => f.payload);
   }
 
   disconnectedCallback() {

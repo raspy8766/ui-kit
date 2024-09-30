@@ -1,3 +1,90 @@
+## 1.0.0 (2024-09-18)
+
+- chore!: update node engine definition in all exported packages (#4330) ([d6d8a1a](https://github.com/coveo/ui-kit/commits/d6d8a1a)), closes [#4330](https://github.com/coveo/ui-kit/issues/4330)
+- chore(headless, atomic, quantic)!: remove deprecated functions/properties (#4350) ([8de5406](https://github.com/coveo/ui-kit/commits/8de5406)), closes [#4350](https://github.com/coveo/ui-kit/issues/4350)
+- feat!: remove the organizationEndpoints configuration option (#4339) ([d3e1041](https://github.com/coveo/ui-kit/commits/d3e1041)), closes [#4339](https://github.com/coveo/ui-kit/issues/4339)
+- chore: update tsconfigs to match node version (#4402) ([e5bf6b8](https://github.com/coveo/ui-kit/commits/e5bf6b8)), closes [#4402](https://github.com/coveo/ui-kit/issues/4402)
+
+### BREAKING CHANGE
+
+- remove deprecated functions/properties (#4350)
+- remove the organizationEndpoints configuration option (#4339)
+- update node engine definition in all exported packages (#4330)
+
+## 0.6.3 (2024-08-07)
+
+## 0.6.2 (2024-07-31)
+
+# 0.6.0 (2024-07-17)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3833](https://github.com/coveo/ui-kit/issues/3833)) ([095ab4b](https://github.com/coveo/ui-kit/commits/095ab4b7ca97b21dc01fc488b9f91ee12f9705f1))
+
+### Features
+
+- **atomic:** add atomic-hosted-ui component ([#3649](https://github.com/coveo/ui-kit/issues/3649)) ([8d52a0d](https://github.com/coveo/ui-kit/commits/8d52a0db608161a3c7036bd6979dfe8db4910cc8))
+
+## 0.5.46 (2024-06-06)
+
+## 0.5.43 (2024-05-15)
+
+## 0.5.41 (2024-05-06)
+
+## 0.5.39 (2024-04-24)
+
+## 0.5.38 (2024-04-17)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3764](https://github.com/coveo/ui-kit/issues/3764)) ([82b6948](https://github.com/coveo/ui-kit/commits/82b694835e9e0a29859590f16bd64a8e028eb888))
+
+## 0.5.37 (2024-04-10)
+
+## 0.5.32 (2024-03-20)
+
+### Bug Fixes
+
+- **deps:** update dependency @stencil/core to v4.13.0 j:kit-282 ([#3725](https://github.com/coveo/ui-kit/issues/3725)) ([aee2015](https://github.com/coveo/ui-kit/commits/aee20158c892bf1ec73ea3e66c2cdfa6823420c1))
+
+## 0.5.23 (2024-03-08)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3635](https://github.com/coveo/ui-kit/issues/3635)) ([63b333e](https://github.com/coveo/ui-kit/commits/63b333eb5ef5b5017288883102503fd47863357b))
+
+## 0.5.22 (2024-03-06)
+
+## 0.5.20 (2024-02-21)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3578](https://github.com/coveo/ui-kit/issues/3578)) ([a5b645d](https://github.com/coveo/ui-kit/commits/a5b645d4f5395c9942af38feb5cfc2c08585405d))
+
+## 0.5.18 (2024-02-14)
+
+### Bug Fixes
+
+- **hsp:** use admin url ([#3600](https://github.com/coveo/ui-kit/issues/3600)) ([4f6ef02](https://github.com/coveo/ui-kit/commits/4f6ef02fe185ab66ac4bfc037e4d091e4fe11808))
+
+## 0.5.17 (2024-02-09)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3576](https://github.com/coveo/ui-kit/issues/3576)) ([4887772](https://github.com/coveo/ui-kit/commits/48877723d6f8c5e5446a48296326519f009ae850))
+
+## 0.5.15 (2024-01-31)
+
+### Bug Fixes
+
+- **deps:** update all dependencies j:kit-282 ([#3535](https://github.com/coveo/ui-kit/issues/3535)) ([8cbc113](https://github.com/coveo/ui-kit/commits/8cbc113c323134c73ec9643260ee4580289e891b))
+
+## 0.5.11 (2024-01-03)
+
+### Bug Fixes
+
+- **deps:** update stencil j:kit-282 ([#3492](https://github.com/coveo/ui-kit/issues/3492)) ([83dfb8d](https://github.com/coveo/ui-kit/commits/83dfb8dbbd89524a694bcd39ce807143a073ac2c))
+
 ## 0.5.10 (2023-12-13)
 
 ## 0.5.8 (2023-12-06)

@@ -1,20 +1,23 @@
 import {FoldedResult, InteractiveResult, Result} from '@coveo/headless';
 import {Component, h, Prop, Element, Listen, Host} from '@stencil/core';
+import {parentNodeToString} from '../../../utils/dom-utils';
 import {applyFocusVisiblePolyfill} from '../../../utils/initialization-utils';
 import {
   AtomicCommonStore,
   AtomicCommonStoreData,
 } from '../../common/interface/store';
+import {DisplayConfig} from '../../common/item-list/item-decorators';
 import {
-  ResultLayout,
-  ResultDisplayDensity,
-  ResultDisplayImageSize,
-  ResultDisplayLayout,
+  ItemRenderingFunction,
+  resultComponentClass,
+} from '../../common/item-list/item-list-common';
+import {
+  ItemLayout,
+  ItemDisplayDensity,
+  ItemDisplayImageSize,
+  ItemDisplayLayout,
 } from '../../common/layout/display-options';
-import {resultComponentClass} from '../../common/result-list/result-list-common';
-import {ResultRenderingFunction} from '../../common/result-list/result-list-common-interface';
 import {
-  DisplayConfig,
   InteractiveResultContextEvent,
   ResultContextEvent,
 } from '../result-template-components/result-template-decorators';
@@ -24,11 +27,11 @@ import {
  */
 @Component({
   tag: 'atomic-result',
-  styleUrl: '../../common/result/result.pcss',
+  styleUrl: 'atomic-result.pcss',
   shadow: true,
 })
 export class AtomicResult {
-  private layout!: ResultLayout;
+  private layout!: ItemLayout;
 
   @Element() host!: HTMLElement;
 
@@ -60,21 +63,28 @@ export class AtomicResult {
   @Prop() content?: ParentNode;
 
   /**
+   * The result link to use when the result is clicked in a grid layout.
+   *
+   * @default - An `atomic-result-link` without any customization.
+   */
+  @Prop() linkContent: ParentNode = new DocumentFragment();
+
+  /**
    * How results should be displayed.
    */
-  @Prop() display: ResultDisplayLayout = 'list';
+  @Prop() display: ItemDisplayLayout = 'list';
 
   /**
    * How large or small results should be.
    */
-  @Prop() density: ResultDisplayDensity = 'normal';
+  @Prop() density: ItemDisplayDensity = 'normal';
 
   /**
    * The size of the visual section in result list items.
    *
    * This is overwritten by the image size defined in the result content, if it exists.
    */
-  @Prop() imageSize: ResultDisplayImageSize = 'icon';
+  @Prop() imageSize: ItemDisplayImageSize = 'icon';
 
   /**
    * The classes to add to the result element.
@@ -92,9 +102,10 @@ export class AtomicResult {
    *
    * @internal
    */
-  @Prop() renderingFunction: ResultRenderingFunction;
+  @Prop() renderingFunction: ItemRenderingFunction;
 
   private resultRootRef?: HTMLElement;
+  private linkContainerRef?: HTMLElement;
   private executedRenderingFunctionOnce = false;
 
   @Listen('atomic/resolveResult')
@@ -128,8 +139,20 @@ export class AtomicResult {
     });
   }
 
+  @Listen('click')
+  public handleClick(event: MouseEvent) {
+    if (this.stopPropagation) {
+      event.stopPropagation();
+    }
+    this.host
+      .shadowRoot!.querySelector<HTMLAnchorElement>(
+        '.link-container > atomic-result-link a:not([slot])'
+      )
+      ?.click();
+  }
+
   public connectedCallback() {
-    this.layout = new ResultLayout(
+    this.layout = new ItemLayout(
       this.content!.children,
       this.display,
       this.density,
@@ -142,9 +165,11 @@ export class AtomicResult {
   }
 
   private getContentHTML() {
-    return Array.from(this.content!.children)
-      .map((child) => child.outerHTML)
-      .join('');
+    return parentNodeToString(this.content!);
+  }
+
+  private getLinkHTML() {
+    return parentNodeToString(this.linkContent);
   }
 
   private shouldExecuteRenderFunction() {
@@ -163,11 +188,14 @@ export class AtomicResult {
             class="result-root"
             ref={(ref) => (this.resultRootRef = ref)}
           ></div>
+          <div
+            class="link-container"
+            ref={(ref) => (this.linkContainerRef = ref)}
+          ></div>
         </Host>
       );
     }
     return (
-      // deepcode ignore ReactSetInnerHtml: This is not React code
       <Host class={resultComponentClass}>
         <div
           class={`result-root ${this.layout
@@ -176,6 +204,7 @@ export class AtomicResult {
             .join(' ')}`}
           innerHTML={this.getContentHTML()}
         ></div>
+        <div class="link-container" innerHTML={this.getLinkHTML()}></div>
       </Host>
     );
   }
@@ -191,7 +220,8 @@ export class AtomicResult {
     if (this.shouldExecuteRenderFunction()) {
       const customRenderOutputAsString = this.renderingFunction!(
         this.result,
-        this.resultRootRef!
+        this.resultRootRef!,
+        this.linkContainerRef!
       );
 
       this.resultRootRef!.className += ` ${this.layout

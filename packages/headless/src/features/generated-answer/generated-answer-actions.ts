@@ -6,32 +6,33 @@ import {
   StringValue,
 } from '@coveo/bueno';
 import {createAction, createAsyncThunk} from '@reduxjs/toolkit';
-import {AsyncThunkGeneratedAnswerOptions} from '../../api/generated-answer/generated-answer-client';
+import {AsyncThunkGeneratedAnswerOptions} from '../../api/generated-answer/generated-answer-client.js';
 import {
   GeneratedAnswerCitationsPayload,
   GeneratedAnswerEndOfStreamPayload,
+  GeneratedAnswerHeaderMessagePayload,
   GeneratedAnswerMessagePayload,
   GeneratedAnswerPayloadType,
   GeneratedAnswerStreamEventData,
-} from '../../api/generated-answer/generated-answer-event-payload';
-import {GeneratedAnswerStreamRequest} from '../../api/generated-answer/generated-answer-request';
+} from '../../api/generated-answer/generated-answer-event-payload.js';
+import {GeneratedAnswerStreamRequest} from '../../api/generated-answer/generated-answer-request.js';
 import {
   ConfigurationSection,
   DebugSection,
   GeneratedAnswerSection,
   SearchSection,
-} from '../../state/state-sections';
+} from '../../state/state-sections.js';
 import {
   nonEmptyStringArray,
   validatePayload,
-} from '../../utils/validate-payload';
-import {logGeneratedAnswerStreamEnd} from './generated-answer-analytics-actions';
-import {buildStreamingRequest} from './generated-answer-request';
+} from '../../utils/validate-payload.js';
+import {logGeneratedAnswerStreamEnd} from './generated-answer-analytics-actions.js';
+import {buildStreamingRequest} from './generated-answer-request.js';
 import {
-  GeneratedAnswerStyle,
+  GeneratedContentFormat,
   GeneratedResponseFormat,
-  generatedAnswerStyle,
-} from './generated-response-format';
+  generatedContentFormat,
+} from './generated-response-format.js';
 
 type StateNeededByGeneratedAnswerStream = ConfigurationSection &
   SearchSection &
@@ -49,6 +50,11 @@ const citationSchema = {
   clickUri: optionalStringValue,
 };
 
+const answerContentFormatSchema = new StringValue<GeneratedContentFormat>({
+  required: true,
+  constrainTo: generatedContentFormat,
+});
+
 export interface GeneratedAnswerErrorPayload {
   message?: string;
   code?: number;
@@ -56,6 +62,11 @@ export interface GeneratedAnswerErrorPayload {
 
 export const setIsVisible = createAction(
   'generatedAnswer/setIsVisible',
+  (payload: boolean) => validatePayload(payload, booleanValue)
+);
+
+export const setIsEnabled = createAction(
+  'generatedAnswer/setIsEnabled',
   (payload: boolean) => validatePayload(payload, booleanValue)
 );
 
@@ -99,6 +110,20 @@ export const openGeneratedAnswerFeedbackModal = createAction(
   'generatedAnswer/feedbackModal/open'
 );
 
+export const expandGeneratedAnswer = createAction('generatedAnswer/expand');
+
+export const collapseGeneratedAnswer = createAction('generatedAnswer/collapse');
+
+export const setId = createAction(
+  'generatedAnswer/setId',
+  (payload: {id: string}) =>
+    validatePayload(payload, {
+      id: new StringValue({
+        required: true,
+      }),
+    })
+);
+
 export const closeGeneratedAnswerFeedbackModal = createAction(
   'generatedAnswer/feedbackModal/close'
 );
@@ -117,20 +142,36 @@ export const setIsStreaming = createAction(
   (payload: boolean) => validatePayload(payload, booleanValue)
 );
 
+export const setAnswerContentFormat = createAction(
+  'generatedAnswer/setAnswerContentFormat',
+  (payload: GeneratedContentFormat) =>
+    validatePayload(payload, answerContentFormatSchema)
+);
+
 export const updateResponseFormat = createAction(
   'generatedAnswer/updateResponseFormat',
   (payload: GeneratedResponseFormat) =>
     validatePayload(payload, {
-      answerStyle: new StringValue<GeneratedAnswerStyle>({
-        required: true,
-        constrainTo: generatedAnswerStyle,
+      contentFormat: new ArrayValue<GeneratedContentFormat>({
+        each: answerContentFormatSchema,
+        default: ['text/plain'],
       }),
     })
+);
+
+export const updateAnswerConfigurationId = createAction(
+  'knowledge/updateAnswerConfigurationId',
+  (payload: string) => validatePayload(payload, stringValue)
 );
 
 export const registerFieldsToIncludeInCitations = createAction(
   'generatedAnswer/registerFieldsToIncludeInCitations',
   (payload: string[]) => validatePayload<string[]>(payload, nonEmptyStringArray)
+);
+
+export const setIsAnswerGenerated = createAction(
+  'generatedAnswer/setIsAnswerGenerated',
+  (payload: boolean) => validatePayload(payload, booleanValue)
 );
 
 interface StreamAnswerArgs {
@@ -154,6 +195,13 @@ export const streamAnswer = createAsyncThunk<
     payload: string
   ) => {
     switch (payloadType) {
+      case 'genqa.headerMessageType': {
+        const header = JSON.parse(
+          payload
+        ) as GeneratedAnswerHeaderMessagePayload;
+        dispatch(setAnswerContentFormat(header.contentFormat));
+        break;
+      }
       case 'genqa.messageType':
         dispatch(
           updateMessage(JSON.parse(payload) as GeneratedAnswerMessagePayload)
@@ -166,15 +214,15 @@ export const streamAnswer = createAsyncThunk<
           )
         );
         break;
-      case 'genqa.endOfStreamType':
+      case 'genqa.endOfStreamType': {
+        const isAnswerGenerated = (
+          JSON.parse(payload) as GeneratedAnswerEndOfStreamPayload
+        ).answerGenerated;
         dispatch(setIsStreaming(false));
-        dispatch(
-          logGeneratedAnswerStreamEnd(
-            (JSON.parse(payload) as GeneratedAnswerEndOfStreamPayload)
-              .answerGenerated
-          )
-        );
+        dispatch(setIsAnswerGenerated(isAnswerGenerated));
+        dispatch(logGeneratedAnswerStreamEnd(isAnswerGenerated));
         break;
+      }
       default:
         if (state.debug) {
           extra.logger.warn(`Unknown payloadType: "${payloadType}"`);

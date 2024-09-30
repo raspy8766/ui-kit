@@ -9,7 +9,6 @@ import {loadDayjsLocale} from '../../../utils/dayjs-locales';
 import {InitializeEvent} from '../../../utils/initialization-utils';
 import {
   i18nBackendOptions,
-  i18nCompatibilityVersion,
   i18nTranslationNamespace,
 } from '../../common/interface/i18n';
 import {AnyBindings, AnyEngineType} from './bindings';
@@ -23,14 +22,13 @@ export interface BaseAtomicInterface<EngineType extends AnyEngineType>
   languageAssetsPath: string;
   iconAssetsPath: string;
   logLevel?: LogLevel;
-  language: string;
+  language?: string;
   host: HTMLStencilElement;
   bindings: AnyBindings;
   error?: Error;
-  localizationCompatibilityVersion: i18nCompatibilityVersion;
 
   updateIconAssetsPath(): void;
-  registerFieldsToInclude(): void;
+  registerFieldsToInclude?: () => void; // Fix: Removed the question mark and added a semicolon.
 }
 
 export const mismatchedInterfaceAndEnginePropError = (
@@ -101,8 +99,10 @@ export class CommonAtomicInterfaceHelper<Engine extends AnyEngineType> {
 
     this.atomicInterface.updateIconAssetsPath();
     initEngine();
-    this.atomicInterface.registerFieldsToInclude();
-    loadDayjsLocale(this.atomicInterface.language);
+    if (this.atomicInterface.registerFieldsToInclude) {
+      this.atomicInterface.registerFieldsToInclude();
+    }
+    loadDayjsLocale(this.language);
     await this.i18nPromise;
     this.initComponents();
   }
@@ -124,13 +124,13 @@ export class CommonAtomicInterfaceHelper<Engine extends AnyEngineType> {
   public onLanguageChange() {
     const {i18n, language} = this.atomicInterface;
 
-    loadDayjsLocale(language);
+    loadDayjsLocale(this.language);
     new Backend(i18n.services, i18nBackendOptions(this.atomicInterface)).read(
-      language,
+      this.language,
       i18nTranslationNamespace,
-      (_, data) => {
+      (_: unknown, data: unknown) => {
         i18n.addResourceBundle(
-          language,
+          this.language,
           i18nTranslationNamespace,
           data,
           true,
@@ -161,5 +161,9 @@ export class CommonAtomicInterfaceHelper<Engine extends AnyEngineType> {
     this.hangingComponentsInitialization.forEach((event) =>
       event.detail(this.atomicInterface.bindings)
     );
+  }
+
+  private get language() {
+    return this.atomicInterface.language || 'en';
   }
 }

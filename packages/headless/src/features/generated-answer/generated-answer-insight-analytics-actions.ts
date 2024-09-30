@@ -1,22 +1,21 @@
+import {Qna} from '@coveo/relay-event-types';
 import {
   InsightAction,
-  makeInsightAnalyticsAction,
-} from '../analytics/analytics-utils';
-import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state';
+  makeInsightAnalyticsActionFactory,
+} from '../analytics/analytics-utils.js';
+import {SearchPageEvents} from '../analytics/search-action-cause.js';
+import {getCaseContextAnalyticsMetadata} from '../case-context/case-context-state.js';
+import {GeneratedAnswerFeedback} from './generated-answer-analytics-actions.js';
 import {
   citationSourceSelector,
   generativeQuestionAnsweringIdSelector,
-} from './generated-answer-selectors';
-import {GeneratedResponseFormat} from './generated-response-format';
+} from './generated-answer-selectors.js';
 
-export type GeneratedAnswerFeedback =
-  | 'irrelevant'
-  | 'notAccurate'
-  | 'outOfDate'
-  | 'harmful';
+const RGAType = 'RGA';
 
+//TODO: SFINT-5435
 export const logRetryGeneratedAnswer = (): InsightAction =>
-  makeInsightAnalyticsAction(
+  makeInsightAnalyticsActionFactory(SearchPageEvents.retryGeneratedAnswer)(
     'analytics/generatedAnswer/retry',
     (client, state) =>
       client.logRetryGeneratedAnswer(
@@ -24,168 +23,224 @@ export const logRetryGeneratedAnswer = (): InsightAction =>
       )
   );
 
-export const logRephraseGeneratedAnswer = (
-  responseFormat: GeneratedResponseFormat
-): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/rephrase',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
-        generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
-        return null;
-      }
-      return client.logRephraseGeneratedAnswer(
-        {
-          generativeQuestionAnsweringId,
-          rephraseFormat: responseFormat.answerStyle,
-        },
-        getCaseContextAnalyticsMetadata(state.insightCaseContext)
-      );
-    }
-  );
-
 export const logOpenGeneratedAnswerSource = (
   citationId: string
 ): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/openAnswerSource',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
-        generativeQuestionAnsweringIdSelector(state);
-      const citation = citationSourceSelector(state, citationId);
-      if (!generativeQuestionAnsweringId || !citation) {
-        return null;
-      }
-      return client.logOpenGeneratedAnswerSource(
-        {
-          generativeQuestionAnsweringId,
-          permanentId: citation.permanentid,
-          citationId: citation.id,
-        },
-        getCaseContextAnalyticsMetadata(state.insightCaseContext)
-      );
+  makeInsightAnalyticsActionFactory(SearchPageEvents.openGeneratedAnswerSource)(
+    {
+      prefix: 'analytics/generatedAnswer/openAnswerSource',
+      __legacy__getBuilder: (client, state) => {
+        const {id: rgaID, answerAPIEnabled} =
+          generativeQuestionAnsweringIdSelector(state);
+        const citation = citationSourceSelector(state, citationId);
+
+        if (!rgaID || !citation) {
+          return null;
+        }
+        return client.logOpenGeneratedAnswerSource(
+          {
+            ...(answerAPIEnabled
+              ? {answerAPIStreamId: rgaID}
+              : {generativeQuestionAnsweringId: rgaID}),
+            permanentId: citation.permanentid,
+            citationId: citation.id,
+          },
+          getCaseContextAnalyticsMetadata(state.insightCaseContext)
+        );
+      },
+      analyticsType: 'Qna.CitationClick',
+      analyticsPayloadBuilder: (state): Qna.CitationClick => {
+        return {
+          answer: {
+            responseId: state.search?.response.searchUid || '',
+
+            type: RGAType,
+          },
+          citation: {
+            id: citationId,
+            type: 'Source',
+          },
+        };
+      },
     }
   );
 
 export const logHoverCitation = (
   citationId: string,
-  citationHoverTimeMs: number
+  citationHoverTimeInMs: number
 ): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/hoverCitation',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(
+    SearchPageEvents.generatedAnswerSourceHover
+  )({
+    prefix: 'analytics/generatedAnswer/hoverCitation',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
       const citation = citationSourceSelector(state, citationId);
-      if (!generativeQuestionAnsweringId || !citation) {
+
+      if (!rgaID || !citation) {
         return null;
       }
       return client.logGeneratedAnswerSourceHover(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
           permanentId: citation.permanentid,
           citationId: citation.id,
-          citationHoverTimeMs,
+          citationHoverTimeMs: citationHoverTimeInMs,
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
+    },
+    analyticsType: 'Qna.CitationHover',
+    analyticsPayloadBuilder: (state): Qna.CitationHover => {
+      return {
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+
+          type: RGAType,
+        },
+        citation: {
+          id: citationId,
+          type: 'Source',
+        },
+        citationHoverTimeInMs,
+      };
+    },
+  });
 
 export const logLikeGeneratedAnswer = (): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/like',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(SearchPageEvents.likeGeneratedAnswer)({
+    prefix: 'analytics/generatedAnswer/like',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
       return client.logLikeGeneratedAnswer(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'like',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
 
 export const logDislikeGeneratedAnswer = (): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/dislike',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(SearchPageEvents.dislikeGeneratedAnswer)({
+    prefix: 'analytics/generatedAnswer/dislike',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
       return client.logDislikeGeneratedAnswer(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'dislike',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
 
 export const logGeneratedAnswerFeedback = (
   feedback: GeneratedAnswerFeedback
 ): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/sendFeedback',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(
+    SearchPageEvents.generatedAnswerFeedbackSubmit
+  )({
+    prefix: 'analytics/generatedAnswer/sendFeedback',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
-      return client.logGeneratedAnswerFeedbackSubmit(
+      return client.logGeneratedAnswerFeedbackSubmitV2(
         {
-          generativeQuestionAnsweringId,
-          reason: feedback,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
+          ...feedback,
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
-
-export const logGeneratedAnswerDetailedFeedback = (
-  details: string
-): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/sendFeedback',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
-        generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
-        return null;
-      }
-      return client.logGeneratedAnswerFeedbackSubmit(
-        {
-          generativeQuestionAnsweringId,
-          reason: 'other',
+    },
+    analyticsType: 'Qna.SubmitRgaFeedback',
+    analyticsPayloadBuilder: (state): Qna.SubmitRgaFeedback => {
+      const {search} = state;
+      const {response} = search || {};
+      const responseId = response?.searchUid || '';
+      const {
+        helpful,
+        readable,
+        documented,
+        details,
+        hallucinationFree: hallucination_free,
+        correctTopic: correct_topic,
+        documentUrl: document_url,
+      } = feedback;
+      return {
+        answer: {
+          responseId,
+        },
+        feedback: {
+          helpful,
+          readable,
+          documented,
           details,
+          hallucination_free,
+          correct_topic,
+          document_url,
         },
-        getCaseContextAnalyticsMetadata(state.insightCaseContext)
-      );
-    }
-  );
+      };
+    },
+  });
 
+//TODO: SFINT-5435
 export const logGeneratedAnswerStreamEnd = (
   answerGenerated: boolean
 ): InsightAction =>
-  makeInsightAnalyticsAction(
+  makeInsightAnalyticsActionFactory(SearchPageEvents.generatedAnswerStreamEnd)(
     'analytics/generatedAnswer/streamEnd',
     (client, state) => {
-      const generativeQuestionAnsweringId =
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
       return client.logGeneratedAnswerStreamEnd(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
           answerGenerated,
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
@@ -194,55 +249,172 @@ export const logGeneratedAnswerStreamEnd = (
   );
 
 export const logGeneratedAnswerShowAnswers = (): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/show',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(
+    SearchPageEvents.generatedAnswerShowAnswers
+  )({
+    prefix: 'analytics/generatedAnswer/show',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
       return client.logGeneratedAnswerShowAnswers(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'show',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
 
 export const logGeneratedAnswerHideAnswers = (): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/hide',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(
+    SearchPageEvents.generatedAnswerHideAnswers
+  )({
+    prefix: 'analytics/generatedAnswer/hide',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
       return client.logGeneratedAnswerHideAnswers(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'hide',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
+
+export const logGeneratedAnswerExpand = (): InsightAction =>
+  makeInsightAnalyticsActionFactory(SearchPageEvents.generatedAnswerExpand)({
+    prefix: 'analytics/generatedAnswer/expand',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
+        generativeQuestionAnsweringIdSelector(state);
+      if (!rgaID) {
+        return null;
+      }
+      return client.logGeneratedAnswerExpand(
+        {
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
+        },
+        getCaseContextAnalyticsMetadata(state.insightCaseContext)
+      );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'expand',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
+
+export const logGeneratedAnswerCollapse = (): InsightAction =>
+  makeInsightAnalyticsActionFactory(SearchPageEvents.generatedAnswerCollapse)({
+    prefix: 'analytics/generatedAnswer/collapse',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
+        generativeQuestionAnsweringIdSelector(state);
+      if (!rgaID) {
+        return null;
+      }
+      return client.logGeneratedAnswerCollapse(
+        {
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
+        },
+        getCaseContextAnalyticsMetadata(state.insightCaseContext)
+      );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'collapse',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
 
 export const logCopyGeneratedAnswer = (): InsightAction =>
-  makeInsightAnalyticsAction(
-    'analytics/generatedAnswer/copy',
-    (client, state) => {
-      const generativeQuestionAnsweringId =
+  makeInsightAnalyticsActionFactory(
+    SearchPageEvents.generatedAnswerCopyToClipboard
+  )({
+    prefix: 'analytics/generatedAnswer/copy',
+    __legacy__getBuilder: (client, state) => {
+      const {id: rgaID, answerAPIEnabled} =
         generativeQuestionAnsweringIdSelector(state);
-      if (!generativeQuestionAnsweringId) {
+      if (!rgaID) {
         return null;
       }
       return client.logGeneratedAnswerCopyToClipboard(
         {
-          generativeQuestionAnsweringId,
+          ...(answerAPIEnabled
+            ? {answerAPIStreamId: rgaID}
+            : {generativeQuestionAnsweringId: rgaID}),
         },
         getCaseContextAnalyticsMetadata(state.insightCaseContext)
       );
-    }
-  );
+    },
+    analyticsType: 'Qna.AnswerAction',
+    analyticsPayloadBuilder: (state): Qna.AnswerAction => {
+      return {
+        action: 'copyToClipboard',
+        answer: {
+          responseId: state.search?.response.searchUid || '',
+          type: RGAType,
+        },
+      };
+    },
+  });
+
+export const generatedAnswerInsightAnalyticsClient = {
+  logCopyGeneratedAnswer,
+  logGeneratedAnswerHideAnswers,
+  logGeneratedAnswerShowAnswers,
+  logGeneratedAnswerStreamEnd,
+  logGeneratedAnswerFeedback,
+  logDislikeGeneratedAnswer,
+  logLikeGeneratedAnswer,
+  logHoverCitation,
+  logOpenGeneratedAnswerSource,
+  logRetryGeneratedAnswer,
+  logGeneratedAnswerExpand,
+  logGeneratedAnswerCollapse,
+};

@@ -1,50 +1,52 @@
-import {CommerceEngine} from '../../../app/commerce-engine/commerce-engine';
-import {configuration} from '../../../app/common-reducers';
-import {deselectAllBreadcrumbs} from '../../../features/breadcrumb/breadcrumb-actions';
-import {selectPage} from '../../../features/commerce/pagination/pagination-actions';
-import {fetchQuerySuggestions} from '../../../features/commerce/query-suggest/query-suggest-actions';
-import {updateQuery} from '../../../features/commerce/query/query-actions';
-import {queryReducer as commerceQuery} from '../../../features/commerce/query/query-slice';
-import {executeSearch} from '../../../features/commerce/search/search-actions';
-import {commerceSearchReducer as commerceSearch} from '../../../features/commerce/search/search-slice';
-import {updateFacetAutoSelection} from '../../../features/facets/generic/facet-actions';
+import {CommerceEngine} from '../../../app/commerce-engine/commerce-engine.js';
+import {configuration} from '../../../app/common-reducers.js';
+import {stateKey} from '../../../app/state-key.js';
 import {
   registerQuerySetQuery,
   updateQuerySetQuery,
-} from '../../../features/query-set/query-set-actions';
-import {querySetReducer as querySet} from '../../../features/query-set/query-set-slice';
+} from '../../../features/commerce/query-set/query-set-actions.js';
 import {
   clearQuerySuggest,
+  fetchQuerySuggestions,
   registerQuerySuggest,
   selectQuerySuggestion,
-} from '../../../features/query-suggest/query-suggest-actions';
-import {querySuggestReducer as querySuggest} from '../../../features/query-suggest/query-suggest-slice';
+} from '../../../features/commerce/query-suggest/query-suggest-actions.js';
+import {UpdateQueryPayload} from '../../../features/commerce/query/query-actions.js';
+import {queryReducer as commerceQuery} from '../../../features/commerce/query/query-slice.js';
+import {executeSearch} from '../../../features/commerce/search/search-actions.js';
+import {
+  PrepareForSearchWithQueryOptions,
+  prepareForSearchWithQuery,
+} from '../../../features/commerce/search/search-actions.js';
+import {commerceSearchReducer as commerceSearch} from '../../../features/commerce/search/search-slice.js';
+import {querySetReducer as querySet} from '../../../features/query-set/query-set-slice.js';
+import {querySuggestReducer as querySuggest} from '../../../features/query-suggest/query-suggest-slice.js';
 import {
   CommerceQuerySection,
   CommerceSearchSection,
   ConfigurationSection,
   QuerySetSection,
   QuerySuggestionSection,
-} from '../../../state/state-sections';
-import {loadReducerError} from '../../../utils/errors';
+} from '../../../state/state-sections.js';
+import {loadReducerError} from '../../../utils/errors.js';
 import {
   Delimiters,
   SuggestionHighlightingOptions,
-} from '../../../utils/highlight';
-import {randomID} from '../../../utils/utils';
-import {validateOptions} from '../../../utils/validate-payload';
-import {buildController} from '../../controller/headless-controller';
+} from '../../../utils/highlight.js';
+import {randomID} from '../../../utils/utils.js';
+import {validateOptions} from '../../../utils/validate-payload.js';
+import {buildController} from '../../controller/headless-controller.js';
 import {
   getSuggestions,
   SearchBoxState,
   SearchBox as CoreSearchBox,
   Suggestion,
-} from '../../core/search-box/headless-core-search-box';
+} from '../../core/search-box/headless-core-search-box.js';
 import {
   defaultSearchBoxOptions,
   SearchBoxOptions,
   searchBoxOptionsSchema,
-} from './headless-search-box-options';
+} from './headless-search-box-options.js';
 
 export type {
   SearchBoxOptions,
@@ -89,7 +91,7 @@ export function buildSearchBox(
 
   const controller = buildController(engine);
   const {dispatch} = engine;
-  const getState = () => engine.state;
+  const getState = () => engine[stateKey];
 
   const id = props.options?.id || randomID('search_box');
   const options: Required<SearchBoxOptions> = {
@@ -101,20 +103,20 @@ export function buildSearchBox(
 
   validateOptions(engine, searchBoxOptionsSchema, options, 'buildSearchBox');
   dispatch(
-    registerQuerySetQuery({id, query: engine.state.commerceQuery.query ?? ''})
+    registerQuerySetQuery({id, query: getState().commerceQuery.query ?? ''})
   );
   dispatch(registerQuerySuggest({id}));
 
-  const getValue = () => engine.state.querySet[options.id];
+  const getValue = () => getState().querySet[options.id];
 
   const performSearch = async () => {
-    if (options.clearFilters) {
-      dispatch(deselectAllBreadcrumbs());
-    }
+    const queryOptions: UpdateQueryPayload & PrepareForSearchWithQueryOptions =
+      {
+        query: getValue(),
+        clearFilters: options.clearFilters,
+      };
 
-    dispatch(updateFacetAutoSelection({allow: true}));
-    dispatch(updateQuery({query: getValue()}));
-    dispatch(selectPage(1));
+    dispatch(prepareForSearchWithQuery(queryOptions));
     dispatch(executeSearch());
   };
 
@@ -148,8 +150,7 @@ export function buildSearchBox(
     },
 
     get state() {
-      const state = getState();
-      const querySuggest = state.querySuggest[options.id];
+      const querySuggest = getState().querySuggest[options.id];
       const suggestions = getSuggestions(
         querySuggest,
         options.highlightOptions
@@ -159,9 +160,10 @@ export function buildSearchBox(
         : false;
 
       return {
+        searchBoxId: id,
         value: getValue(),
         suggestions,
-        isLoading: state.commerceSearch.isLoading,
+        isLoading: getState().commerceSearch.isLoading,
         isLoadingSuggestions,
       };
     },

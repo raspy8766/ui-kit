@@ -1,24 +1,23 @@
 import {
   buildSearchEngine,
   getSampleSearchEngineConfiguration,
+  Raw,
+  Result,
 } from '@coveo/headless';
-import {TestUtils} from '@coveo/headless';
 import {Bindings} from '../components/search/atomic-search-interface/atomic-search-interface';
 import {buildStringTemplateFromResult} from './result-utils';
 
 describe('buildStringTemplateFromResult', () => {
+  const mockRaw = jest.mocked({source: 'the source'} as Raw);
+  const mockResult = jest.mocked({
+    title: 'foo',
+    uri: 'http://uri.foo.com',
+    raw: mockRaw,
+  } as Result);
   const engine = buildSearchEngine({
     configuration: getSampleSearchEngineConfiguration(),
   });
   const bindings = {engine} as Bindings;
-  const result = TestUtils.buildMockResult({
-    title: 'foo',
-    uri: 'http://uri.foo.com',
-    raw: {
-      ...TestUtils.buildMockResult().raw,
-      source: 'the source',
-    },
-  });
 
   it('should create string templates', () => {
     const templates = [
@@ -30,18 +29,18 @@ describe('buildStringTemplateFromResult', () => {
     ];
 
     templates.forEach((template) =>
-      expect(buildStringTemplateFromResult(template.in, result, bindings)).toBe(
-        template.out
-      )
+      expect(
+        buildStringTemplateFromResult(template.in, mockResult, bindings)
+      ).toBe(template.out)
     );
   });
 
   it('should snip out objects that cannot be evaluated properly and log a warning', () => {
-    spyOn(engine.logger, 'warn');
+    jest.spyOn(engine.logger, 'warn');
     expect(
       buildStringTemplateFromResult(
         '${title}/${raw.notafield}',
-        result,
+        mockResult,
         bindings
       )
     ).toBe('foo/');

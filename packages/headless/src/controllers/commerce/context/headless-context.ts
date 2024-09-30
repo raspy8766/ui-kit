@@ -1,40 +1,25 @@
-import {CommerceEngine} from '../../../app/commerce-engine/commerce-engine';
+import {CurrencyCodeISO4217} from '@coveo/relay-event-types';
+import {CommerceEngine} from '../../../app/commerce-engine/commerce-engine.js';
+import {stateKey} from '../../../app/state-key.js';
 import {
   setContext,
-  setUser,
   setView,
-} from '../../../features/commerce/context/context-actions';
-import {contextReducer as commerceContext} from '../../../features/commerce/context/context-slice';
-import {contextSchema} from '../../../features/commerce/context/context-validation';
-import {loadReducerError} from '../../../utils/errors';
-import {validateOptions} from '../../../utils/validate-payload';
+} from '../../../features/commerce/context/context-actions.js';
+import {contextReducer as commerceContext} from '../../../features/commerce/context/context-slice.js';
+import {contextSchema} from '../../../features/commerce/context/context-validation.js';
+import {loadReducerError} from '../../../utils/errors.js';
+import {validateOptions} from '../../../utils/validate-payload.js';
 import {
   buildController,
   Controller,
-} from '../../controller/headless-controller';
+} from '../../controller/headless-controller.js';
 
 export interface ContextOptions {
-  trackingId: string;
   language: string;
   country: string;
-  currency: string;
-  clientId: string;
-  user?: User;
+  currency: CurrencyCodeISO4217;
   view: View;
 }
-
-interface UserId {
-  userId: string;
-}
-
-interface Email {
-  email: string;
-}
-
-export type User = (UserId | Email | (UserId & Email)) & {
-  userIp?: string;
-  userAgent?: string;
-};
 
 export interface View {
   url: string;
@@ -44,19 +29,13 @@ export interface ContextProps {
   /**
    * The initial options that should be applied to this `Context` controller.
    */
-  options: ContextOptions;
+  options?: ContextOptions;
 }
 
 /**
  * The `Context` controller exposes methods for managing the global context in a commerce interface.
  */
 export interface Context extends Controller {
-  /**
-   * Sets the tracking ID.
-   * @param trackingId - The new tracking ID.
-   */
-  setTrackingId(trackingId: string): void;
-
   /**
    * Sets the language.
    * @param language - The new language.
@@ -73,19 +52,7 @@ export interface Context extends Controller {
    * Sets the currency.
    * @param currency - The new currency.
    */
-  setCurrency(currency: string): void;
-
-  /**
-   * Sets the client ID.
-   * @param clientId - The new client ID.
-   */
-  setClientId(clientId: string): void;
-
-  /**
-   * Sets the user.
-   * @param user - The new user.
-   */
-  setUser(user: User): void;
+  setCurrency(currency: CurrencyCodeISO4217): void;
 
   /**
    * Sets the view.
@@ -100,16 +67,11 @@ export interface Context extends Controller {
 }
 
 export interface ContextState {
-  trackingId: string;
   language: string;
   country: string;
-  currency: string;
-  clientId: string;
-  user?: User;
+  currency: CurrencyCodeISO4217;
   view: View;
 }
-
-export type ContextControllerState = Context['state'];
 
 /**
  * Creates a `Context` controller instance.
@@ -120,7 +82,7 @@ export type ContextControllerState = Context['state'];
  */
 export function buildContext(
   engine: CommerceEngine,
-  props: ContextProps
+  props: ContextProps = {}
 ): Context {
   if (!loadBaseContextReducers(engine)) {
     throw loadReducerError;
@@ -128,19 +90,12 @@ export function buildContext(
 
   const controller = buildController(engine);
   const {dispatch} = engine;
-  const getState = () => engine.state;
+  const getState = () => engine[stateKey];
 
-  const options = {
-    ...props.options,
-  };
-
-  validateOptions(engine, contextSchema, options, 'buildContext');
-
-  dispatch(
-    setContext({
-      ...options,
-    })
-  );
+  if (props.options) {
+    validateOptions(engine, contextSchema, props.options, 'buildContext');
+    dispatch(setContext(props.options));
+  }
 
   return {
     ...controller,
@@ -148,14 +103,6 @@ export function buildContext(
     get state() {
       return getState().commerceContext;
     },
-
-    setTrackingId: (trackingId: string) =>
-      dispatch(
-        setContext({
-          ...getState().commerceContext,
-          trackingId,
-        })
-      ),
 
     setLanguage: (language: string) =>
       dispatch(
@@ -173,23 +120,13 @@ export function buildContext(
         })
       ),
 
-    setCurrency: (currency: string) =>
+    setCurrency: (currency: CurrencyCodeISO4217) =>
       dispatch(
         setContext({
           ...getState().commerceContext,
           currency,
         })
       ),
-
-    setClientId: (clientId: string) =>
-      dispatch(
-        setContext({
-          ...getState().commerceContext,
-          clientId,
-        })
-      ),
-
-    setUser: (user: User) => dispatch(setUser(user)),
 
     setView: (view: View) => dispatch(setView(view)),
   };

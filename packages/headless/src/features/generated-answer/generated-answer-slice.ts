@@ -1,5 +1,6 @@
 import {createReducer} from '@reduxjs/toolkit';
-import {RETRYABLE_STREAM_ERROR_CODE} from '../../api/generated-answer/generated-answer-client';
+import {RETRYABLE_STREAM_ERROR_CODE} from '../../api/generated-answer/generated-answer-client.js';
+import {GeneratedAnswerCitation} from '../../api/generated-answer/generated-answer-event-payload.js';
 import {
   closeGeneratedAnswerFeedbackModal,
   dislikeGeneratedAnswer,
@@ -15,8 +16,15 @@ import {
   updateResponseFormat,
   sendGeneratedAnswerFeedback,
   registerFieldsToIncludeInCitations,
-} from './generated-answer-actions';
-import {getGeneratedAnswerInitialState} from './generated-answer-state';
+  setId,
+  setAnswerContentFormat,
+  setIsAnswerGenerated,
+  expandGeneratedAnswer,
+  collapseGeneratedAnswer,
+  updateAnswerConfigurationId,
+  setIsEnabled,
+} from './generated-answer-actions.js';
+import {getGeneratedAnswerInitialState} from './generated-answer-state.js';
 
 export const generatedAnswerReducer = createReducer(
   getGeneratedAnswerInitialState(),
@@ -25,19 +33,32 @@ export const generatedAnswerReducer = createReducer(
       .addCase(setIsVisible, (state, {payload}) => {
         state.isVisible = payload;
       })
+      .addCase(setIsEnabled, (state, {payload}) => {
+        state.isEnabled = payload;
+      })
+      .addCase(setId, (state, {payload}) => {
+        state.id = payload.id;
+      })
       .addCase(updateMessage, (state, {payload}) => {
         state.isLoading = false;
         state.isStreaming = true;
         if (!state.answer) {
           state.answer = '';
         }
+
         state.answer += payload.textDelta;
         delete state.error;
       })
       .addCase(updateCitations, (state, {payload}) => {
         state.isLoading = false;
         state.isStreaming = true;
-        state.citations = state.citations.concat(payload.citations);
+        const citationMap = new Map<string, GeneratedAnswerCitation>();
+        for (const citationCollection of [state.citations, payload.citations]) {
+          for (const citation of citationCollection) {
+            citationMap.set(citation.uri, citation);
+          }
+        }
+        state.citations = Array.from(citationMap.values());
         delete state.error;
       })
       .addCase(updateError, (state, {payload}) => {
@@ -70,9 +91,13 @@ export const generatedAnswerReducer = createReducer(
       .addCase(resetAnswer, (state) => {
         return {
           ...getGeneratedAnswerInitialState(),
+          ...(state.answerConfigurationId
+            ? {answerConfigurationId: state.answerConfigurationId}
+            : {}),
           responseFormat: state.responseFormat,
           fieldsToIncludeInCitations: state.fieldsToIncludeInCitations,
           isVisible: state.isVisible,
+          id: state.id,
         };
       })
       .addCase(setIsLoading, (state, {payload}) => {
@@ -81,6 +106,9 @@ export const generatedAnswerReducer = createReducer(
       .addCase(setIsStreaming, (state, {payload}) => {
         state.isStreaming = payload;
       })
+      .addCase(setAnswerContentFormat, (state, {payload}) => {
+        state.answerContentFormat = payload;
+      })
       .addCase(updateResponseFormat, (state, {payload}) => {
         state.responseFormat = payload;
       })
@@ -88,5 +116,17 @@ export const generatedAnswerReducer = createReducer(
         state.fieldsToIncludeInCitations = [
           ...new Set(state.fieldsToIncludeInCitations.concat(action.payload)),
         ];
+      })
+      .addCase(setIsAnswerGenerated, (state, {payload}) => {
+        state.isAnswerGenerated = payload;
+      })
+      .addCase(expandGeneratedAnswer, (state) => {
+        state.expanded = true;
+      })
+      .addCase(collapseGeneratedAnswer, (state) => {
+        state.expanded = false;
+      })
+      .addCase(updateAnswerConfigurationId, (state, {payload}) => {
+        state.answerConfigurationId = payload;
       })
 );

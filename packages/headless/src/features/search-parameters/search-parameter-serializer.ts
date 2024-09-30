@@ -3,43 +3,107 @@ import {
   API_DATE_FORMAT,
   isSearchApiDate,
   validateAbsoluteDate,
-} from '../../api/search/date/date-format';
+} from '../../api/search/date/date-format.js';
 import {
   isRelativeDateFormat,
   validateRelativeDate,
-} from '../../api/search/date/relative-date';
-import {buildDateRange} from '../../controllers/facets/range-facet/date-facet/headless-date-facet';
-import {buildNumericRange} from '../../controllers/facets/range-facet/numeric-facet/headless-numeric-facet';
-import {RangeValueRequest} from '../facets/range-facets/generic/interfaces/range-facet';
-import {SearchParameters} from './search-parameter-actions';
+} from '../../api/search/date/relative-date.js';
+import {buildDateRange} from '../../controllers/facets/range-facet/date-facet/headless-date-facet.js';
+import {buildNumericRange} from '../../controllers/facets/range-facet/numeric-facet/headless-numeric-facet.js';
+import {RangeValueRequest} from '../facets/range-facets/generic/interfaces/range-facet.js';
+import {SearchParameters} from './search-parameter-actions.js';
 
-const delimiter = '&';
-const equal = '=';
-const rangeDelimiterExclusive = '..';
-const rangeDelimiterInclusive = '...';
-
-type SearchParameterKey = keyof SearchParameters;
+export const rangeDelimiterExclusive = '..';
+export const rangeDelimiterInclusive = '...';
+export const facetSearchParamRegex = /^(f|fExcluded|cf|nf|df|sf|af|mnf)-(.+)$/;
+export type SearchParameterKey = keyof SearchParameters;
 type UnknownObject = {[field: string]: unknown[]};
 
+type FacetSearchParameters = keyof Pick<
+  SearchParameters,
+  'f' | 'fExcluded' | 'cf' | 'sf' | 'af' | 'nf' | 'df' | 'mnf'
+>;
+
+type FacetKey = keyof typeof supportedFacetParameters;
+
+const supportedFacetParameters: Record<FacetSearchParameters, boolean> = {
+  f: true,
+  fExcluded: true,
+  cf: true,
+  sf: true,
+  af: true,
+  nf: true,
+  df: true,
+  mnf: true,
+};
+
+export const delimiter = '&';
+export const equal = '=';
+
 export function buildSearchParameterSerializer() {
-  return {serialize, deserialize};
+  return {serialize: serialize(serializePair), deserialize: deserialize};
 }
 
-function serialize(obj: SearchParameters) {
-  return Object.entries(obj)
-    .map(serializePair)
-    .filter((str) => str)
-    .join(delimiter);
+export function keyHasObjectValue(key: string): key is FacetKey {
+  return key in supportedFacetParameters;
 }
 
-function serializePair(pair: [string, unknown]) {
+export function isValidBasicKey(
+  key: string
+): key is Exclude<SearchParameterKey, FacetKey> {
+  const supportedBasicParameters: Record<
+    Exclude<keyof SearchParameters, FacetSearchParameters>,
+    boolean
+  > = {
+    q: true,
+    aq: true,
+    cq: true,
+    enableQuerySyntax: true,
+    firstResult: true,
+    numberOfResults: true,
+    sortCriteria: true,
+    debug: true,
+    tab: true,
+  };
+  return key in supportedBasicParameters;
+}
+
+export function isRangeFacetKey(
+  key: string
+): key is Extract<FacetKey, 'nf' | 'df' | 'mnf'> {
+  const supportedRangeFacetParameters: Pick<
+    typeof supportedFacetParameters,
+    'df' | 'nf' | 'mnf'
+  > = {
+    nf: true,
+    df: true,
+    mnf: true,
+  };
+  const isRangeFacet = key in supportedRangeFacetParameters;
+  return keyHasObjectValue(key) && isRangeFacet;
+}
+
+export function isValidKey(key: string): key is SearchParameterKey {
+  return isValidBasicKey(key) || keyHasObjectValue(key);
+}
+
+export const serialize =
+  <T extends {}>(pairSerializer: (pair: [string, unknown]) => string) =>
+  (obj: T) => {
+    return Object.entries(obj)
+      .map(pairSerializer)
+      .filter((str) => str)
+      .join(delimiter);
+  };
+
+export function serializePair(pair: [string, unknown]) {
   const [key, val] = pair;
 
   if (!isValidKey(key)) {
     return '';
   }
 
-  if (isSpecificFacetKey(key)) {
+  if (keyHasObjectValue(key) && !isRangeFacetKey(key)) {
     return isFacetObject(val) ? serializeFacets(key, val) : '';
   }
 
@@ -47,12 +111,16 @@ function serializePair(pair: [string, unknown]) {
     return isRangeFacetObject(val) ? serializeRangeFacets(key, val) : '';
   }
 
+  return serializeSpecialCharacters(key, val);
+}
+
+export function serializeSpecialCharacters(key: string, val: unknown) {
   return `${key}${equal}${encodeURIComponent(
     val as string | number | boolean
   )}`;
 }
 
-function isFacetObject(obj: unknown): obj is Record<string, string[]> {
+export function isFacetObject(obj: unknown): obj is Record<string, string[]> {
   if (!isObject(obj)) {
     return false;
   }
@@ -61,7 +129,7 @@ function isFacetObject(obj: unknown): obj is Record<string, string[]> {
   return allEntriesAreValid(obj, isValidValue);
 }
 
-function isRangeFacetObject(
+export function isRangeFacetObject(
   obj: unknown
 ): obj is Record<string, RangeValueRequest[]> {
   if (!isObject(obj)) {
@@ -73,7 +141,7 @@ function isRangeFacetObject(
   return allEntriesAreValid(obj, isRangeValue);
 }
 
-function isObject(obj: unknown): obj is object {
+export function isObject(obj: unknown): obj is object {
   return obj && typeof obj === 'object' ? true : false;
 }
 
@@ -89,7 +157,7 @@ function allEntriesAreValid(
   return invalidEntries.length === 0;
 }
 
-function serializeFacets(key: string, facets: Record<string, string[]>) {
+export function serializeFacets(key: string, facets: Record<string, string[]>) {
   return Object.entries(facets)
     .map(
       ([facetId, values]) =>
@@ -100,7 +168,7 @@ function serializeFacets(key: string, facets: Record<string, string[]>) {
     .join(delimiter);
 }
 
-function serializeRangeFacets(
+export function serializeRangeFacets(
   key: string,
   facets: Record<string, RangeValueRequest[]>
 ) {
@@ -125,7 +193,7 @@ function deserialize(fragment: string): SearchParameters {
     .map((part) => splitOnFirstEqual(part))
     .map(preprocessObjectPairs)
     .filter(isValidPair)
-    .map(cast);
+    .map((pair) => cast(pair));
 
   return keyValuePairs.reduce((acc: SearchParameters, pair) => {
     const [key, val] = pair;
@@ -139,17 +207,16 @@ function deserialize(fragment: string): SearchParameters {
   }, {});
 }
 
-function splitOnFirstEqual(str: string) {
+export function splitOnFirstEqual(str: string) {
   const [first, ...rest] = str.split(equal);
   const second = rest.join(equal);
 
   return [first, second];
 }
 
-function preprocessObjectPairs(pair: string[]) {
+export function preprocessObjectPairs(pair: string[]) {
   const [key, val] = pair;
-  const objectKey = /^(f|fExcluded|cf|nf|df|sf|af)-(.+)$/;
-  const result = objectKey.exec(key);
+  const result = facetSearchParamRegex.exec(key);
 
   if (!result) {
     return pair;
@@ -165,7 +232,7 @@ function preprocessObjectPairs(pair: string[]) {
 }
 
 function processObjectValues(key: string, values: string[]) {
-  if (key === 'nf') {
+  if (key === 'nf' || key === 'mnf') {
     return buildNumericRanges(values);
   }
 
@@ -176,7 +243,7 @@ function processObjectValues(key: string, values: string[]) {
   return values;
 }
 
-function buildNumericRanges(ranges: string[]) {
+export function buildNumericRanges(ranges: string[]) {
   return ranges
     .map((str) => {
       const {startAsString, endAsString, isEndInclusive} =
@@ -211,7 +278,7 @@ function isValidDateRangeValue(date: string) {
   }
 }
 
-function buildDateRanges(ranges: string[]) {
+export function buildDateRanges(ranges: string[]) {
   return ranges
     .map((str) => {
       const {isEndInclusive, startAsString, endAsString} =
@@ -240,31 +307,10 @@ function isValidPair<K extends SearchParameterKey>(
   return validKey && lengthOfTwo;
 }
 
-function isValidKey(key: string): key is SearchParameterKey {
-  const supportedParameters: Record<keyof Required<SearchParameters>, boolean> =
-    {
-      q: true,
-      aq: true,
-      cq: true,
-      enableQuerySyntax: true,
-      firstResult: true,
-      numberOfResults: true,
-      sortCriteria: true,
-      f: true,
-      fExcluded: true,
-      cf: true,
-      nf: true,
-      df: true,
-      debug: true,
-      sf: true,
-      tab: true,
-      af: true,
-    };
-
-  return key in supportedParameters;
-}
-
-function cast<K extends SearchParameterKey>(pair: [K, string]): [K, unknown] {
+export function cast<K extends SearchParameterKey>(
+  pair: [K, string],
+  decode = true
+): [K, unknown] {
   const [key, value] = pair;
 
   if (key === 'enableQuerySyntax') {
@@ -287,10 +333,10 @@ function cast<K extends SearchParameterKey>(pair: [K, string]): [K, unknown] {
     return [key, castUnknownObject(value)];
   }
 
-  return [key, decodeURIComponent(value)];
+  return [key, decode ? decodeURIComponent(value) : value];
 }
 
-function castUnknownObject(value: string) {
+export function castUnknownObject(value: string) {
   const jsonParsed: UnknownObject = JSON.parse(value);
   const ret: UnknownObject = {};
   Object.entries(jsonParsed).forEach((entry) => {
@@ -299,20 +345,6 @@ function castUnknownObject(value: string) {
   });
 
   return ret;
-}
-
-function keyHasObjectValue(
-  key: SearchParameterKey
-): key is 'f' | 'af' | 'cf' | 'df' | 'nf' | 'sf' | 'fExcluded' {
-  const keys = ['f', 'fExcluded', 'cf', 'nf', 'df', 'sf', 'af'];
-  return keys.includes(key);
-}
-
-function isSpecificFacetKey(
-  key: SearchParameterKey
-): key is 'f' | 'af' | 'cf' | 'sf' | 'fExcluded' {
-  const keys = ['f', 'af', 'cf', 'sf', 'fExcluded'];
-  return keys.includes(key);
 }
 
 function splitRangeValueAsStringByDelimiter(str: string) {

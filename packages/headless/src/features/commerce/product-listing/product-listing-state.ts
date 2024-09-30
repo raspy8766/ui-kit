@@ -1,18 +1,20 @@
-import {CommerceAPIErrorStatusResponse} from '../../../api/commerce/commerce-api-error-response';
-import {ProductRecommendation} from '../../../api/search/search/product-recommendation';
-import {AnyFacetResponse} from '../facets/facet-set/interfaces/response';
+import {CommerceAPIErrorStatusResponse} from '../../../api/commerce/commerce-api-error-response.js';
+import {Product} from '../../../api/commerce/common/product.js';
+import {AnyFacetResponse} from '../facets/facet-set/interfaces/response.js';
 
-export interface ProductListingV2State {
+export interface ProductListingState {
   error: CommerceAPIErrorStatusResponse | null;
   isLoading: boolean;
+  requestId: string;
   responseId: string;
   facets: AnyFacetResponse[];
-  products: ProductRecommendation[];
+  products: Product[];
 }
 
-export const getProductListingV2InitialState = (): ProductListingV2State => ({
+export const getProductListingInitialState = (): ProductListingState => ({
   error: null,
   isLoading: false,
+  requestId: '',
   responseId: '',
   facets: [],
   products: [],

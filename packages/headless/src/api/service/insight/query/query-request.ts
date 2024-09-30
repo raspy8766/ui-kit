@@ -1,25 +1,30 @@
 import {
+  ContextParam,
   FoldingParam,
+  LocaleParam,
   NumberOfResultsParam,
-} from '../../../platform-service-params';
+} from '../../../platform-service-params.js';
 import {
+  AnalyticsParam,
   ConstantQueryParam,
   EnableDidYouMeanParam,
   FacetsParam,
   FieldsToIncludeParam,
   FirstResultParam,
+  PipelineRuleParams,
   QueryParam,
   SortCriteriaParam,
   TabParam,
-} from '../../../search/search-api-params';
+} from '../../../search/search-api-params.js';
 import {
   baseInsightRequest,
   InsightParam,
   pickNonInsightParams,
-} from '../insight-params';
-import {InsightQuerySuggestRequest} from '../query-suggest/query-suggest-request';
+} from '../insight-params.js';
+import {InsightQuerySuggestRequest} from '../query-suggest/query-suggest-request.js';
 
 export type InsightQueryRequest = InsightParam &
+  AnalyticsParam &
   CaseContextParam &
   FacetsParam &
   QueryParam &
@@ -30,7 +35,10 @@ export type InsightQueryRequest = InsightParam &
   EnableDidYouMeanParam &
   ConstantQueryParam &
   TabParam &
-  FoldingParam;
+  FoldingParam &
+  ContextParam &
+  LocaleParam &
+  PipelineRuleParams;
 
 interface CaseContextParam {
   caseContext?: Record<string, string>;

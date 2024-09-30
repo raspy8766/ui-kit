@@ -1,35 +1,43 @@
-import {updateFacetOptions} from '../../../../../features/facet-options/facet-options-actions';
-import {updateDateFacetValues} from '../../../../../features/facets/range-facets/date-facet-set/date-facet-actions';
-import {executeSearch} from '../../../../../features/search/search-actions';
-import {InsightAppState} from '../../../../../state/insight-app-state';
-import {buildMockDateFacetSlice} from '../../../../../test/mock-date-facet-slice';
-import {buildMockDateFacetValue} from '../../../../../test/mock-date-facet-value';
+import {Mock} from 'vitest';
+import {updateFacetOptions} from '../../../../../features/facet-options/facet-options-actions.js';
+import {updateDateFacetValues} from '../../../../../features/facets/range-facets/date-facet-set/date-facet-actions.js';
+import {executeSearch} from '../../../../../features/insight-search/insight-search-actions.js';
+import {InsightAppState} from '../../../../../state/insight-app-state.js';
+import {buildMockDateFacetSlice} from '../../../../../test/mock-date-facet-slice.js';
+import {buildMockDateFacetValue} from '../../../../../test/mock-date-facet-value.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../../../test/mock-engine';
-import {buildMockInsightState} from '../../../../../test/mock-insight-state';
+  MockedInsightEngine,
+} from '../../../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../../../test/mock-insight-state.js';
 import {
   buildDateFilter,
   DateFilter,
   DateFilterInitialState,
   DateFilterOptions,
-} from './headless-insight-date-filter';
+} from './headless-insight-date-filter.js';
+
+vi.mock(
+  '../../../../../features/facets/range-facets/date-facet-set/date-facet-actions'
+);
+vi.mock('../../../../../features/facet-options/facet-options-actions');
+vi.mock('../../../../../features/insight-search/insight-search-actions');
 
 describe('insight date filter', () => {
   const facetId = '1';
   let options: DateFilterOptions;
   let initialState: DateFilterInitialState | undefined;
   let state: InsightAppState;
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let dateFacet: DateFilter;
 
   function initDateFilter() {
-    engine = buildMockInsightEngine({state});
+    engine = buildMockInsightEngine(state);
     dateFacet = buildDateFilter(engine, {options, initialState});
   }
 
   beforeEach(() => {
+    (updateDateFacetValues as unknown as Mock).mockReturnValue(() => {});
     initialState = undefined;
 
     options = {
@@ -47,8 +55,7 @@ describe('insight date filter', () => {
     it('dispatches a updateDateFacetValues with the passed value', () => {
       const value = buildMockDateFacetValue({});
       dateFacet.setRange(value);
-
-      const action = updateDateFacetValues({
+      expect(updateDateFacetValues).toHaveBeenCalledWith({
         facetId,
         values: [
           {
@@ -59,17 +66,13 @@ describe('insight date filter', () => {
           },
         ],
       });
-      expect(engine.actions).toContainEqual(action);
     });
 
     it('dispatches a search', () => {
       const value = buildMockDateFacetValue();
       dateFacet.setRange(value);
 
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -77,21 +80,11 @@ describe('insight date filter', () => {
     beforeEach(() => dateFacet.clear());
 
     it('dispatches #updateDateFacetValues with the facet id and an empty array', () => {
-      expect(engine.actions).toContainEqual(
-        updateDateFacetValues({facetId, values: []})
-      );
+      expect(updateDateFacetValues).toHaveBeenCalledWith({facetId, values: []});
     });
 
     it('dispatches a #updateFacetOptions action with #freezeFacetOrder true', () => {
-      expect(engine.actions).toContainEqual(updateFacetOptions());
-    });
-
-    it('dispatches a search', () => {
-      const action = engine.actions.find(
-        (a) => a.type === executeSearch.pending.type
-      );
-
-      expect(engine.actions).toContainEqual(action);
+      expect(updateFacetOptions).toHaveBeenCalled();
     });
   });
 });

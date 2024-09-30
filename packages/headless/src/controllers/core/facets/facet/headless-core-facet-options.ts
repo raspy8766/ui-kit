@@ -1,12 +1,12 @@
-import {Schema, StringValue} from '@coveo/bueno';
+import {ArrayValue, RecordValue, Schema, StringValue} from '@coveo/bueno';
 import {
   FacetResultsMustMatch,
   facetResultsMustMatch,
-} from '../../../../features/facets/facet-api/request';
+} from '../../../../features/facets/facet-api/request.js';
 import {
   facetSortCriteria,
   FacetSortCriterion,
-} from '../../../../features/facets/facet-set/interfaces/request';
+} from '../../../../features/facets/facet-set/interfaces/request.js';
 import {
   facetId,
   field,
@@ -14,7 +14,7 @@ import {
   injectionDepth,
   numberOfValues,
   facetSearch,
-} from '../_common/facet-option-definitions';
+} from '../_common/facet-option-definitions.js';
 
 export interface FacetOptions {
   /**
@@ -26,6 +26,11 @@ export interface FacetOptions {
    * A unique identifier for the controller. By default, a random unique identifier is generated.
    * */
   facetId?: string;
+
+  /**
+   * The tabs on which the facet should be enabled or disabled.
+   */
+  tabs?: {included?: string[]; excluded?: string[]};
 
   /**
    * Facet search options.
@@ -61,7 +66,10 @@ export interface FacetOptions {
 
   /**
    * The criterion to use for sorting returned facet values.
-   * Learn more about `sortCriteria` values and the default behavior of specific facets in the [Search API documentation](https://docs.coveo.com/en/1461/build-a-search-ui/query-parameters#RestFacetRequest-sortCriteria).
+   *
+   * The `sortCriteria` option does not apply when making a facet search request. It is only used for sorting returned facet values during a regular Coveo search request.
+   *
+   * Learn more about `sortCriteria` values and the default behavior of specific facets in the [Search API documentation](https://docs.coveo.com/en/13#operation/searchUsingPost-facets-sortCriteria).
    *
    * @defaultValue `automatic`
    */
@@ -96,6 +104,15 @@ export interface FacetSearchOptions {
 
 export const facetOptionsSchema = new Schema<Required<FacetOptions>>({
   facetId,
+  tabs: new RecordValue({
+    options: {
+      required: false,
+    },
+    values: {
+      included: new ArrayValue({each: new StringValue()}),
+      excluded: new ArrayValue({each: new StringValue()}),
+    },
+  }),
   field,
   filterFacetCount,
   injectionDepth,

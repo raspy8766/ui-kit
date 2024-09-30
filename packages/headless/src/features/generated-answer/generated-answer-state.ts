@@ -1,7 +1,11 @@
-import {GeneratedAnswerCitation} from '../../api/generated-answer/generated-answer-event-payload';
-import {GeneratedResponseFormat} from './generated-response-format';
+import {GeneratedAnswerCitation} from '../../api/generated-answer/generated-answer-event-payload.js';
+import {
+  GeneratedContentFormat,
+  GeneratedResponseFormat,
+} from './generated-response-format.js';
 
 export interface GeneratedAnswerState {
+  id: string;
   /**
    * Determines if the generated answer is visible.
    */
@@ -15,9 +19,19 @@ export interface GeneratedAnswerState {
    */
   isStreaming: boolean;
   /**
+   * Determines if the generated answer is enabled.
+   */
+  isEnabled: boolean;
+  /**
    * The generated answer.
    */
   answer?: string;
+  /**
+   * The content format of the generated answer. Possible values are:
+   * - `text/plain`
+   * - `text/markdown`
+   */
+  answerContentFormat?: GeneratedContentFormat;
   /**
    * The document snippets retrieved to generate the answer.
    */
@@ -54,21 +68,37 @@ export interface GeneratedAnswerState {
    * A list of indexed fields to include in the citations returned with the generated answer.
    */
   fieldsToIncludeInCitations: string[];
+  /**
+   * Determines if the answer is generated.
+   */
+  isAnswerGenerated: boolean;
+  /**
+   * Whether the answer is expanded.
+   */
+  expanded: boolean;
+  /**
+   * The answer configuration unique identifier.
+   */
+  answerConfigurationId?: string;
 }
 
 export function getGeneratedAnswerInitialState(): GeneratedAnswerState {
   return {
+    id: '',
     isVisible: true,
+    isEnabled: true,
     isLoading: false,
     isStreaming: false,
     citations: [],
     liked: false,
     disliked: false,
     responseFormat: {
-      answerStyle: 'default',
+      contentFormat: ['text/plain'],
     },
     feedbackModalOpen: false,
     feedbackSubmitted: false,
     fieldsToIncludeInCitations: [],
+    isAnswerGenerated: false,
+    expanded: false,
   };
 }

@@ -1,50 +1,17 @@
-import {SearchEngine} from '../../app/search-engine/search-engine';
-import {updateQuery} from '../../features/query/query-actions';
-import {queryReducer as query} from '../../features/query/query-slice';
-import {executeSearch} from '../../features/search/search-actions';
+import {SearchEngine} from '../../app/search-engine/search-engine.js';
+import {updateQuery} from '../../features/query/query-actions.js';
+import {queryReducer as query} from '../../features/query/query-slice.js';
+import {executeSearch} from '../../features/search/search-actions.js';
 import {
   logUndoTriggerQuery,
   undoTriggerQuery,
-} from '../../features/triggers/trigger-analytics-actions';
-import {updateIgnoreQueryTrigger} from '../../features/triggers/triggers-actions';
-import {triggerReducer as triggers} from '../../features/triggers/triggers-slice';
-import {TriggerSection, QuerySection} from '../../state/state-sections';
-import {loadReducerError} from '../../utils/errors';
-import {buildController, Controller} from '../controller/headless-controller';
-
-/**
- * The `QueryTrigger` controller handles query triggers.
- */
-export interface QueryTrigger extends Controller {
-  /**
-   * The state of the `QueryTrigger` controller.
-   */
-  state: QueryTriggerState;
-  /**
-   * Undoes a query trigger's correction.
-   */
-  undo(): void;
-}
-
-/**
- * A scoped and simplified part of the headless state that is relevant to the `QueryTrigger` controller.
- */
-export interface QueryTriggerState {
-  /**
-   * The new query to perform a search with after receiving a query trigger.
-   */
-  newQuery: string;
-
-  /**
-   * The query used to perform the search that received a query trigger in its response.
-   */
-  originalQuery: string;
-
-  /**
-   * A boolean to specify if the controller was triggered resulting in a modification to the query.
-   */
-  wasQueryModified: boolean;
-}
+} from '../../features/triggers/trigger-analytics-actions.js';
+import {updateIgnoreQueryTrigger} from '../../features/triggers/triggers-actions.js';
+import {triggerReducer as triggers} from '../../features/triggers/triggers-slice.js';
+import {TriggerSection, QuerySection} from '../../state/state-sections.js';
+import {loadReducerError} from '../../utils/errors.js';
+import {buildController} from '../controller/headless-controller.js';
+import {QueryTrigger} from '../core/triggers/headless-core-query-trigger.js';
 
 /**
  * Creates a `QueryTrigger` controller instance.
@@ -85,7 +52,7 @@ export function buildQueryTrigger(engine: SearchEngine): QueryTrigger {
           legacy: logUndoTriggerQuery({
             undoneQuery: modification(),
           }),
-          next: undoTriggerQuery(modification()),
+          next: undoTriggerQuery(),
         })
       );
     },

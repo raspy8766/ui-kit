@@ -1,18 +1,22 @@
-import {configuration} from '../../../../../app/common-reducers';
-import {InsightEngine} from '../../../../../app/insight-engine/insight-engine';
+import {configuration} from '../../../../../app/common-reducers.js';
+import {InsightEngine} from '../../../../../app/insight-engine/insight-engine.js';
+import {
+  facetClearAll,
+  facetSelect,
+} from '../../../../../features/facets/facet-set/facet-set-analytics-actions.js';
 import {
   logFacetClearAll,
   logFacetSelect,
-} from '../../../../../features/facets/facet-set/facet-set-insight-analytics-actions';
-import {dateFacetSetReducer as dateFacetSet} from '../../../../../features/facets/range-facets/date-facet-set/date-facet-set-slice';
-import {executeSearch} from '../../../../../features/insight-search/insight-search-actions';
-import {searchReducer as search} from '../../../../../features/search/search-slice';
+} from '../../../../../features/facets/facet-set/facet-set-insight-analytics-actions.js';
+import {dateFacetSetReducer as dateFacetSet} from '../../../../../features/facets/range-facets/date-facet-set/date-facet-set-slice.js';
+import {executeSearch} from '../../../../../features/insight-search/insight-search-actions.js';
+import {searchReducer as search} from '../../../../../features/search/search-slice.js';
 import {
   ConfigurationSection,
   DateFacetSection,
   SearchSection,
-} from '../../../../../state/state-sections';
-import {loadReducerError} from '../../../../../utils/errors';
+} from '../../../../../state/state-sections.js';
+import {loadReducerError} from '../../../../../utils/errors.js';
 import {
   buildCoreDateFilter,
   DateFilter,
@@ -21,7 +25,7 @@ import {
   DateFilterProps,
   DateFilterRange,
   DateFilterState,
-} from '../../../../core/facets/range-facet/date-facet/headless-core-date-filter';
+} from '../../../../core/facets/range-facet/date-facet/headless-core-date-filter.js';
 
 export type {
   DateFilterOptions,
@@ -54,18 +58,24 @@ export function buildDateFilter(
     ...coreController,
     clear: () => {
       coreController.clear();
-      dispatch(executeSearch(logFacetClearAll(getFacetId())));
+      dispatch(
+        executeSearch({
+          legacy: logFacetClearAll(getFacetId()),
+          next: facetClearAll(),
+        })
+      );
     },
     setRange: (range) => {
       const success = coreController.setRange(range);
       if (success) {
         dispatch(
-          executeSearch(
-            logFacetSelect({
+          executeSearch({
+            legacy: logFacetSelect({
               facetId: getFacetId(),
               facetValue: `${range.start}..${range.end}`,
-            })
-          )
+            }),
+            next: facetSelect(),
+          })
         );
       }
       return success;

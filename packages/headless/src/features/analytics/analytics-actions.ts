@@ -1,13 +1,12 @@
-import {SearchPageEvents as LegacySearchPageEvents} from 'coveo.analytics/dist/definitions/searchPage/searchPageEvents';
-import {SearchAnalyticsProvider} from '../../api/analytics/search-analytics';
-import {Result} from '../../api/search/search/result';
+import {SearchPageEvents as LegacySearchPageEvents} from 'coveo.analytics/dist/definitions/searchPage/searchPageEvents.js';
+import {Result} from '../../api/search/search/result.js';
 import {
   validatePayload,
   requiredNonEmptyString,
   nonEmptyString,
-} from '../../utils/validate-payload';
-import {OmniboxSuggestionMetadata} from '../query-suggest/query-suggest-analytics-actions';
-import {SearchAction} from '../search/search-actions';
+} from '../../utils/validate-payload.js';
+import {OmniboxSuggestionMetadata} from '../query-suggest/query-suggest-analytics-actions.js';
+import {SearchAction} from '../search/search-actions.js';
 import {
   ClickAction,
   CustomAction,
@@ -16,8 +15,8 @@ import {
   partialDocumentInformation,
   LegacySearchAction,
   validateResultPayload,
-} from './analytics-utils';
-import {SearchPageEvents} from './search-action-cause';
+} from './analytics-utils.js';
+import {SearchPageEvents} from './search-action-cause.js';
 
 export interface SearchEventPayload {
   /** The identifier of the search action (e.g., `interfaceLoad`). */
@@ -164,38 +163,18 @@ export const logOmniboxFromLink = (
   );
 
 // --------------------- KIT-2859 : Everything above this will get deleted ! :) ---------------------
-export const interfaceLoad = (): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.interfaceLoad,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getBaseMetadata(),
-  };
-};
+export const interfaceLoad = (): SearchAction => ({
+  actionCause: SearchPageEvents.interfaceLoad,
+});
 
-export const interfaceChange = (): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.interfaceChange,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getInterfaceChangeMetadata(),
-  };
-};
+export const interfaceChange = (): SearchAction => ({
+  actionCause: SearchPageEvents.interfaceChange,
+});
 
-export const searchFromLink = (): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.searchFromLink,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getBaseMetadata(),
-  };
-};
+export const searchFromLink = (): SearchAction => ({
+  actionCause: SearchPageEvents.searchFromLink,
+});
 
-export const omniboxFromLink = (
-  metadata: OmniboxSuggestionMetadata
-): SearchAction => {
-  return {
-    actionCause: SearchPageEvents.omniboxFromLink,
-    getEventExtraPayload: (state) =>
-      new SearchAnalyticsProvider(() => state).getOmniboxFromLinkMetadata(
-        metadata
-      ),
-  };
-};
+export const omniboxFromLink = (): SearchAction => ({
+  actionCause: SearchPageEvents.omniboxFromLink,
+});

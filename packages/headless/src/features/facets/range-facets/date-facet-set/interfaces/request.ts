@@ -1,19 +1,19 @@
-import {CurrentValues, Type} from '../../../facet-api/request';
-import {FacetValueState} from '../../../facet-api/value';
-import {AnyFacetRequest} from '../../../generic/interfaces/generic-facet-request';
-import {BaseRangeFacetRequest} from '../../generic/interfaces/request';
+import {CurrentValues, Type} from '../../../facet-api/request.js';
+import {FacetValueState} from '../../../facet-api/value.js';
+import {AnyFacetRequest} from '../../../generic/interfaces/generic-facet-request.js';
+import {BaseRangeFacetRequest} from '../../generic/interfaces/request.js';
 
 /**
  * The options defining a value to display in a `DateFacet`.
  */
 export interface DateRangeRequest {
   /**
-   * The starting value for the date range, formatted as `YYYY/MM/DD@HH:mm:ss` or the [Relative Date](https://docs.coveo.com/en/headless/latest/reference/search/search-date-facet-controller/relative-date-format/) format "period-amount-unit".
+   * The starting value for the date range, formatted as `YYYY/MM/DD@HH:mm:ss` or the [Relative Date](https://docs.coveo.com/en/headless/latest/reference/search/controllers/date-facet/relative-date-format/) format "period-amount-unit".
    */
   start: string;
 
   /**
-   * The ending value for the date range, formatted as `YYYY/MM/DD@HH:mm:ss` or the [Relative Date](https://docs.coveo.com/en/headless/latest/reference/search/search-date-facet-controller/relative-date-format/) format "period-amount-unit".
+   * The ending value for the date range, formatted as `YYYY/MM/DD@HH:mm:ss` or the [Relative Date](https://docs.coveo.com/en/headless/latest/reference/search/controllers/date-facet/relative-date-format/) format "period-amount-unit".
    */
   end: string;
 

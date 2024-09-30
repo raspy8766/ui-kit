@@ -7,10 +7,26 @@ import {
   augmentAnalyticsWithAtomicVersion,
   augmentWithExternalMiddleware,
   augmentAnalyticsConfigWithDocument,
+  augmentAnalyticsConfigWithAtomicVersion,
+  getNextAnalyticsConfig,
 } from '../../common/interface/analytics-config';
 import {createAtomicStore} from './store';
 
 export function getAnalyticsConfig(
+  searchEngineConfig: SearchEngineConfiguration,
+  enabled: boolean,
+  store: ReturnType<typeof createAtomicStore>
+): AnalyticsConfiguration {
+  switch (searchEngineConfig.analytics?.analyticsMode) {
+    case 'next':
+      return getNextAnalyticsConfig(searchEngineConfig, enabled);
+    case 'legacy':
+    default:
+      return getLegacyAnalyticsConfig(searchEngineConfig, enabled, store);
+  }
+}
+
+function getLegacyAnalyticsConfig(
   searchEngineConfig: SearchEngineConfiguration,
   enabled: boolean,
   store: ReturnType<typeof createAtomicStore>
@@ -26,14 +42,23 @@ export function getAnalyticsConfig(
     ...augmentAnalyticsConfigWithDocument(),
   };
 
+  const immutableConfiguration: AnalyticsConfiguration = {
+    ...augmentAnalyticsConfigWithAtomicVersion(),
+  };
+
   if (searchEngineConfig.analytics) {
     return {
       ...defaultConfiguration,
       ...searchEngineConfig.analytics,
       analyticsClientMiddleware,
+      ...immutableConfiguration,
     };
   }
-  return defaultConfiguration;
+
+  return {
+    ...defaultConfiguration,
+    ...immutableConfiguration,
+  };
 }
 
 function augmentAnalytics(

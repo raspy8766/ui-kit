@@ -1,22 +1,29 @@
-import {executeSearch} from '../../features/search/search-actions';
+import {executeSearch} from '../../features/search/search-actions.js';
 import {
   deselectAllStaticFilterValues,
   registerStaticFilter,
   toggleExcludeStaticFilterValue,
   toggleSelectStaticFilterValue,
-} from '../../features/static-filter-set/static-filter-set-actions';
-import {staticFilterSetReducer as staticFilterSet} from '../../features/static-filter-set/static-filter-set-slice';
-import {buildMockSearchAppEngine, MockSearchEngine} from '../../test';
-import {buildMockStaticFilterSlice} from '../../test/mock-static-filter-slice';
-import {buildMockStaticFilterValue} from '../../test/mock-static-filter-value';
+} from '../../features/static-filter-set/static-filter-set-actions.js';
+import {staticFilterSetReducer as staticFilterSet} from '../../features/static-filter-set/static-filter-set-slice.js';
+import {
+  buildMockSearchEngine,
+  MockedSearchEngine,
+} from '../../test/mock-engine-v2.js';
+import {createMockState} from '../../test/mock-state.js';
+import {buildMockStaticFilterSlice} from '../../test/mock-static-filter-slice.js';
+import {buildMockStaticFilterValue} from '../../test/mock-static-filter-value.js';
 import {
   buildStaticFilter,
   StaticFilter,
   StaticFilterOptions,
-} from './headless-static-filter';
+} from './headless-static-filter.js';
+
+vi.mock('../../features/search/search-actions');
+vi.mock('../../features/static-filter-set/static-filter-set-actions');
 
 describe('Static Filter', () => {
-  let engine: MockSearchEngine;
+  let engine: MockedSearchEngine;
   let filter: StaticFilter;
   let options: StaticFilterOptions;
 
@@ -25,7 +32,8 @@ describe('Static Filter', () => {
   }
 
   beforeEach(() => {
-    engine = buildMockSearchAppEngine();
+    vi.resetAllMocks();
+    engine = buildMockSearchEngine(createMockState());
     options = {
       id: 'a',
       values: [],
@@ -44,8 +52,8 @@ describe('Static Filter', () => {
 
   it('registers the static filter in state', () => {
     const {id, values} = options;
-    const action = registerStaticFilter({id, values});
-    expect(engine.actions).toContainEqual(action);
+
+    expect(registerStaticFilter).toHaveBeenCalledWith({id, values});
   });
 
   it('when #id option has an invalid type, it throws', () => {
@@ -58,17 +66,16 @@ describe('Static Filter', () => {
     it('dispatches #toggleSelectStaticFilterValue', () => {
       const value = buildMockStaticFilterValue();
       filter.toggleSelect(value);
-
-      const action = toggleSelectStaticFilterValue({id: options.id, value});
-      expect(engine.actions).toContainEqual(action);
+      expect(toggleSelectStaticFilterValue).toHaveBeenCalledWith({
+        id: options.id,
+        value,
+      });
     });
 
     it('dispatches #executeSearch', () => {
       const value = buildMockStaticFilterValue();
       filter.toggleSelect(value);
-
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -76,32 +83,29 @@ describe('Static Filter', () => {
     it('dispatches #toggleExcludeStaticFilterValue', () => {
       const value = buildMockStaticFilterValue();
       filter.toggleExclude(value);
-
-      const action = toggleExcludeStaticFilterValue({id: options.id, value});
-      expect(engine.actions).toContainEqual(action);
+      expect(toggleExcludeStaticFilterValue).toHaveBeenCalledWith({
+        id: options.id,
+        value,
+      });
     });
 
     it('dispatches #executeSearch', () => {
       const value = buildMockStaticFilterValue();
       filter.toggleExclude(value);
 
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
   describe('#deselectAll', () => {
     it('dispatches #deselectAllStaticFilterValues', () => {
       filter.deselectAll();
-      const action = deselectAllStaticFilterValues(options.id);
-      expect(engine.actions).toContainEqual(action);
+      expect(deselectAllStaticFilterValues).toHaveBeenCalledWith(options.id);
     });
 
     it('dispatches #executeSearch', () => {
       filter.deselectAll();
-
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -111,10 +115,8 @@ describe('Static Filter', () => {
       const value = buildMockStaticFilterValue({state: 'idle'});
       filter.toggleSingleSelect(value);
 
-      expect(engine.actions).toContainEqual(deselectAllStaticFilterValues(id));
-      expect(engine.actions).toContainEqual(
-        toggleSelectStaticFilterValue({id, value})
-      );
+      expect(deselectAllStaticFilterValues).toHaveBeenCalledWith(id);
+      expect(toggleSelectStaticFilterValue).toHaveBeenCalledWith({id, value});
     });
 
     it('with an active value, it only toggle selects the value', () => {
@@ -122,20 +124,15 @@ describe('Static Filter', () => {
       const value = buildMockStaticFilterValue({state: 'selected'});
       filter.toggleSingleSelect(value);
 
-      expect(engine.actions).not.toContainEqual(
-        deselectAllStaticFilterValues(id)
-      );
-      expect(engine.actions).toContainEqual(
-        toggleSelectStaticFilterValue({id, value})
-      );
+      expect(deselectAllStaticFilterValues).not.toHaveBeenCalledWith(id);
+      expect(toggleSelectStaticFilterValue).toHaveBeenCalledWith({id, value});
     });
 
     it('dispatches #executeSearch', () => {
       const value = buildMockStaticFilterValue();
       filter.toggleSingleSelect(value);
 
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 
@@ -145,10 +142,8 @@ describe('Static Filter', () => {
       const value = buildMockStaticFilterValue({state: 'idle'});
       filter.toggleSingleExclude(value);
 
-      expect(engine.actions).toContainEqual(deselectAllStaticFilterValues(id));
-      expect(engine.actions).toContainEqual(
-        toggleExcludeStaticFilterValue({id, value})
-      );
+      expect(deselectAllStaticFilterValues).toHaveBeenCalledWith(id);
+      expect(toggleExcludeStaticFilterValue).toHaveBeenCalledWith({id, value});
     });
 
     it('with a selected value, it only toggle excludes the value', () => {
@@ -156,12 +151,8 @@ describe('Static Filter', () => {
       const value = buildMockStaticFilterValue({state: 'selected'});
       filter.toggleSingleExclude(value);
 
-      expect(engine.actions).not.toContainEqual(
-        deselectAllStaticFilterValues(id)
-      );
-      expect(engine.actions).toContainEqual(
-        toggleExcludeStaticFilterValue({id, value})
-      );
+      expect(deselectAllStaticFilterValues).not.toHaveBeenCalledWith(id);
+      expect(toggleExcludeStaticFilterValue).toHaveBeenCalledWith({id, value});
     });
 
     it('with an excluded value, it only toggle excludes the value', () => {
@@ -169,20 +160,15 @@ describe('Static Filter', () => {
       const value = buildMockStaticFilterValue({state: 'excluded'});
       filter.toggleSingleExclude(value);
 
-      expect(engine.actions).not.toContainEqual(
-        deselectAllStaticFilterValues(id)
-      );
-      expect(engine.actions).toContainEqual(
-        toggleExcludeStaticFilterValue({id, value})
-      );
+      expect(deselectAllStaticFilterValues).not.toHaveBeenCalledWith(id);
+      expect(toggleExcludeStaticFilterValue).toHaveBeenCalledWith({id, value});
     });
 
     it('dispatches #executeSearch', () => {
       const value = buildMockStaticFilterValue();
       filter.toggleSingleSelect(value);
 
-      const action = engine.findAsyncAction(executeSearch.pending);
-      expect(action).toBeTruthy();
+      expect(executeSearch).toHaveBeenCalled();
     });
   });
 

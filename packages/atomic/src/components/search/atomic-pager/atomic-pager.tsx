@@ -15,7 +15,15 @@ import {
   InitializableComponent,
   InitializeBindings,
 } from '../../../utils/initialization-utils';
-import {PagerCommon} from '../../common/pager/pager-common';
+import {randomID} from '../../../utils/utils';
+import {
+  PagerNextButton,
+  PagerPageButton,
+  PagerPageButtons,
+  PagerPreviousButton,
+} from '../../common/pager/pager-buttons';
+import {PagerGuard} from '../../common/pager/pager-guard';
+import {PagerNavigation} from '../../common/pager/pager-navigation';
 import {Bindings} from '../atomic-search-interface/atomic-search-interface';
 
 /**
@@ -65,7 +73,7 @@ export class AtomicPager implements InitializableComponent {
    * - Use a value that starts with `assets://`, to display an icon from the Atomic package.
    * - Use a stringified SVG to display it directly.
    */
-  @Prop({reflect: true}) previousButtonIcon = ArrowLeftIcon;
+  @Prop({reflect: true}) previousButtonIcon: string = ArrowLeftIcon;
 
   /**
    * The SVG icon to use to display the Next button.
@@ -74,9 +82,10 @@ export class AtomicPager implements InitializableComponent {
    * - Use a value that starts with `assets://`, to display an icon from the Atomic package.
    * - Use a stringified SVG to display it directly.
    */
-  @Prop({reflect: true}) nextButtonIcon = ArrowRightIcon;
+  @Prop({reflect: true}) nextButtonIcon: string = ArrowRightIcon;
 
   private activePage?: FocusTargetController;
+  private radioGroupName = randomID('atomic-pager-');
 
   public initialize() {
     this.searchStatus = buildSearchStatus(this.bindings.engine);
@@ -87,17 +96,61 @@ export class AtomicPager implements InitializableComponent {
 
   public render() {
     return (
-      <PagerCommon
-        activePage={this.focusTarget}
-        bindings={this.bindings}
-        eventEmitter={this.scrollToTopEvent}
-        pager={this.pager}
-        previousButtonIcon={this.previousButtonIcon}
-        nextButtonIcon={this.nextButtonIcon}
-        pagerState={this.pagerState}
-        searchStatusState={this.searchStatusState}
-      />
+      <PagerGuard
+        hasError={this.searchStatusState.hasError}
+        hasItems={this.searchStatusState.hasResults}
+        isAppLoaded={this.bindings.store.isAppLoaded()}
+      >
+        <PagerNavigation i18n={this.bindings.i18n}>
+          <PagerPreviousButton
+            icon={this.previousButtonIcon}
+            disabled={!this.pagerState.hasPreviousPage}
+            i18n={this.bindings.i18n}
+            onClick={() => {
+              this.pager.previousPage();
+              this.focusOnFirstResultAndScrollToTop();
+            }}
+          />
+          <PagerPageButtons i18n={this.bindings.i18n}>
+            {this.pagerState.currentPages.map((pageNumber) => {
+              return (
+                <PagerPageButton
+                  isSelected={this.pager.isCurrentPage(pageNumber)}
+                  ariaLabel={this.bindings.i18n.t('page-number', {pageNumber})}
+                  onChecked={() => {
+                    this.pager.selectPage(pageNumber);
+                    this.focusOnFirstResultAndScrollToTop();
+                  }}
+                  page={pageNumber}
+                  groupName={this.radioGroupName}
+                  ref={(el) => {
+                    const isSelected = this.pager.isCurrentPage(pageNumber);
+                    if (isSelected && el) {
+                      this.focusTarget.setTarget(el);
+                    }
+                  }}
+                  text={pageNumber.toLocaleString(this.bindings.i18n.language)}
+                />
+              );
+            })}
+          </PagerPageButtons>
+          <PagerNextButton
+            icon={this.nextButtonIcon}
+            disabled={!this.pagerState.hasNextPage}
+            i18n={this.bindings.i18n}
+            onClick={() => {
+              this.pager.nextPage();
+              this.focusOnFirstResultAndScrollToTop();
+            }}
+          />
+        </PagerNavigation>
+      </PagerGuard>
     );
+  }
+
+  private async focusOnFirstResultAndScrollToTop() {
+    await this.bindings.store.state.resultList?.focusOnFirstResultAfterNextSearch();
+    this.scrollToTopEvent.emit();
   }
 
   private get focusTarget() {

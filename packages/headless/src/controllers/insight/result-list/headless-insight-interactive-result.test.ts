@@ -1,22 +1,25 @@
-import {Result} from '../../../api/search/search/result';
-import {configuration} from '../../../app/common-reducers';
-import {pushRecentResult} from '../../../features/recent-results/recent-results-actions';
-import {logDocumentOpen} from '../../../features/result/result-insight-analytics-actions';
-import {buildMockResult} from '../../../test';
+import {Result} from '../../../api/search/search/result.js';
+import {configuration} from '../../../app/common-reducers.js';
+import {pushRecentResult} from '../../../features/recent-results/recent-results-actions.js';
+import {logDocumentOpen} from '../../../features/result/result-insight-analytics-actions.js';
 import {
   buildMockInsightEngine,
-  MockInsightEngine,
-} from '../../../test/mock-engine';
+  MockedInsightEngine,
+} from '../../../test/mock-engine-v2.js';
+import {buildMockInsightState} from '../../../test/mock-insight-state.js';
+import {buildMockResult} from '../../../test/mock-result.js';
 import {
   buildInteractiveResult,
   InteractiveResult,
-} from './headless-insight-interactive-result';
+} from './headless-insight-interactive-result.js';
+
+vi.mock('../../../features/result/result-insight-analytics-actions');
+vi.mock('../../../features/recent-results/recent-results-actions');
 
 describe('InsightInteractiveResult', () => {
-  let engine: MockInsightEngine;
+  let engine: MockedInsightEngine;
   let mockResult: Result;
   let interactiveResult: InteractiveResult;
-  let logDocumentOpenPendingActionType: string;
 
   const resultStringParams = {
     title: 'title',
@@ -31,35 +34,23 @@ describe('InsightInteractiveResult', () => {
 
   function initializeInteractiveResult(delay?: number) {
     const result = (mockResult = buildMockResult(resultStringParams));
-    logDocumentOpenPendingActionType = logDocumentOpen(mockResult).pending.type;
     interactiveResult = buildInteractiveResult(engine, {
       options: {result, selectionDelay: delay},
     });
   }
 
-  function findLogDocumentAction() {
-    return (
-      engine.actions.find(
-        (action) => action.type === logDocumentOpenPendingActionType
-      ) ?? null
-    );
-  }
-
   function expectLogDocumentActionPending() {
-    const action = findLogDocumentAction();
-    expect(action).toEqual(
-      logDocumentOpen(mockResult).pending(action!.meta.requestId)
-    );
+    expect(logDocumentOpen).toHaveBeenCalledWith(mockResult);
   }
 
   beforeEach(() => {
-    engine = buildMockInsightEngine();
+    engine = buildMockInsightEngine(buildMockInsightState());
     initializeInteractiveResult();
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('it adds the correct reducers to engine', () => {
@@ -68,11 +59,9 @@ describe('InsightInteractiveResult', () => {
 
   it('when calling select() should add the result to recent results list', () => {
     interactiveResult.select();
-    jest.runAllTimers();
+    vi.runAllTimers();
 
-    expect(
-      engine.actions.find((a) => a.type === pushRecentResult.type)
-    ).toBeDefined();
+    expect(pushRecentResult).toHaveBeenCalled();
   });
 
   it('when calling select(), logs documentOpen', () => {
